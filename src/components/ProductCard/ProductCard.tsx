@@ -1,0 +1,195 @@
+'use client';
+
+import { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Heart, ShoppingCart, Star } from 'lucide-react';
+import { cartService } from '@/lib/cart';
+import { useStore } from '@/components/StoreProvider';
+
+export interface Product {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice?: number;
+  image: string;
+  images?: string[];
+  rating?: number;
+  reviews?: number;
+  category: string;
+  description: string;
+  inStock: boolean;
+  variants?: ProductVariant[];
+}
+
+export interface ProductVariant {
+  id: string;
+  name: string;
+  value: string;
+  price?: number;
+}
+
+interface ProductCardProps {
+  product: Product;
+  className?: string;
+}
+
+export function ProductCard({ product, className = '' }: ProductCardProps) {
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { store } = useStore();
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      cartService.addItem({
+        id: `${product.id}-${Date.now()}`,
+        productId: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+      });
+
+      // Trigger storage event to update cart count
+      window.dispatchEvent(new Event('storage'));
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsFavorite(!isFavorite);
+    // TODO: Implement favorites service
+  };
+
+  const discountPercentage = product.originalPrice
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    : 0;
+
+  return (
+    <div
+      className={`group relative bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 ${className}`}
+    >
+      <Link href={`/products/${product.id}`}>
+        <div className="relative aspect-square overflow-hidden rounded-t-lg">
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+
+          {/* Discount Badge */}
+          {discountPercentage > 0 && (
+            <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-sm font-medium">
+              -{discountPercentage}%
+            </div>
+          )}
+
+          {/* Stock Status */}
+          {!product.inStock && (
+            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+              <span className="text-white font-medium text-lg">Agotado</span>
+            </div>
+          )}
+
+          {/* Favorite Button */}
+          <button
+            onClick={handleToggleFavorite}
+            className="absolute top-2 right-2 p-2 rounded-full bg-white shadow-md hover:bg-gray-50 transition-colors"
+          >
+            <Heart className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+          </button>
+        </div>
+
+        <div className="p-4">
+          {/* Category */}
+          <p className="text-sm text-gray-700 mb-1">{product.category}</p>
+
+          {/* Product Name */}
+          <h3
+            className="font-medium text-black mb-2 line-clamp-2 group-hover:transition-colors"
+            style={
+              {
+                '--hover-color': store?.primaryColor || '#2563eb',
+              } as React.CSSProperties
+            }
+            onMouseEnter={e => {
+              e.currentTarget.style.color = store?.primaryColor || '#2563eb';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.color = '#111827';
+            }}
+          >
+            {product.name}
+          </h3>
+
+          {/* Rating */}
+          {product.rating && (
+            <div className="flex items-center mb-2">
+              <div className="flex items-center">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-4 h-4 ${
+                      i < Math.floor(product.rating!) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                    }`}
+                  />
+                ))}
+              </div>
+              {product.reviews && <span className="text-sm text-gray-700 ml-1">({product.reviews})</span>}
+            </div>
+          )}
+
+          {/* Price */}
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              <span className="text-lg font-bold text-black">${product.price.toLocaleString('es-CO')}</span>
+              {product.originalPrice && (
+                <span className="text-sm text-gray-600 line-through">
+                  ${product.originalPrice.toLocaleString('es-CO')}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </Link>
+
+      {/* Add to Cart Button */}
+      <div className="px-4 pb-4">
+        <button
+          onClick={handleAddToCart}
+          disabled={!product.inStock || isLoading}
+          className="w-full text-white py-2 px-4 rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-300 flex items-center justify-center"
+          style={{
+            backgroundColor: product.inStock && !isLoading ? store?.primaryColor || '#2563eb' : undefined,
+          }}
+          onMouseEnter={e => {
+            if (product.inStock && !isLoading) {
+              e.currentTarget.style.backgroundColor = store?.secondaryColor || '#1d4ed8';
+            }
+          }}
+          onMouseLeave={e => {
+            if (product.inStock && !isLoading) {
+              e.currentTarget.style.backgroundColor = store?.primaryColor || '#2563eb';
+            }
+          }}
+        >
+          {isLoading ? (
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <>
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              {product.inStock ? 'Agregar al Carrito' : 'Agotado'}
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
