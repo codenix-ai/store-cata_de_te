@@ -4,6 +4,7 @@ import './globals.css';
 import { Providers } from '@/components/Providers';
 import { Navbar } from '@/components/Navbar/Navbar';
 import { Footer } from '@/components/Footer/Footer';
+import { Toaster } from 'react-hot-toast';
 
 const roboto = Roboto({
   variable: '--font-roboto',
@@ -34,6 +35,7 @@ export default function RootLayout({
         className={`${roboto.variable} ${montserrat.variable} font-roboto antialiased min-h-screen flex flex-col text-gray-900 bg-white dark:text-gray-100 dark:bg-slate-900`}
       >
         <Providers>
+          <Toaster position="top-right" toastOptions={{ duration: 3500 }} />
           <Navbar />
           <main className="flex-1">{children}</main>
           <Footer />

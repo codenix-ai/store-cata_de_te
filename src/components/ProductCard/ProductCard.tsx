@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Heart, ShoppingCart, Star } from 'lucide-react';
 import { cartService } from '@/lib/cart';
 import { useStore } from '@/components/StoreProvider';
+import toast from 'react-hot-toast';
 
 export interface Product {
   id: string;
@@ -54,8 +55,12 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
 
       // Trigger storage event to update cart count
       window.dispatchEvent(new Event('storage'));
+
+      // Show toast notification
+      toast.success(`${product.name} ha sido agregado al carrito.`);
     } catch (error) {
       console.error('Error adding to cart:', error);
+      toast.error('Hubo un problema al agregar el producto al carrito.');
     } finally {
       setIsLoading(false);
     }
