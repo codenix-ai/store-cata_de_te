@@ -1,4 +1,3 @@
-import { render, screen } from '@testing-library/react';
 import { cartService } from '@/lib/cart';
 
 // Test for cart service
