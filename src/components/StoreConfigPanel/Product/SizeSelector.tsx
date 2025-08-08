@@ -28,7 +28,7 @@ export function SizeSelector({ sizes, onChange }: SizeSelectorProps) {
     const newSize: ProductSize = {
       id: `size-${Date.now()}`,
       name: preset.name,
-      value: preset.value
+      value: preset.value,
     };
 
     onChange([...sizes, newSize]);
@@ -41,7 +41,7 @@ export function SizeSelector({ sizes, onChange }: SizeSelectorProps) {
     const newSize: ProductSize = {
       id: `size-${Date.now()}`,
       name: customSize.name,
-      value: customSize.value
+      value: customSize.value,
     };
 
     onChange([...sizes, newSize]);
@@ -54,9 +54,7 @@ export function SizeSelector({ sizes, onChange }: SizeSelectorProps) {
   };
 
   const updateSize = (index: number, field: 'name' | 'value', value: string) => {
-    const updatedSizes = sizes.map((size, i) => 
-      i === index ? { ...size, [field]: value } : size
-    );
+    const updatedSizes = sizes.map((size, i) => (i === index ? { ...size, [field]: value } : size));
     onChange(updatedSizes);
   };
 
@@ -78,7 +76,7 @@ export function SizeSelector({ sizes, onChange }: SizeSelectorProps) {
       <div>
         <h4 className="text-sm font-medium text-gray-700 mb-2">Tallas Estándar</h4>
         <div className="flex flex-wrap gap-2">
-          {PRESET_SIZES.map((preset) => {
+          {PRESET_SIZES.map(preset => {
             const isSelected = sizes.some(size => size.value === preset.value);
             return (
               <button
@@ -104,25 +102,21 @@ export function SizeSelector({ sizes, onChange }: SizeSelectorProps) {
         <div className="border rounded-lg p-4 bg-gray-50">
           <div className="flex items-end space-x-3">
             <div className="flex-1">
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Nombre de la Talla
-              </label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Nombre de la Talla</label>
               <input
                 type="text"
                 value={customSize.name}
-                onChange={(e) => setCustomSize({ ...customSize, name: e.target.value })}
+                onChange={e => setCustomSize({ ...customSize, name: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="ej: Extra Grande"
               />
             </div>
             <div className="flex-1">
-              <label className="block text-xs font-medium text-gray-700 mb-1">
-                Valor/Código
-              </label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Valor/Código</label>
               <input
                 type="text"
                 value={customSize.value}
-                onChange={(e) => setCustomSize({ ...customSize, value: e.target.value.toUpperCase() })}
+                onChange={e => setCustomSize({ ...customSize, value: e.target.value.toUpperCase() })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="ej: XG"
               />
@@ -158,23 +152,19 @@ export function SizeSelector({ sizes, onChange }: SizeSelectorProps) {
                   <input
                     type="text"
                     value={size.name}
-                    onChange={(e) => updateSize(index, 'name', e.target.value)}
+                    onChange={e => updateSize(index, 'name', e.target.value)}
                     className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500"
                     placeholder="Nombre de la talla"
                   />
                   <input
                     type="text"
                     value={size.value}
-                    onChange={(e) => updateSize(index, 'value', e.target.value.toUpperCase())}
+                    onChange={e => updateSize(index, 'value', e.target.value.toUpperCase())}
                     className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500"
                     placeholder="Código"
                   />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removeSize(index)}
-                  className="p-1 text-red-500 hover:text-red-700"
-                >
+                <button type="button" onClick={() => removeSize(index)} className="p-1 text-red-500 hover:text-red-700">
                   <X className="w-4 h-4" />
                 </button>
               </div>
