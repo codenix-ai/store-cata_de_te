@@ -1,63 +1,73 @@
-import { Mail, Phone, MessageCircle, Clock, MapPin, Headphones } from 'lucide-react';
+"use client";
+import { useStore } from "@/components/StoreProvider";
+import {
+  Mail,
+  Phone,
+  MessageCircle,
+  Clock,
+  MapPin,
+  Headphones,
+} from "lucide-react";
 
 export default function SupportPage() {
+  const { store } = useStore();
   const supportOptions = [
     {
       icon: MessageCircle,
-      title: 'Chat en Vivo',
-      description: 'Habla directamente con nuestro equipo de soporte',
-      action: 'Iniciar Chat',
-      available: '24/7',
-      color: 'bg-blue-500',
+      title: "Chat en Vivo",
+      description: "Habla directamente con nuestro equipo de soporte",
+      action: "Iniciar Chat",
+      available: "24/7",
+      color: store?.primaryColor || "#2563eb",
     },
     {
       icon: Mail,
-      title: 'Email',
-      description: 'Envíanos tu consulta por correo electrónico',
-      action: 'Enviar Email',
-      contact: 'soporte@emprendyup.com',
-      color: 'bg-green-500',
+      title: "Email",
+      description: "Envíanos tu consulta por correo electrónico",
+      action: "Enviar Email",
+      contact: "soporte@emprendyup.com",
+      color: store?.secondaryColor || "#059669",
     },
     {
       icon: Phone,
-      title: 'Teléfono',
-      description: 'Llámanos para soporte inmediato',
-      action: 'Llamar Ahora',
-      contact: '+57 (1) 234-5678',
-      color: 'bg-orange-500',
+      title: "Teléfono",
+      description: "Llámanos para soporte inmediato",
+      action: "Llamar Ahora",
+      contact: "+57 (1) 234-5678",
+      color: store?.accentColor || "#059669",
     },
   ];
 
   const faqItems = [
     {
-      question: '¿Cuál es el tiempo de entrega?',
+      question: "¿Cuál es el tiempo de entrega?",
       answer:
-        'Los tiempos de entrega varían según la ubicación. En Bogotá: 1-2 días hábiles. En otras ciudades principales: 2-4 días hábiles. En municipios: 5-7 días hábiles.',
+        "Los tiempos de entrega varían según la ubicación. En Bogotá: 1-2 días hábiles. En otras ciudades principales: 2-4 días hábiles. En municipios: 5-7 días hábiles.",
     },
     {
-      question: '¿Cómo puedo realizar el seguimiento de mi pedido?',
+      question: "¿Cómo puedo realizar el seguimiento de mi pedido?",
       answer:
         'Una vez confirmado tu pedido, recibirás un email con el número de seguimiento. También puedes ingresar a tu cuenta y revisar el estado en la sección "Mis Pedidos".',
     },
     {
-      question: '¿Qué métodos de pago aceptan?',
+      question: "¿Qué métodos de pago aceptan?",
       answer:
-        'Aceptamos MercadoPago, Wompi, ePayco, tarjetas de crédito y débito Visa/Mastercard, PSE, y pago contraentrega en algunas zonas.',
+        "Aceptamos MercadoPago, Wompi, ePayco, tarjetas de crédito y débito Visa/Mastercard, PSE, y pago contraentrega en algunas zonas.",
     },
     {
-      question: '¿Cuál es la política de devoluciones?',
+      question: "¿Cuál es la política de devoluciones?",
       answer:
-        'Tienes 30 días calendario para devolver productos en perfecto estado. Los productos deben estar en su empaque original y con todas las etiquetas.',
+        "Tienes 30 días calendario para devolver productos en perfecto estado. Los productos deben estar en su empaque original y con todas las etiquetas.",
     },
     {
-      question: '¿El envío tiene costo?',
+      question: "¿El envío tiene costo?",
       answer:
-        'El envío es gratuito en compras superiores a $150.000 COP. Para compras menores, el costo del envío es de $15.000 COP.',
+        "El envío es gratuito en compras superiores a $150.000 COP. Para compras menores, el costo del envío es de $15.000 COP.",
     },
     {
-      question: '¿Cómo puedo cambiar o cancelar mi pedido?',
+      question: "¿Cómo puedo cambiar o cancelar mi pedido?",
       answer:
-        'Puedes cambiar o cancelar tu pedido dentro de las primeras 2 horas después de realizarlo. Contáctanos inmediatamente para procesar el cambio.',
+        "Puedes cambiar o cancelar tu pedido dentro de las primeras 2 horas después de realizarlo. Contáctanos inmediatamente para procesar el cambio.",
     },
   ];
 
@@ -65,26 +75,59 @@ export default function SupportPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-black font-montserrat mb-4">Centro de Soporte</h1>
+        <h1 className="text-4xl font-bold text-black font-montserrat mb-4">
+          Centro de Soporte
+        </h1>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-          Estamos aquí para ayudarte. Encuentra respuestas a tus preguntas o contáctanos directamente.
+          Estamos aquí para ayudarte. Encuentra respuestas a tus preguntas o
+          contáctanos directamente.
         </p>
       </div>
 
       {/* Contact Options */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
         {supportOptions.map((option, index) => (
-          <div key={index} className="bg-white rounded-lg shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
+          <div
+            key={index}
+            className="bg-white rounded-lg shadow-lg p-6 text-center hover:shadow-xl transition-shadow"
+          >
             <div
-              className={`inline-flex items-center justify-center w-16 h-16 ${option.color} text-white rounded-full mb-4`}
+              className="inline-flex items-center justify-center w-16 h-16 text-white rounded-full mb-4"
+              style={{ backgroundColor: option.color }}
             >
               <option.icon className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-semibold text-black mb-2">{option.title}</h3>
+            <h3 className="text-xl font-semibold text-black mb-2">
+              {option.title}
+            </h3>
             <p className="text-gray-600 mb-4">{option.description}</p>
-            {option.contact && <p className="text-blue-600 font-medium mb-4">{option.contact}</p>}
-            {option.available && <p className="text-green-600 text-sm mb-4">Disponible {option.available}</p>}
-            <button className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+            {option.contact && (
+              <p
+                className="font-medium mb-4"
+                style={{ color: store?.primaryColor || "#2563eb" }}
+              >
+                {option.contact}
+              </p>
+            )}
+            {option.available && (
+              <p className="text-green-600 text-sm mb-4">
+                Disponible {option.available}
+              </p>
+            )}
+            <button
+              className="w-full text-white py-2 px-4 rounded-lg transition-colors"
+              style={{
+                backgroundColor: store?.primaryColor || "#2563eb",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor =
+                  store?.secondaryColor || "#1e293b";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor =
+                  store?.primaryColor || "#2563eb";
+              }}
+            >
               {option.action}
             </button>
           </div>
@@ -92,11 +135,23 @@ export default function SupportPage() {
       </div>
 
       {/* Quick Info */}
-      <div className="bg-blue-50 rounded-lg p-8 mb-16">
+      <div
+        className="rounded-lg p-8 mb-16"
+        style={{
+          backgroundColor: store?.primaryColor
+            ? `${store.primaryColor}20`
+            : "#eff6ff",
+        }} // 20 = 12% opacity
+      >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="text-center">
-            <Clock className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-black mb-2">Horarios de Atención</h3>
+            <Clock
+              className="w-12 h-12 mx-auto mb-4"
+              style={{ color: store?.primaryColor || "#2563eb" }}
+            />
+            <h3 className="text-lg font-semibold text-black mb-2">
+              Horarios de Atención
+            </h3>
             <p className="text-gray-600">
               Lunes a Viernes: 8:00 AM - 6:00 PM
               <br />
@@ -106,7 +161,10 @@ export default function SupportPage() {
             </p>
           </div>
           <div className="text-center">
-            <MapPin className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+            <MapPin
+              className="w-12 h-12 mx-auto mb-4"
+              style={{ color: store?.primaryColor || "#2563eb" }}
+            />
             <h3 className="text-lg font-semibold text-black mb-2">Ubicación</h3>
             <p className="text-gray-600">
               Bogotá, Colombia
@@ -117,8 +175,13 @@ export default function SupportPage() {
             </p>
           </div>
           <div className="text-center">
-            <Headphones className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-black mb-2">Tiempo de Respuesta</h3>
+            <Headphones
+              className="w-12 h-12 mx-auto mb-4"
+              style={{ color: store?.primaryColor || "#2563eb" }}
+            />
+            <h3 className="text-lg font-semibold text-black mb-2">
+              Tiempo de Respuesta
+            </h3>
             <p className="text-gray-600">
               Chat: Inmediato
               <br />
@@ -132,11 +195,15 @@ export default function SupportPage() {
 
       {/* FAQ Section */}
       <div className="mb-16">
-        <h2 className="text-3xl font-bold text-black text-center mb-8 font-montserrat">Preguntas Frecuentes</h2>
+        <h2 className="text-3xl font-bold text-black text-center mb-8 font-montserrat">
+          Preguntas Frecuentes
+        </h2>
         <div className="max-w-4xl mx-auto space-y-6">
           {faqItems.map((item, index) => (
             <div key={index} className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-lg font-semibold text-black mb-3">{item.question}</h3>
+              <h3 className="text-lg font-semibold text-black mb-3">
+                {item.question}
+              </h3>
               <p className="text-gray-600 leading-relaxed">{item.answer}</p>
             </div>
           ))}
@@ -145,11 +212,16 @@ export default function SupportPage() {
 
       {/* Contact Form */}
       <div className="max-w-2xl mx-auto">
-        <h2 className="text-3xl font-bold text-black text-center mb-8 font-montserrat">Envíanos un Mensaje</h2>
+        <h2 className="text-3xl font-bold text-black text-center mb-8 font-montserrat">
+          Envíanos un Mensaje
+        </h2>
         <form className="bg-white rounded-lg shadow-lg p-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Nombre Completo
               </label>
               <input
@@ -161,7 +233,10 @@ export default function SupportPage() {
               />
             </div>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Email
               </label>
               <input
@@ -175,7 +250,10 @@ export default function SupportPage() {
           </div>
 
           <div className="mb-6">
-            <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="subject"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Asunto
             </label>
             <select
@@ -195,7 +273,10 @@ export default function SupportPage() {
           </div>
 
           <div className="mb-6">
-            <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="message"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Mensaje
             </label>
             <textarea
@@ -210,7 +291,18 @@ export default function SupportPage() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            className="w-full text-white py-3 px-6 rounded-lg font-medium transition-colors"
+            style={{
+              backgroundColor: store?.primaryColor || "#2563eb",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor =
+                store?.secondaryColor || "#1e293b";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor =
+                store?.primaryColor || "#2563eb";
+            }}
           >
             Enviar Mensaje
           </button>
@@ -219,34 +311,64 @@ export default function SupportPage() {
 
       {/* Additional Resources */}
       <div className="mt-16 bg-gray-50 rounded-lg p-8">
-        <h2 className="text-2xl font-bold text-black text-center mb-6 font-montserrat">Recursos Adicionales</h2>
+        <h2 className="text-2xl font-bold text-black text-center mb-6 font-montserrat">
+          Recursos Adicionales
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="text-center">
             <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-              <span className="text-blue-600 font-semibold">📖</span>
+              <span
+                className="font-semibold"
+                style={{ color: store?.primaryColor || "#2563eb" }}
+              >
+                📋
+              </span>
             </div>
             <h3 className="font-semibold text-black mb-2">Guía de Usuario</h3>
-            <p className="text-sm text-gray-600">Aprende a usar nuestra plataforma</p>
+            <p className="text-sm text-gray-600">
+              Aprende a usar nuestra plataforma
+            </p>
           </div>
           <div className="text-center">
             <div className="bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-              <span className="text-green-600 font-semibold">📋</span>
+              <span
+                className="font-semibold"
+                style={{ color: store?.secondaryColor || "#2563eb" }}
+              >
+                📋
+              </span>
             </div>
-            <h3 className="font-semibold text-black mb-2">Términos y Condiciones</h3>
+            <h3 className="font-semibold text-black mb-2">
+              Términos y Condiciones
+            </h3>
             <p className="text-sm text-gray-600">Revisa nuestras políticas</p>
           </div>
           <div className="text-center">
             <div className="bg-orange-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-              <span className="text-orange-600 font-semibold">🔒</span>
+              <span
+                className="font-semibold"
+                style={{ color: store?.accentColor || "#2563eb" }}
+              >
+                🔒
+              </span>
             </div>
-            <h3 className="font-semibold text-black mb-2">Política de Privacidad</h3>
+            <h3 className="font-semibold text-black mb-2">
+              Política de Privacidad
+            </h3>
             <p className="text-sm text-gray-600">Cómo protegemos tus datos</p>
           </div>
           <div className="text-center">
             <div className="bg-purple-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
-              <span className="text-purple-600 font-semibold">💡</span>
+              <span
+                className="font-semibold"
+                style={{ color: store?.primaryColor || "#2563eb" }}
+              >
+                💡
+              </span>
             </div>
-            <h3 className="font-semibold text-black mb-2">Tips para Emprendedores</h3>
+            <h3 className="font-semibold text-black mb-2">
+              Tips para Emprendedores
+            </h3>
             <p className="text-sm text-gray-600">Consejos y recursos útiles</p>
           </div>
         </div>

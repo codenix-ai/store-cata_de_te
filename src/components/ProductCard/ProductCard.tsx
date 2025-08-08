@@ -176,7 +176,7 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
           }}
           onMouseEnter={e => {
             if (product.inStock && !isLoading) {
-              e.currentTarget.style.backgroundColor = store?.secondaryColor || '#1d4ed8';
+              e.currentTarget.style.backgroundColor = store?.hoverBackgroundColor || '#d3d3d3';
             }
           }}
           onMouseLeave={e => {

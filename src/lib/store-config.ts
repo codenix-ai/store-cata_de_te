@@ -14,6 +14,7 @@ export interface StoreConfig {
   secondaryColor: string;
   accentColor: string;
   backgroundColor: string;
+  hoverBackgroundColor?: string;
   textColor: string;
 
   // Contact Information
@@ -266,9 +267,9 @@ class StoreConfigService {
 
     // Fallback to default
     const defaultStore = {
-      id: '1',
+      id: '2',
       storeId: 'default',
-      ...defaultStoreConfigs.fashion,
+      ...defaultStoreConfigs.electronics,
     } as StoreConfig;
 
     this.setCurrentStore(defaultStore);

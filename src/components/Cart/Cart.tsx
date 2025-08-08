@@ -12,7 +12,13 @@ interface CartProps {
 }
 
 export function Cart({ className = '' }: CartProps) {
-  const [cart, setCart] = useState<CartType>({ items: [], total: 0, subtotal: 0, tax: 0, shipping: 0 });
+  const [cart, setCart] = useState<CartType>({
+    items: [],
+    total: 0,
+    subtotal: 0,
+    tax: 0,
+    shipping: 0,
+  });
   const [isLoading, setIsLoading] = useState(false);
   const { store } = useStore();
 
@@ -54,13 +60,13 @@ export function Cart({ className = '' }: CartProps) {
           href="/products"
           className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white transition-colors"
           style={{
-            backgroundColor: store?.primaryColor || '#3B82F6',
+            backgroundColor: store?.primaryColor || '#1F2937',
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.backgroundColor = store?.secondaryColor || store?.primaryColor || '#2563EB';
+            e.currentTarget.style.backgroundColor = store?.hoverBackgroundColor || '#d3d3d3';
           }}
           onMouseLeave={e => {
-            e.currentTarget.style.backgroundColor = store?.primaryColor || '#3B82F6';
+            e.currentTarget.style.backgroundColor = store?.hoverBackgroundColor || '#1F2937';
           }}
         >
           Continuar Comprando

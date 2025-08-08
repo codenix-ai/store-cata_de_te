@@ -1,28 +1,30 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Heart, ShoppingCart } from 'lucide-react';
-import { ProductCard, Product } from '@/components/ProductCard/ProductCard';
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { Heart, ShoppingCart } from "lucide-react";
+import { ProductCard, Product } from "@/components/ProductCard/ProductCard";
+import { useStore } from "../StoreProvider";
 
 interface FavoritesProps {
   className?: string;
 }
 
-export function Favorites({ className = '' }: FavoritesProps) {
+export function Favorites({ className = "" }: FavoritesProps) {
   const [favorites, setFavorites] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { store } = useStore();
 
   useEffect(() => {
     // Load favorites from localStorage
     const loadFavorites = () => {
       try {
-        const stored = localStorage.getItem('emprendyup_favorites');
+        const stored = localStorage.getItem("emprendyup_favorites");
         if (stored) {
           setFavorites(JSON.parse(stored));
         }
       } catch (error) {
-        console.error('Error loading favorites:', error);
+        console.error("Error loading favorites:", error);
       } finally {
         setIsLoading(false);
       }
@@ -32,14 +34,17 @@ export function Favorites({ className = '' }: FavoritesProps) {
   }, []);
 
   const removeFavorite = (productId: string) => {
-    const updatedFavorites = favorites.filter(item => item.id !== productId);
+    const updatedFavorites = favorites.filter((item) => item.id !== productId);
     setFavorites(updatedFavorites);
-    localStorage.setItem('emprendyup_favorites', JSON.stringify(updatedFavorites));
+    localStorage.setItem(
+      "emprendyup_favorites",
+      JSON.stringify(updatedFavorites)
+    );
   };
 
   const clearAllFavorites = () => {
     setFavorites([]);
-    localStorage.removeItem('emprendyup_favorites');
+    localStorage.removeItem("emprendyup_favorites");
   };
 
   if (isLoading) {
@@ -61,11 +66,27 @@ export function Favorites({ className = '' }: FavoritesProps) {
     return (
       <div className={`text-center py-12 ${className}`}>
         <Heart className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-        <h3 className="text-lg font-medium text-black mb-2">No tienes favoritos aún</h3>
-        <p className="text-gray-500 mb-6">Agrega productos a tus favoritos para encontrarlos fácilmente más tarde</p>
+        <h3 className="text-lg font-medium text-black mb-2">
+          No tienes favoritos aún
+        </h3>
+        <p className="text-gray-500 mb-6">
+          Agrega productos a tus favoritos para encontrarlos fácilmente más
+          tarde
+        </p>
         <Link
           href="/products"
-          className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white transition-colors"
+          style={{
+            backgroundColor: store?.primaryColor || "#1F2937",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor =
+              store?.hoverBackgroundColor || "#d3d3d3";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor =
+              store?.hoverBackgroundColor || "#1F2937";
+          }}
         >
           <ShoppingCart className="w-5 h-5 mr-2" />
           Explorar Productos
@@ -81,12 +102,17 @@ export function Favorites({ className = '' }: FavoritesProps) {
         <div>
           <h2 className="text-2xl font-bold text-black">Mis Favoritos</h2>
           <p className="text-gray-600 mt-1">
-            {favorites.length} {favorites.length === 1 ? 'producto' : 'productos'} en tu lista de favoritos
+            {favorites.length}{" "}
+            {favorites.length === 1 ? "producto" : "productos"} en tu lista de
+            favoritos
           </p>
         </div>
 
         {favorites.length > 0 && (
-          <button onClick={clearAllFavorites} className="text-red-600 hover:text-red-700 font-medium transition-colors">
+          <button
+            onClick={clearAllFavorites}
+            className="text-red-600 hover:text-red-700 font-medium transition-colors"
+          >
             Limpiar Todo
           </button>
         )}
@@ -94,7 +120,7 @@ export function Favorites({ className = '' }: FavoritesProps) {
 
       {/* Favorites Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {favorites.map(product => (
+        {favorites.map((product) => (
           <div key={product.id} className="relative">
             <ProductCard product={product} />
 
@@ -112,7 +138,9 @@ export function Favorites({ className = '' }: FavoritesProps) {
 
       {/* Quick Actions */}
       <div className="bg-gray-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-black mb-4">Acciones Rápidas</h3>
+        <h3 className="text-lg font-semibold text-black mb-4">
+          Acciones Rápidas
+        </h3>
         <div className="flex flex-col sm:flex-row gap-4">
           <button className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-md font-medium hover:bg-blue-700 transition-colors">
             Agregar Todos al Carrito
@@ -128,8 +156,12 @@ export function Favorites({ className = '' }: FavoritesProps) {
 
       {/* Share Favorites */}
       <div className="bg-blue-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-black mb-2">Comparte tu Lista</h3>
-        <p className="text-gray-600 mb-4">Comparte tu lista de favoritos con amigos y familiares</p>
+        <h3 className="text-lg font-semibold text-black mb-2">
+          Comparte tu Lista
+        </h3>
+        <p className="text-gray-600 mb-4">
+          Comparte tu lista de favoritos con amigos y familiares
+        </p>
         <button className="bg-blue-600 text-white py-2 px-4 rounded-md font-medium hover:bg-blue-700 transition-colors">
           Generar Enlace para Compartir
         </button>
@@ -140,10 +172,10 @@ export function Favorites({ className = '' }: FavoritesProps) {
 
 // Service functions for managing favorites
 export class FavoritesService {
-  private storageKey = 'emprendyup_favorites';
+  private storageKey = "emprendyup_favorites";
 
   getFavorites(): Product[] {
-    if (typeof window === 'undefined') return [];
+    if (typeof window === "undefined") return [];
 
     try {
       const stored = localStorage.getItem(this.storageKey);
@@ -155,7 +187,7 @@ export class FavoritesService {
 
   addFavorite(product: Product): Product[] {
     const favorites = this.getFavorites();
-    const exists = favorites.find(item => item.id === product.id);
+    const exists = favorites.find((item) => item.id === product.id);
 
     if (!exists) {
       favorites.push(product);
@@ -167,14 +199,14 @@ export class FavoritesService {
 
   removeFavorite(productId: string): Product[] {
     const favorites = this.getFavorites();
-    const updated = favorites.filter(item => item.id !== productId);
+    const updated = favorites.filter((item) => item.id !== productId);
     this.saveFavorites(updated);
     return updated;
   }
 
   isFavorite(productId: string): boolean {
     const favorites = this.getFavorites();
-    return favorites.some(item => item.id === productId);
+    return favorites.some((item) => item.id === productId);
   }
 
   toggleFavorite(product: Product): boolean {
@@ -192,7 +224,7 @@ export class FavoritesService {
   }
 
   private saveFavorites(favorites: Product[]): void {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       localStorage.setItem(this.storageKey, JSON.stringify(favorites));
     }
   }
