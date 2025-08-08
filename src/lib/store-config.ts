@@ -238,7 +238,7 @@ class StoreConfigService {
 
   // Initialize store from subdomain or environment
   async initializeStore(): Promise<StoreConfig> {
-    let storeId = 'default';
+    let storeId = 'store1';
 
     if (typeof window !== 'undefined') {
       // Extract subdomain or use environment variable

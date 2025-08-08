@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
+import { Minus, Plus, Trash2, ShoppingBag, Eye, X } from 'lucide-react';
 import { cartService, Cart as CartType, CartItem } from '@/lib/cart';
 import { useStore } from '@/components/StoreProvider';
 
@@ -116,56 +116,166 @@ interface CartItemCardProps {
 }
 
 function CartItemCard({ item, onUpdateQuantity, onRemove, isLoading }: CartItemCardProps) {
+  const [showPreview, setShowPreview] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-      <div className="flex items-start space-x-4">
-        {/* Product Image */}
-        <div className="relative w-20 h-20 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
-          <Image src={item.image} alt={item.name} fill className="object-cover" />
-        </div>
+    <>
+      <div
+        className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <div className="flex items-start space-x-4">
+          {/* Product Image with Preview */}
+          <div className="relative w-20 h-20 bg-gray-100 rounded-md overflow-hidden flex-shrink-0 group">
+            <Image
+              src={item.image}
+              alt={item.name}
+              fill
+              className="object-cover transition-transform group-hover:scale-105"
+            />
 
-        {/* Product Details */}
-        <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-black mb-1">{item.name}</h3>
-          {item.variant && <p className="text-sm text-gray-500 mb-2">Variante: {item.variant}</p>}
-          <p className="text-lg font-semibold text-black">${item.price.toLocaleString('es-CO')}</p>
-        </div>
+            {/* Hover Overlay */}
+            <div
+              className={`absolute inset-0 bg-black bg-opacity-0 transition-all duration-200 flex items-center justify-center ${
+                isHovered ? 'bg-opacity-40' : ''
+              }`}
+            >
+              <div
+                className={`opacity-0 transition-opacity duration-200 flex space-x-1 ${isHovered ? 'opacity-100' : ''}`}
+              >
+                <button
+                  onClick={() => setShowPreview(true)}
+                  className="p-1.5 bg-white text-gray-700 rounded-full hover:bg-gray-50 shadow-md"
+                  title="Vista previa"
+                >
+                  <Eye className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => onRemove(item.productId, item.variant)}
+                  disabled={isLoading}
+                  className="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-md disabled:opacity-50"
+                  title="Eliminar"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          </div>
 
-        {/* Quantity Controls */}
-        <div className="flex items-center space-x-2">
+          {/* Product Details */}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium text-black mb-1">{item.name}</h3>
+            {item.variant && <p className="text-sm text-gray-500 mb-2">Variante: {item.variant}</p>}
+            <p className="text-lg font-semibold text-black">${item.price.toLocaleString('es-CO')}</p>
+          </div>
+
+          {/* Quantity Controls */}
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => onUpdateQuantity(item.productId, item.quantity - 1, item.variant)}
+              disabled={isLoading || item.quantity <= 1}
+              className="p-1 rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+            <span className="w-12 text-center font-medium">{item.quantity}</span>
+            <button
+              onClick={() => onUpdateQuantity(item.productId, item.quantity + 1, item.variant)}
+              disabled={isLoading}
+              className="p-1 rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Remove Button - Always visible but subtle */}
           <button
-            onClick={() => onUpdateQuantity(item.productId, item.quantity - 1, item.variant)}
-            disabled={isLoading || item.quantity <= 1}
-            className="p-1 rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Minus className="w-4 h-4" />
-          </button>
-          <span className="w-12 text-center font-medium">{item.quantity}</span>
-          <button
-            onClick={() => onUpdateQuantity(item.productId, item.quantity + 1, item.variant)}
+            onClick={() => onRemove(item.productId, item.variant)}
             disabled={isLoading}
-            className="p-1 rounded-md border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
+            className={`p-2 rounded-md disabled:opacity-50 transition-colors ${
+              isHovered ? 'text-red-600 hover:text-red-700 hover:bg-red-50' : 'text-gray-400 hover:text-red-500'
+            }`}
+            title="Eliminar del carrito"
           >
-            <Plus className="w-4 h-4" />
+            <Trash2 className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Remove Button */}
-        <button
-          onClick={() => onRemove(item.productId, item.variant)}
-          disabled={isLoading}
-          className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md disabled:opacity-50"
-        >
-          <Trash2 className="w-5 h-5" />
-        </button>
+        {/* Item Total */}
+        <div className="mt-4 flex justify-between items-center">
+          <span className="text-sm text-gray-500">Subtotal:</span>
+          <span className="font-semibold text-black">${(item.price * item.quantity).toLocaleString('es-CO')}</span>
+        </div>
       </div>
 
-      {/* Item Total */}
-      <div className="mt-4 flex justify-between items-center">
-        <span className="text-sm text-gray-500">Subtotal:</span>
-        <span className="font-semibold text-black">${(item.price * item.quantity).toLocaleString('es-CO')}</span>
-      </div>
-    </div>
+      {/* Preview Modal */}
+      {showPreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="relative max-w-2xl max-h-full bg-white rounded-lg overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
+                {item.variant && <p className="text-sm text-gray-500">Variante: {item.variant}</p>}
+              </div>
+              <button
+                onClick={() => setShowPreview(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              <div className="relative w-full h-80 mb-4">
+                <Image src={item.image} alt={item.name} fill className="object-contain rounded-lg" />
+              </div>
+
+              {/* Product Info */}
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold text-gray-900">Precio:</span>
+                  <span className="text-xl font-bold text-black">${item.price.toLocaleString('es-CO')}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold text-gray-900">Cantidad:</span>
+                  <span className="text-xl font-bold text-black">{item.quantity}</span>
+                </div>
+                <div className="flex justify-between items-center border-t pt-3">
+                  <span className="text-lg font-semibold text-gray-900">Subtotal:</span>
+                  <span className="text-2xl font-bold text-black">
+                    ${(item.price * item.quantity).toLocaleString('es-CO')}
+                  </span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-center space-x-3 mt-6">
+                <button
+                  onClick={() => {
+                    onRemove(item.productId, item.variant);
+                    setShowPreview(false);
+                  }}
+                  disabled={isLoading}
+                  className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 transition-colors"
+                >
+                  Eliminar del carrito
+                </button>
+                <button
+                  onClick={() => setShowPreview(false)}
+                  className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
