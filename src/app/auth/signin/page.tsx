@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
@@ -38,6 +38,11 @@ export default function SignInPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/auth/signin" });
+    router.push("/");
   };
 
   return (
@@ -222,7 +227,7 @@ export default function SignInPage() {
             <p className="text-sm text-gray-600">
               ¿No tienes una cuenta?{" "}
               <Link
-                href="/auth/signup"
+                href="/auth/register"
                 className="font-medium"
                 style={{ color: store?.primaryColor || "#2563eb" }}
               >
