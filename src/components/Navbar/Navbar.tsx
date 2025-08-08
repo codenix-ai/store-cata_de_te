@@ -1,20 +1,12 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { useSession } from "next-auth/react";
-import {
-  Menu,
-  X,
-  ShoppingCart,
-  Heart,
-  User,
-  Search,
-  HelpCircle,
-} from "lucide-react";
-import { cartService } from "@/lib/cart";
-import { useStore } from "@/components/StoreProvider";
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useSession } from 'next-auth/react';
+import { Menu, X, ShoppingCart, Heart, User, Search, HelpCircle } from 'lucide-react';
+import { cartService } from '@/lib/cart';
+import { useStore } from '@/components/StoreProvider';
 
 export function Navbar() {
   const { data: session } = useSession();
@@ -25,13 +17,12 @@ export function Navbar() {
   useEffect(() => {
     setCartItemCount(cartService.getItemCount());
 
-    // Listen for cart updates
     const handleStorageChange = () => {
       setCartItemCount(cartService.getItemCount());
     };
 
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   if (isLoading || !store) {
@@ -48,52 +39,40 @@ export function Navbar() {
   }
 
   const navigation = [
-    { name: "Tienda", href: "/products", key: "products" },
+    { name: 'Tienda', href: '/products', key: 'products' },
     {
-      name: "",
-      href: "/cart",
+      name: '',
+      href: '/cart',
       icon: ShoppingCart,
       badge: cartItemCount,
-      key: "cart",
+      key: 'cart',
     },
-    { name: "", href: "/favorites", icon: Heart, key: "favorites" },
-    { name: "", href: "/support", icon: HelpCircle, key: "support" },
+    { name: '', href: '/favorites', icon: Heart, key: 'favorites' },
+    { name: '', href: '/support', icon: HelpCircle, key: 'support' },
   ];
 
   // Mobile navigation excludes cart and favorites (they're in the navbar)
   const mobileNavigation = [
-    { name: "Tienda", href: "/products", key: "mobile-products" },
+    { name: 'Tienda', href: '/products', key: 'mobile-products' },
     {
-      name: "Soporte",
-      href: "/support",
+      name: 'Soporte',
+      href: '/support',
       icon: HelpCircle,
-      key: "mobile-support",
+      key: 'mobile-support',
     },
   ];
 
   return (
-    <nav
-      className="shadow-lg sticky top-0 z-50"
-      style={{ backgroundColor: store.backgroundColor }}
-    >
+    <nav className="shadow-lg sticky top-0 z-50" style={{ backgroundColor: store.backgroundColor }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex-shrink-0 flex items-center">
               {store.logoUrl ? (
-                <Image
-                  src={store.logoUrl}
-                  alt={store.name}
-                  width={120}
-                  height={40}
-                  className="h-8 w-auto"
-                />
+                <Image src={store.logoUrl} alt={store.name} width={120} height={40} className="h-8 w-auto" />
               ) : (
-                <span
-                  className="text-2xl font-bold font-montserrat"
-                  style={{ color: store.secondaryColor }}
-                >
+                <span className="text-2xl font-bold font-montserrat" style={{ color: store.secondaryColor }}>
                   {store.name}
                 </span>
               )}
@@ -111,7 +90,7 @@ export function Navbar() {
               />
             </div>
 
-            {navigation.map((item) => (
+            {navigation.map(item => (
               <Link
                 key={item.key}
                 href={item.href}
@@ -159,11 +138,7 @@ export function Navbar() {
           {/* Mobile menu button and icons */}
           <div className="lg:hidden flex items-center space-x-4">
             {/* Cart Icon */}
-            <Link
-              href="/cart"
-              className="relative transition-colors"
-              style={{ color: store.textColor }}
-            >
+            <Link href="/cart" className="relative transition-colors" style={{ color: store.textColor }}>
               <ShoppingCart className="w-6 h-6" />
               {cartItemCount > 0 && (
                 <span
@@ -176,11 +151,7 @@ export function Navbar() {
             </Link>
 
             {/* Heart Icon */}
-            <Link
-              href="/favorites"
-              className="relative transition-colors"
-              style={{ color: store.textColor }}
-            >
+            <Link href="/favorites" className="relative transition-colors" style={{ color: store.textColor }}>
               <Heart className="w-6 h-6" />
             </Link>
 
@@ -190,11 +161,7 @@ export function Navbar() {
               className=" focus:outline-none "
               style={{ color: store.textColor }}
             >
-              {isMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </div>
@@ -214,7 +181,7 @@ export function Navbar() {
                 </div>
               </div>
 
-              {mobileNavigation.map((item) => (
+              {mobileNavigation.map(item => (
                 <Link
                   key={item.key}
                   href={item.href}
