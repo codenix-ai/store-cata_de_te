@@ -13,6 +13,7 @@ export function Navbar() {
   const { store, isLoading } = useStore();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [cartItemCount, setCartItemCount] = useState(0);
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
 
   useEffect(() => {
     setCartItemCount(cartService.getItemCount());
@@ -62,7 +63,6 @@ export function Navbar() {
     },
   ];
 
-  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const handleAccountMenuToggle = () => setIsAccountMenuOpen(prev => !prev);
   const handleLogout = async () => {
     const { signOut } = await import('next-auth/react');

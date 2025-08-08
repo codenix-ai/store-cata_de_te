@@ -1,28 +1,21 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useParams, useSearchParams } from "next/navigation";
-import {
-  Star,
-  Heart,
-  ShoppingCart,
-  Truck,
-  Shield,
-  ArrowLeft,
-} from "lucide-react";
-import Link from "next/link";
-import { ProductGallery } from "@/components/ProductGallery/ProductGallery";
-import { cartService } from "@/lib/cart";
-import { useStore } from "@/components/StoreProvider";
-import { gql, useQuery } from "@apollo/client";
-import toast from "react-hot-toast";
+import { useState, useEffect } from 'react';
+import { useParams, useSearchParams } from 'next/navigation';
+import { Star, Heart, ShoppingCart, Truck, Shield, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
+import { ProductGallery } from '@/components/ProductGallery/ProductGallery';
+import { cartService } from '@/lib/cart';
+import { useStore } from '@/components/StoreProvider';
+import { gql, useQuery } from '@apollo/client';
+import toast from 'react-hot-toast';
 
 // Favorites service
 const favoritesService = {
   getFavorites(): string[] {
-    if (typeof window === "undefined") return [];
+    if (typeof window === 'undefined') return [];
     try {
-      const favorites = localStorage.getItem("emprendyup_favorites");
+      const favorites = localStorage.getItem('emprendyup_favorites');
       return favorites ? JSON.parse(favorites) : [];
     } catch {
       return [];
@@ -39,13 +32,13 @@ const favoritesService = {
 
     if (index > -1) {
       favorites.splice(index, 1);
-      localStorage.setItem("emprendyup_favorites", JSON.stringify(favorites));
-      window.dispatchEvent(new Event("storage"));
+      localStorage.setItem('emprendyup_favorites', JSON.stringify(favorites));
+      window.dispatchEvent(new Event('storage'));
       return false;
     } else {
       favorites.push(productId);
-      localStorage.setItem("emprendyup_favorites", JSON.stringify(favorites));
-      window.dispatchEvent(new Event("storage"));
+      localStorage.setItem('emprendyup_favorites', JSON.stringify(favorites));
+      window.dispatchEvent(new Event('storage'));
       return true;
     }
   },
@@ -93,11 +86,9 @@ export default function ProductDetailPage() {
     skip: !id, // Skip the query if id is not available
   });
 
-  const [selectedVariant, setSelectedVariant] = useState(
-    data?.product?.variants?.[0]
-  );
+  const [selectedVariant, setSelectedVariant] = useState(data?.product?.variants?.[0]);
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState("description");
+  const [activeTab, setActiveTab] = useState('description');
   const [isFavorite, setIsFavorite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { store } = useStore();
@@ -106,9 +97,7 @@ export default function ProductDetailPage() {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-black mb-4">
-            ID de producto no válido
-          </h1>
+          <h1 className="text-2xl font-bold text-black mb-4">ID de producto no válido</h1>
           <Link href="/products" className="text-blue-600 hover:text-blue-700">
             Volver a productos
           </Link>
@@ -126,10 +115,7 @@ export default function ProductDetailPage() {
   const averageRating =
     product.rating ||
     (product.comments?.length > 0
-      ? product.comments.reduce(
-          (sum: number, comment: any) => sum + comment.rating,
-          0
-        ) / product.comments.length
+      ? product.comments.reduce((sum: number, comment: any) => sum + comment.rating, 0) / product.comments.length
       : 0);
   const reviewCount = product.reviews || product.comments?.length || 0;
 
@@ -137,16 +123,14 @@ export default function ProductDetailPage() {
 
   const currentPrice = selectedVariant?.price || product.price;
   const discountPercentage = product.originalPrice
-    ? Math.round(
-        ((product.originalPrice - currentPrice) / product.originalPrice) * 100
-      )
+    ? Math.round(((product.originalPrice - currentPrice) / product.originalPrice) * 100)
     : 0;
 
   const handleAddToCart = async () => {
     setIsLoading(true);
     try {
       cartService.addItem({
-        id: `${product.id}-${selectedVariant?.id || "default"}-${Date.now()}`,
+        id: `${product.id}-${selectedVariant?.id || 'default'}-${Date.now()}`,
         productId: product.id,
         name: product.title,
         price: currentPrice,
@@ -156,9 +140,9 @@ export default function ProductDetailPage() {
       });
 
       // Trigger storage event to update cart count
-      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new Event('storage'));
     } catch (error) {
-      console.error("Error adding to cart:", error);
+      console.error('Error adding to cart:', error);
     } finally {
       setIsLoading(false);
     }
@@ -171,14 +155,12 @@ export default function ProductDetailPage() {
     setIsFavorite(isNowFavorite);
 
     if (isNowFavorite) {
-      toast.success("Producto agregado a favoritos");
+      toast.success('Producto agregado a favoritos');
     } else {
-      toast.success("Producto removido de favoritos");
+      toast.success('Producto removido de favoritos');
     }
   };
-  const imageSrc = `https://emprendyup-images.s3.us-east-1.amazonaws.com/${
-    product.images?.[0]?.url || product.image
-  }`;
+  const imageSrc = `https://emprendyup-images.s3.us-east-1.amazonaws.com/${product.images?.[0]?.url || product.image}`;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -192,10 +174,7 @@ export default function ProductDetailPage() {
           Productos
         </Link>
         <span>/</span>
-        <Link
-          href={`/products?category=${product.category}`}
-          className="hover:text-gray-700"
-        >
+        <Link href={`/products?category=${product.category}`} className="hover:text-gray-700">
           {product.category}
         </Link>
         <span>/</span>
@@ -203,10 +182,7 @@ export default function ProductDetailPage() {
       </nav>
 
       {/* Back Button */}
-      <Link
-        href="/products"
-        className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-6"
-      >
+      <Link href="/products" className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-6">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Volver a productos
       </Link>
@@ -220,16 +196,10 @@ export default function ProductDetailPage() {
         {/* Product Info */}
         <div className="space-y-6">
           <div>
-            <p
-              className="text-sm font-medium mb-2"
-              style={{ color: store?.primaryColor || "#2563eb" }}
-            >
+            <p className="text-sm font-medium mb-2" style={{ color: store?.primaryColor || '#2563eb' }}>
               {product.category}
             </p>
-            <h1
-              className="text-3xl font-bold mb-4"
-              style={{ color: store?.textColor || "#000000" }}
-            >
+            <h1 className="text-3xl font-bold mb-4" style={{ color: store?.textColor || '#000000' }}>
               {product.title}
             </h1>
 
@@ -241,9 +211,7 @@ export default function ProductDetailPage() {
                     <Star
                       key={i}
                       className={`w-5 h-5 ${
-                        i < Math.floor(averageRating)
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "text-gray-300"
+                        i < Math.floor(averageRating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
                       }`}
                     />
                   ))}
@@ -256,16 +224,13 @@ export default function ProductDetailPage() {
 
             {/* Price */}
             <div className="flex items-center space-x-4 mb-6">
-              <span
-                className="text-3xl font-bold"
-                style={{ color: store?.textColor || "#000000" }}
-              >
-                ${currentPrice.toLocaleString("es-CO")}
+              <span className="text-3xl font-bold" style={{ color: store?.textColor || '#000000' }}>
+                ${currentPrice.toLocaleString('es-CO')}
               </span>
               {product.originalPrice && (
                 <>
                   <span className="text-xl text-gray-500 line-through">
-                    ${product.originalPrice.toLocaleString("es-CO")}
+                    ${product.originalPrice.toLocaleString('es-CO')}
                   </span>
                   <span className="bg-red-500 text-white px-2 py-1 rounded text-sm font-medium">
                     -{discountPercentage}%
@@ -277,9 +242,7 @@ export default function ProductDetailPage() {
             {/* Stock Status */}
             <div className="mb-6">
               {product.inStock ? (
-                <p className="text-green-600 font-medium">
-                  ✓ En stock ({product.stock} disponibles)
-                </p>
+                <p className="text-green-600 font-medium">✓ En stock ({product.stock} disponibles)</p>
               ) : (
                 <p className="text-red-600 font-medium">✗ Agotado</p>
               )}
@@ -289,23 +252,16 @@ export default function ProductDetailPage() {
           {/* Variants */}
           {product.variants && product.variants.length > 0 && (
             <div>
-              <h3 className="text-lg font-medium text-black mb-3">
-                Configuración:
-              </h3>
+              <h3 className="text-lg font-medium text-black mb-3">Configuración:</h3>
               <div className="space-y-2">
                 {product.variants.map((variant: any) => (
                   <label
                     key={variant.id}
                     className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-colors`}
                     style={{
-                      borderColor:
-                        selectedVariant?.id === variant.id
-                          ? store?.primaryColor || "#2563eb"
-                          : "#d1d5db",
+                      borderColor: selectedVariant?.id === variant.id ? store?.primaryColor || '#2563eb' : '#d1d5db',
                       backgroundColor:
-                        selectedVariant?.id === variant.id
-                          ? `${store?.primaryColor || "#2563eb"}20`
-                          : undefined,
+                        selectedVariant?.id === variant.id ? `${store?.primaryColor || '#2563eb'}20` : undefined,
                     }}
                   >
                     <div className="flex items-center">
@@ -317,22 +273,16 @@ export default function ProductDetailPage() {
                         onChange={() => setSelectedVariant(variant)}
                         className="text-blue-600 focus:ring-blue-500"
                         style={{
-                          accentColor: store?.primaryColor || "#2563eb",
-                          color: store?.primaryColor || "#2563eb",
+                          accentColor: store?.primaryColor || '#2563eb',
+                          color: store?.primaryColor || '#2563eb',
                         }}
                       />
-                      <span
-                        className="ml-3"
-                        style={{ color: store?.textColor || "#000000" }}
-                      >
+                      <span className="ml-3" style={{ color: store?.textColor || '#000000' }}>
                         {variant.value}
                       </span>
                     </div>
-                    <span
-                      className="font-medium"
-                      style={{ color: store?.textColor || "#000000" }}
-                    >
-                      ${variant.price?.toLocaleString("es-CO")}
+                    <span className="font-medium" style={{ color: store?.textColor || '#000000' }}>
+                      ${variant.price?.toLocaleString('es-CO')}
                     </span>
                   </label>
                 ))}
@@ -352,9 +302,7 @@ export default function ProductDetailPage() {
                 >
                   -
                 </button>
-                <span className="px-4 py-2 min-w-[3rem] text-center">
-                  {quantity}
-                </span>
+                <span className="px-4 py-2 min-w-[3rem] text-center">{quantity}</span>
                 <button
                   onClick={() => setQuantity(quantity + 1)}
                   className="p-2 hover:bg-gray-100 rounded-r-lg"
@@ -363,9 +311,7 @@ export default function ProductDetailPage() {
                   +
                 </button>
               </div>
-              <span className="text-gray-600">
-                Máximo {product.stock} unidades
-              </span>
+              <span className="text-gray-600">Máximo {product.stock} unidades</span>
             </div>
           </div>
 
@@ -377,27 +323,18 @@ export default function ProductDetailPage() {
                 <button
                   key={size.id}
                   className={`px-4 py-2 rounded-lg border transition-colors ${
-                    selectedVariant?.size === size.size
-                      ? "bg-opacity-10"
-                      : "border-gray-300 hover:border-opacity-60"
+                    selectedVariant?.size === size.size ? 'bg-opacity-10' : 'border-gray-300 hover:border-opacity-60'
                   }`}
                   style={{
-                    borderColor:
-                      selectedVariant?.size === size.size
-                        ? store?.primaryColor || "#2563eb"
-                        : undefined,
+                    borderColor: selectedVariant?.size === size.size ? store?.primaryColor || '#2563eb' : undefined,
                     backgroundColor:
-                      selectedVariant?.size === size.size
-                        ? `${store?.primaryColor || "#2563eb"}20`
-                        : undefined,
+                      selectedVariant?.size === size.size ? `${store?.primaryColor || '#2563eb'}20` : undefined,
                     color:
                       selectedVariant?.size === size.size
-                        ? store?.primaryColor || "#2563eb"
-                        : store?.textColor || "#374151",
+                        ? store?.primaryColor || '#2563eb'
+                        : store?.textColor || '#374151',
                   }}
-                  onClick={() =>
-                    setSelectedVariant({ ...selectedVariant, size: size.size })
-                  }
+                  onClick={() => setSelectedVariant({ ...selectedVariant, size: size.size })}
                 >
                   {size.size}
                 </button>
@@ -417,16 +354,13 @@ export default function ProductDetailPage() {
                     style={{
                       backgroundColor: color.colorHex,
                       borderColor:
-                        selectedVariant?.color === color.colorHex
-                          ? store?.primaryColor || "#2563eb"
-                          : "#d1d5db",
+                        selectedVariant?.color === color.colorHex ? store?.primaryColor || '#2563eb' : '#d1d5db',
                       boxShadow:
                         selectedVariant?.color === color.colorHex
-                          ? `0 0 0 2px ${store?.primaryColor || "#2563eb"}40`
-                          : color.colorHex === "#ffffff" ||
-                            color.colorHex === "white"
-                          ? "inset 0 0 0 1px rgba(0,0,0,0.1)"
-                          : "none",
+                          ? `0 0 0 2px ${store?.primaryColor || '#2563eb'}40`
+                          : color.colorHex === '#ffffff' || color.colorHex === 'white'
+                          ? 'inset 0 0 0 1px rgba(0,0,0,0.1)'
+                          : 'none',
                     }}
                     title={color.colorHex}
                     onClick={() =>
@@ -448,7 +382,7 @@ export default function ProductDetailPage() {
                 onClick={handleAddToCart}
                 disabled={!product.inStock || isLoading}
                 className="flex-1 py-3 px-6 rounded-lg font-medium disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-                style={{ background: store?.primaryColor || "#2563eb" }}
+                style={{ background: store?.primaryColor || '#2563eb' }}
               >
                 {isLoading ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -463,17 +397,13 @@ export default function ProductDetailPage() {
                 onClick={handleToggleFavorite}
                 className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <Heart
-                  className={`w-5 h-5 ${
-                    isFavorite ? "fill-red-500 text-red-500" : "text-gray-400"
-                  }`}
-                />
+                <Heart className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
               </button>
             </div>
 
             <button
               className="w-full py-3 px-6 rounded-lg font-medium transition-colors"
-              style={{ backgroundColor: store?.secondaryColor || "#2563eb" }}
+              style={{ backgroundColor: store?.secondaryColor || '#2563eb' }}
             >
               Comprar Ahora
             </button>
@@ -483,9 +413,7 @@ export default function ProductDetailPage() {
           <div className="border-t pt-6 space-y-4">
             <div className="flex items-center space-x-3">
               <Truck className="w-5 h-5 text-green-600" />
-              <span className="text-black">
-                Envío gratis en compras superiores a $150.000
-              </span>
+              <span className="text-black">Envío gratis en compras superiores a $150.000</span>
             </div>
             <div className="flex items-center space-x-3">
               <Shield className="w-5 h-5 text-blue-600" />
@@ -499,24 +427,18 @@ export default function ProductDetailPage() {
       <div className="border-t pt-8">
         <div className="flex space-x-8 border-b">
           {[
-            { id: "description", label: "Descripción" },
-            { id: "features", label: "Características" },
+            { id: 'description', label: 'Descripción' },
+            { id: 'features', label: 'Características' },
             // { id: "specifications", label: "Especificaciones" },
-            { id: "reviews", label: "Reseñas" },
-          ].map((tab) => (
+            { id: 'reviews', label: 'Reseñas' },
+          ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors`}
               style={{
-                borderBottomColor:
-                  activeTab === tab.id
-                    ? store?.primaryColor || "#2563eb"
-                    : "transparent",
-                color:
-                  activeTab === tab.id
-                    ? store?.primaryColor || "#2563eb"
-                    : store?.secondaryColor || "#6b7280",
+                borderBottomColor: activeTab === tab.id ? store?.primaryColor || '#2563eb' : 'transparent',
+                color: activeTab === tab.id ? store?.primaryColor || '#2563eb' : store?.secondaryColor || '#6b7280',
               }}
             >
               {tab.label}
@@ -525,63 +447,45 @@ export default function ProductDetailPage() {
         </div>
 
         <div className="py-8">
-          {activeTab === "description" && (
+          {activeTab === 'description' && (
             <div className="prose max-w-none">
-              <p className="text-gray-700 leading-relaxed">
-                {product.description}
-              </p>
+              <p className="text-gray-700 leading-relaxed">{product.description}</p>
             </div>
           )}
 
-          {activeTab === "features" && (
+          {activeTab === 'features' && (
             <div>
-              <h3 className="text-lg font-medium text-black mb-4">
-                Características principales:
-              </h3>
+              <h3 className="text-lg font-medium text-black mb-4">Características principales:</h3>
               <ul className="space-y-3">
                 {/* Precio */}
                 <li className="flex items-start">
-                  <span
-                    className="mr-2"
-                    style={{ color: store?.primaryColor || "#2563eb" }}
-                  >
+                  <span className="mr-2" style={{ color: store?.primaryColor || '#2563eb' }}>
                     •
                   </span>
                   <span className="text-gray-700">
-                    <strong>Precio:</strong> $
-                    {product.price?.toLocaleString("es-CO")}{" "}
-                    {product.currency || "COP"}
+                    <strong>Precio:</strong> ${product.price?.toLocaleString('es-CO')} {product.currency || 'COP'}
                   </span>
                 </li>
 
                 {/* Disponibilidad */}
                 <li className="flex items-start">
-                  <span
-                    className="mr-2"
-                    style={{ color: store?.primaryColor || "#2563eb" }}
-                  >
+                  <span className="mr-2" style={{ color: store?.primaryColor || '#2563eb' }}>
                     •
                   </span>
                   <span className="text-gray-700">
-                    <strong>Disponibilidad:</strong>{" "}
-                    {product.inStock
-                      ? `En stock (${product.stock} disponibles)`
-                      : "Agotado"}
+                    <strong>Disponibilidad:</strong>{' '}
+                    {product.inStock ? `En stock (${product.stock} disponibles)` : 'Agotado'}
                   </span>
                 </li>
 
                 {/* Tallas disponibles */}
                 {product.sizes && product.sizes.length > 0 && (
                   <li className="flex items-start">
-                    <span
-                      className="mr-2"
-                      style={{ color: store?.primaryColor || "#2563eb" }}
-                    >
+                    <span className="mr-2" style={{ color: store?.primaryColor || '#2563eb' }}>
                       •
                     </span>
                     <span className="text-gray-700">
-                      <strong>Tallas disponibles:</strong>{" "}
-                      {product.sizes.map((size: any) => size.size).join(", ")}
+                      <strong>Tallas disponibles:</strong> {product.sizes.map((size: any) => size.size).join(', ')}
                     </span>
                   </li>
                 )}
@@ -589,17 +493,11 @@ export default function ProductDetailPage() {
                 {/* Colores disponibles */}
                 {product.colors && product.colors.length > 0 && (
                   <li className="flex items-start">
-                    <span
-                      className="mr-2"
-                      style={{ color: store?.primaryColor || "#2563eb" }}
-                    >
+                    <span className="mr-2" style={{ color: store?.primaryColor || '#2563eb' }}>
                       •
                     </span>
                     <span className="text-gray-700">
-                      <strong>Colores disponibles:</strong>{" "}
-                      {product.colors
-                        .map((color: any) => color.color)
-                        .join(", ")}
+                      <strong>Colores disponibles:</strong> {product.colors.map((color: any) => color.color).join(', ')}
                     </span>
                   </li>
                 )}
@@ -609,10 +507,7 @@ export default function ProductDetailPage() {
                   product.features.length > 0 &&
                   product.features.map((feature: any, index: number) => (
                     <li key={index} className="flex items-start">
-                      <span
-                        className="mr-2"
-                        style={{ color: store?.primaryColor || "#2563eb" }}
-                      >
+                      <span className="mr-2" style={{ color: store?.primaryColor || '#2563eb' }}>
                         •
                       </span>
                       <span className="text-gray-700">{feature}</span>
@@ -624,72 +519,48 @@ export default function ProductDetailPage() {
                   (!product.sizes || product.sizes.length === 0) &&
                   (!product.colors || product.colors.length === 0) && (
                     <li className="flex items-start">
-                      <span
-                        className="mr-2"
-                        style={{ color: store?.primaryColor || "#2563eb" }}
-                      >
+                      <span className="mr-2" style={{ color: store?.primaryColor || '#2563eb' }}>
                         •
                       </span>
-                      <span className="text-gray-700">
-                        Información básica del producto disponible arriba
-                      </span>
+                      <span className="text-gray-700">Información básica del producto disponible arriba</span>
                     </li>
                   )}
               </ul>
             </div>
           )}
 
-          {activeTab === "specifications" && (
+          {activeTab === 'specifications' && (
             <div>
-              <h3 className="text-lg font-medium text-black mb-4">
-                Especificaciones técnicas:
-              </h3>
-              {product.specifications &&
-              Object.keys(product.specifications).length > 0 ? (
+              <h3 className="text-lg font-medium text-black mb-4">Especificaciones técnicas:</h3>
+              {product.specifications && Object.keys(product.specifications).length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Object.entries(product.specifications).map(
-                    ([key, value]) => (
-                      <div
-                        key={key}
-                        className="flex justify-between py-2 border-b border-gray-200"
-                      >
-                        <span className="font-medium text-black">{key}:</span>
-                        <span className="text-gray-700">{value as string}</span>
-                      </div>
-                    )
-                  )}
+                  {Object.entries(product.specifications).map(([key, value]) => (
+                    <div key={key} className="flex justify-between py-2 border-b border-gray-200">
+                      <span className="font-medium text-black">{key}:</span>
+                      <span className="text-gray-700">{value as string}</span>
+                    </div>
+                  ))}
                 </div>
               ) : (
-                <p className="text-gray-600">
-                  No hay especificaciones disponibles para este producto.
-                </p>
+                <p className="text-gray-600">No hay especificaciones disponibles para este producto.</p>
               )}
             </div>
           )}
 
-          {activeTab === "reviews" && (
+          {activeTab === 'reviews' && (
             <div className="space-y-8">
               {/* Header de comentarios */}
               <div className="flex items-center gap-3">
-                <h5 className="text-lg font-medium text-black mb-4">
-                  Comentarios
-                </h5>
+                <h5 className="text-lg font-medium text-black mb-4">Comentarios</h5>
                 <div className="flex-1 h-px bg-gradient-to-r from-indigo-200 to-transparent"></div>
-                <span className="text-sm text-slate-500 px-3 py-1 rounded-full">
-                  {product.comments.length} reseñas
-                </span>
+                <span className="text-sm text-slate-500 px-3 py-1 rounded-full">{product.comments.length} reseñas</span>
               </div>
 
               {/* Lista de comentarios */}
               <div className="space-y-6">
                 {product.comments.length > 0 ? (
                   product.comments.map(
-                    (comment: {
-                      id: string;
-                      rating: number;
-                      comment: string;
-                      createdAt: string;
-                    }) => (
+                    (comment: { id: string; rating: number; comment: string; createdAt: string }) => (
                       <div
                         key={comment.id}
                         className="group bg-white p-6 rounded-2xl border border-slate-200 dark:border-slate-700 hover:border-indigo-200 dark:hover:border-indigo-700 hover:shadow-lg transition-all duration-300"
@@ -699,49 +570,36 @@ export default function ProductDetailPage() {
                             <div
                               className="w-10 h-10  rounded-full flex items-center justify-center text-white font-semibold text-sm"
                               style={{
-                                backgroundColor:
-                                  store?.primaryColor || "#2563eb",
+                                backgroundColor: store?.primaryColor || '#2563eb',
                               }}
                             >
                               U
                             </div>
                             <div>
                               <div className="flex items-center gap-2 mb-1">
-                                {Array.from({ length: comment.rating }).map(
-                                  (_, idx) => (
-                                    <Star
-                                      key={idx}
-                                      className="w-4 h-4 fill-amber-400 text-amber-400"
-                                    />
-                                  )
-                                )}
-                                {Array.from({ length: 5 - comment.rating }).map(
-                                  (_, idx) => (
-                                    <Star
-                                      key={`empty-${idx}`}
-                                      className="w-4 h-4 fill-slate-200 text-slate-200 dark:fill-slate-700 dark:text-slate-700"
-                                    />
-                                  )
-                                )}
-                                <span className="text-sm font-medium text-black">
-                                  {comment.rating}/5
-                                </span>
+                                {Array.from({ length: comment.rating }).map((_, idx) => (
+                                  <Star key={idx} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                                ))}
+                                {Array.from({ length: 5 - comment.rating }).map((_, idx) => (
+                                  <Star
+                                    key={`empty-${idx}`}
+                                    className="w-4 h-4 fill-slate-200 text-slate-200 dark:fill-slate-700 dark:text-slate-700"
+                                  />
+                                ))}
+                                <span className="text-sm font-medium text-black">{comment.rating}/5</span>
                               </div>
                               <p className="text-xs text-slate-500 dark:text-slate-400">
-                                {new Date(comment.createdAt).toLocaleDateString(
-                                  "es-ES",
-                                  {
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                  }
-                                )}
+                                {new Date(comment.createdAt).toLocaleDateString('es-ES', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                })}
                               </p>
                             </div>
                           </div>
                         </div>
                         <blockquote className="text-black leading-relaxed pl-4 border-l-4 border-indigo-200 italic">
-                          "{comment.comment}"
+                          `&quot;`{comment.comment}`&quot;`
                         </blockquote>
                       </div>
                     )
@@ -751,12 +609,8 @@ export default function ProductDetailPage() {
                     <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Star className="w-8 h-8 text-slate-700" />
                     </div>
-                    <p className="text-black font-medium">
-                      Aún no hay comentarios
-                    </p>
-                    <p className="text-sm text-slate-600 mt-1">
-                      ¡Sé el primero en dejar tu reseña!
-                    </p>
+                    <p className="text-black font-medium">Aún no hay comentarios</p>
+                    <p className="text-sm text-slate-600 mt-1">¡Sé el primero en dejar tu reseña!</p>
                   </div>
                 )}
               </div>
@@ -767,24 +621,20 @@ export default function ProductDetailPage() {
                   <div
                     className="w-8 h-8 rounded-lg flex items-center justify-center"
                     style={{
-                      backgroundColor: store?.secondaryColor || "#2563eb",
+                      backgroundColor: store?.secondaryColor || '#2563eb',
                     }}
                   >
                     <Star className="w-4 h-4 text-white fill-white" />
                   </div>
-                  <h5 className="text-lg font-bold text-gray-800">
-                    Comparte tu experiencia
-                  </h5>
+                  <h5 className="text-lg font-bold text-gray-800">Comparte tu experiencia</h5>
                 </div>
 
                 <form className="space-y-6">
                   {/* Rating selector */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-600">
-                      Tu calificación:
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-600">Tu calificación:</label>
                     <div className="flex items-center gap-2">
-                      {[1, 2, 3, 4, 5].map((rating) => (
+                      {[1, 2, 3, 4, 5].map(rating => (
                         <button
                           key={rating}
                           type="button"
@@ -798,10 +648,7 @@ export default function ProductDetailPage() {
 
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
-                      <label
-                        htmlFor="name"
-                        className="block text-sm font-semibold text-slate-700  mb-2"
-                      >
+                      <label htmlFor="name" className="block text-sm font-semibold text-slate-700  mb-2">
                         Nombre
                       </label>
                       <input
@@ -813,10 +660,7 @@ export default function ProductDetailPage() {
                       />
                     </div>
                     <div>
-                      <label
-                        htmlFor="email"
-                        className="block text-sm font-semibold text-slate-700 mb-2"
-                      >
+                      <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-2">
                         Correo Electrónico
                       </label>
                       <input
@@ -830,10 +674,7 @@ export default function ProductDetailPage() {
                   </div>
 
                   <div>
-                    <label
-                      htmlFor="comments"
-                      className="block text-sm font-semibold text-slate-700  mb-2"
-                    >
+                    <label htmlFor="comments" className="block text-sm font-semibold text-slate-700  mb-2">
                       Tu reseña
                     </label>
                     <textarea
@@ -848,7 +689,7 @@ export default function ProductDetailPage() {
                   <button
                     type="submit"
                     className="w-full 600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2"
-                    style={{ background: store?.primaryColor || "#2563eb" }}
+                    style={{ background: store?.primaryColor || '#2563eb' }}
                   >
                     <Star className="w-4 h-4" />
                     Publicar Reseña
