@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Plus, Package, Search, Edit, Trash2, Eye } from 'lucide-react';
-import { gql, useMutation, useQuery } from '@apollo/client';
-import { Product, CreateProductInput } from '@/types/product';
-import { ProductForm } from './Product/ProductForm';
-import { TabProps } from './types';
-import toast from 'react-hot-toast';
+import { useState } from "react";
+import { Plus, Package, Search, Edit, Trash2, Eye } from "lucide-react";
+import { gql, useMutation, useQuery } from "@apollo/client";
+import { Product, CreateProductInput } from "@/types/product";
+import { ProductForm } from "./Product/ProductForm";
+import { TabProps } from "./types";
+import toast from "react-hot-toast";
 
 // GraphQL Queries and Mutations
 const GET_PRODUCTS = gql`
@@ -129,12 +129,12 @@ const CREATE_PRODUCT = gql`
 // Mock data - En producción esto vendría de una API
 const MOCK_PRODUCTS: Product[] = [
   {
-    id: '1',
-    name: 'Camiseta Polo',
-    title: 'Camiseta Polo Premium de Algodón',
-    description: 'Camiseta polo de alta calidad, 100% algodón.',
+    id: "1",
+    name: "Camiseta Polo",
+    title: "Camiseta Polo Premium de Algodón",
+    description: "Camiseta polo de alta calidad, 100% algodón.",
     price: 89900,
-    currency: 'COP',
+    currency: "COP",
     available: true,
     inStock: true,
     stock: 25,
@@ -143,20 +143,20 @@ const MOCK_PRODUCTS: Product[] = [
     sizes: [],
     categories: [],
     comments: [],
-    storeId: 'store-1',
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01',
+    storeId: "store-1",
+    createdAt: "2024-01-01",
+    updatedAt: "2024-01-01",
   },
 ];
 
 export function ProductsTab({ config, setConfig }: TabProps) {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
   // GraphQL hooks
-  const storeId = config.storeId || 'default-store';
+  const storeId = config.storeId || "default-store";
   const {
     data: productsData,
     loading: loadingProducts,
@@ -204,15 +204,15 @@ export function ProductsTab({ config, setConfig }: TabProps) {
               inStock: productData.inStock,
               stock: productData.stock,
               categories: productData.categoryIds || [],
-              images: productData.images.map(img => ({
+              images: productData.images.map((img) => ({
                 url: img.url,
                 order: img.order,
               })),
-              colors: productData.colors.map(color => ({
+              colors: productData.colors.map((color) => ({
                 name: color.name,
                 hex: color.hex,
               })),
-              sizes: productData.sizes.map(size => ({
+              sizes: productData.sizes.map((size) => ({
                 name: size.name,
                 value: size.value,
               })),
@@ -223,7 +223,7 @@ export function ProductsTab({ config, setConfig }: TabProps) {
         if (data?.updateProduct) {
           // Refetch products to get updated list
           await refetchProducts();
-          toast.success('Producto actualizado exitosamente');
+          toast.success("Producto actualizado exitosamente");
         }
       } else {
         // Create new product using GraphQL mutation
@@ -238,17 +238,17 @@ export function ProductsTab({ config, setConfig }: TabProps) {
               available: productData.available,
               inStock: productData.inStock,
               stock: productData.stock,
-              storeId: config.storeId || 'default-store',
+              storeId: config.storeId || "default-store",
               categories: productData.categoryIds || [],
-              images: productData.images.map(img => ({
+              images: productData.images.map((img) => ({
                 url: img.url,
                 order: img.order,
               })),
-              colors: productData.colors.map(color => ({
+              colors: productData.colors.map((color) => ({
                 name: color.name,
                 hex: color.hex,
               })),
-              sizes: productData.sizes.map(size => ({
+              sizes: productData.sizes.map((size) => ({
                 name: size.name,
                 value: size.value,
               })),
@@ -259,14 +259,14 @@ export function ProductsTab({ config, setConfig }: TabProps) {
         if (data?.createProduct) {
           // Refetch products to get updated list
           await refetchProducts();
-          toast.success('Producto creado exitosamente');
+          toast.success("Producto creado exitosamente");
         }
       }
       setShowForm(false);
       setEditingProduct(null);
     } catch (error: any) {
-      console.error('Error saving product:', error);
-      const errorMessage = error.message || 'Error al guardar el producto';
+      console.error("Error saving product:", error);
+      const errorMessage = error.message || "Error al guardar el producto";
       toast.error(errorMessage);
       throw error;
     }
@@ -274,25 +274,29 @@ export function ProductsTab({ config, setConfig }: TabProps) {
 
   const handleDeleteProduct = (productId: string) => {
     // TODO: Implement DELETE_PRODUCT mutation
-    toast.error('Eliminación de productos aún no implementada');
-    console.log('Delete product:', productId);
+    toast.error("Eliminación de productos aún no implementada");
+    console.log("Delete product:", productId);
   };
 
   const handleDeleteSelected = () => {
     // TODO: Implement DELETE_PRODUCTS mutation
-    toast.error('Eliminación masiva de productos aún no implementada');
-    console.log('Delete products:', selectedProducts);
+    toast.error("Eliminación masiva de productos aún no implementada");
+    console.log("Delete products:", selectedProducts);
   };
 
   const toggleProductSelection = (productId: string) => {
-    setSelectedProducts(prev =>
-      prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]
+    setSelectedProducts((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
     );
   };
 
   const toggleSelectAll = () => {
-    setSelectedProducts(prev =>
-      prev.length === filteredProducts.length ? [] : filteredProducts.map((p: Product) => p.id)
+    setSelectedProducts((prev) =>
+      prev.length === filteredProducts.length
+        ? []
+        : filteredProducts.map((p: Product) => p.id)
     );
   };
 
@@ -316,11 +320,14 @@ export function ProductsTab({ config, setConfig }: TabProps) {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">Gestión de Productos</h3>
-          <p className="text-sm text-gray-600">Administra el catálogo de productos de tu tienda</p>
+          <p className="text-sm text-gray-600">
+            Administra el catálogo de productos de tu tienda
+          </p>
         </div>
         <button
           onClick={handleCreateProduct}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+          className="text-white px-4 py-2 rounded-lg flex items-center"
+          style={{ backgroundColor: config.primaryColor || "#2563eb" }}
         >
           <Plus className="w-4 h-4 mr-2" />
           Nuevo Producto
@@ -334,7 +341,7 @@ export function ProductsTab({ config, setConfig }: TabProps) {
           <input
             type="text"
             value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Buscar productos..."
             className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
@@ -366,7 +373,10 @@ export function ProductsTab({ config, setConfig }: TabProps) {
                   <th className="px-6 py-3 text-left">
                     <input
                       type="checkbox"
-                      checked={selectedProducts.length === filteredProducts.length && filteredProducts.length > 0}
+                      checked={
+                        selectedProducts.length === filteredProducts.length &&
+                        filteredProducts.length > 0
+                      }
                       onChange={toggleSelectAll}
                       className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
@@ -415,30 +425,40 @@ export function ProductsTab({ config, setConfig }: TabProps) {
                           )}
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                          <div className="text-sm text-gray-500">{product.title}</div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {product.name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {product.title}
+                          </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       ${product.price.toLocaleString()} {product.currency}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">{product.stock}</td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      {product.stock}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="flex space-x-2">
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            product.available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            product.available
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
                           }`}
                         >
-                          {product.available ? 'Disponible' : 'No disponible'}
+                          {product.available ? "Disponible" : "No disponible"}
                         </span>
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            product.inStock ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
+                            product.inStock
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-gray-100 text-gray-800"
                           }`}
                         >
-                          {product.inStock ? 'En stock' : 'Sin stock'}
+                          {product.inStock ? "En stock" : "Sin stock"}
                         </span>
                       </div>
                     </td>
@@ -468,10 +488,14 @@ export function ProductsTab({ config, setConfig }: TabProps) {
         <div className="text-center py-12">
           <Package className="w-12 h-12 mx-auto text-gray-300 mb-4" />
           <p className="text-gray-500 text-lg">
-            {searchTerm ? 'No se encontraron productos' : 'No tienes productos todavía'}
+            {searchTerm
+              ? "No se encontraron productos"
+              : "No tienes productos todavía"}
           </p>
           <p className="text-gray-400 text-sm mb-6">
-            {searchTerm ? 'Intenta con otros términos de búsqueda' : 'Crea tu primer producto para empezar a vender'}
+            {searchTerm
+              ? "Intenta con otros términos de búsqueda"
+              : "Crea tu primer producto para empezar a vender"}
           </p>
           {!searchTerm && (
             <button

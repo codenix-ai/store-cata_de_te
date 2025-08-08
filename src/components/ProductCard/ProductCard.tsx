@@ -1,12 +1,52 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Heart, ShoppingCart, Star } from 'lucide-react';
-import { cartService } from '@/lib/cart';
-import { useStore } from '@/components/StoreProvider';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Heart, ShoppingCart, Star } from "lucide-react";
+import { cartService } from "@/lib/cart";
+import { useStore } from "@/components/StoreProvider";
+import toast from "react-hot-toast";
+
+// Simple favorites service
+const favoritesService = {
+  getFavorites(): string[] {
+    if (typeof window === "undefined") return [];
+    try {
+      const favorites = localStorage.getItem("emprendyup_favorites");
+      return favorites ? JSON.parse(favorites) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  isFavorite(productId: string): boolean {
+    return this.getFavorites().includes(productId);
+  },
+
+  toggleFavorite(productId: string): boolean {
+    const favorites = this.getFavorites();
+    const index = favorites.indexOf(productId);
+
+    if (index > -1) {
+      favorites.splice(index, 1);
+      localStorage.setItem("emprendyup_favorites", JSON.stringify(favorites));
+      window.dispatchEvent(new Event("storage"));
+      return false;
+    } else {
+      favorites.push(productId);
+      localStorage.setItem("emprendyup_favorites", JSON.stringify(favorites));
+      window.dispatchEvent(new Event("storage"));
+      return true;
+    }
+  },
+};
+
+export interface ProductImage {
+  id: string;
+  url: string;
+  order: number;
+}
 
 export interface Product {
   id: string;
@@ -14,7 +54,7 @@ export interface Product {
   price: number;
   originalPrice?: number;
   image: string;
-  images?: string[];
+  images?: ProductImage[];
   rating?: number;
   reviews?: number;
   category: string;
@@ -35,10 +75,16 @@ interface ProductCardProps {
   className?: string;
 }
 
-export function ProductCard({ product, className = '' }: ProductCardProps) {
+export function ProductCard({ product, className = "" }: ProductCardProps) {
+  console.log("🚀 ~ ProductCard ~ product:", product);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { store } = useStore();
+
+  // Check if product is favorite on component mount
+  useEffect(() => {
+    setIsFavorite(favoritesService.isFavorite(product.id));
+  }, [product.id]);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -54,13 +100,13 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
       });
 
       // Trigger storage event to update cart count
-      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new Event("storage"));
 
       // Show toast notification
       toast.success(`${product.name} ha sido agregado al carrito.`);
     } catch (error) {
-      console.error('Error adding to cart:', error);
-      toast.error('Hubo un problema al agregar el producto al carrito.');
+      console.error("Error adding to cart:", error);
+      toast.error("Hubo un problema al agregar el producto al carrito.");
     } finally {
       setIsLoading(false);
     }
@@ -68,13 +114,35 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
-    setIsFavorite(!isFavorite);
-    // TODO: Implement favorites service
+
+    try {
+      const newFavoriteState = favoritesService.toggleFavorite(product.id);
+      setIsFavorite(newFavoriteState);
+
+      // Show toast notification
+      if (newFavoriteState) {
+        toast.success(`${product.name} agregado a favoritos`, {
+          icon: "❤️",
+        });
+      } else {
+        toast.success(`${product.name} eliminado de favoritos`, {
+          icon: "💔",
+        });
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      toast.error("Hubo un problema al gestionar favoritos.");
+    }
   };
 
   const discountPercentage = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    ? Math.round(
+        ((product.originalPrice - product.price) / product.originalPrice) * 100
+      )
     : 0;
+  const imageSrc = `https://emprendyup-images.s3.us-east-1.amazonaws.com/${
+    product.images?.[0]?.url || product.image
+  }`;
 
   return (
     <div
@@ -83,7 +151,7 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
       <Link href={`/products/${product.id}`}>
         <div className="relative aspect-square overflow-hidden rounded-t-lg">
           <Image
-            src={product.image}
+            src={imageSrc}
             alt={product.name}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -108,7 +176,11 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
             onClick={handleToggleFavorite}
             className="absolute top-2 right-2 p-2 rounded-full bg-white shadow-md hover:bg-gray-50 transition-colors"
           >
-            <Heart className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+            <Heart
+              className={`w-5 h-5 ${
+                isFavorite ? "fill-red-500 text-red-500" : "text-gray-600"
+              }`}
+            />
           </button>
         </div>
 
@@ -121,14 +193,14 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
             className="font-medium text-black mb-2 line-clamp-2 group-hover:transition-colors"
             style={
               {
-                '--hover-color': store?.primaryColor || '#2563eb',
+                "--hover-color": store?.primaryColor || "#2563eb",
               } as React.CSSProperties
             }
-            onMouseEnter={e => {
-              e.currentTarget.style.color = store?.primaryColor || '#2563eb';
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = store?.primaryColor || "#2563eb";
             }}
-            onMouseLeave={e => {
-              e.currentTarget.style.color = '#111827';
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "#111827";
             }}
           >
             {product.name}
@@ -142,22 +214,30 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
                   <Star
                     key={i}
                     className={`w-4 h-4 ${
-                      i < Math.floor(product.rating!) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                      i < Math.floor(product.rating!)
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-gray-300"
                     }`}
                   />
                 ))}
               </div>
-              {product.reviews && <span className="text-sm text-gray-700 ml-1">({product.reviews})</span>}
+              {product.reviews && (
+                <span className="text-sm text-gray-700 ml-1">
+                  ({product.reviews})
+                </span>
+              )}
             </div>
           )}
 
           {/* Price */}
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-2">
-              <span className="text-lg font-bold text-black">${product.price.toLocaleString('es-CO')}</span>
+              <span className="text-lg font-bold text-black">
+                ${Number(product?.price ?? 0).toLocaleString("es-CO")}
+              </span>
               {product.originalPrice && (
                 <span className="text-sm text-gray-600 line-through">
-                  ${product.originalPrice.toLocaleString('es-CO')}
+                  ${product.originalPrice.toLocaleString("es-CO")}
                 </span>
               )}
             </div>
@@ -172,16 +252,21 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
           disabled={!product.inStock || isLoading}
           className="w-full text-white py-2 px-4 rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-300 flex items-center justify-center"
           style={{
-            backgroundColor: product.inStock && !isLoading ? store?.primaryColor || '#2563eb' : undefined,
+            backgroundColor:
+              product.inStock && !isLoading
+                ? store?.primaryColor || "#2563eb"
+                : undefined,
           }}
-          onMouseEnter={e => {
+          onMouseEnter={(e) => {
             if (product.inStock && !isLoading) {
-              e.currentTarget.style.backgroundColor = store?.hoverBackgroundColor || '#d3d3d3';
+              e.currentTarget.style.backgroundColor =
+                store?.hoverBackgroundColor || "#d3d3d3";
             }
           }}
-          onMouseLeave={e => {
+          onMouseLeave={(e) => {
             if (product.inStock && !isLoading) {
-              e.currentTarget.style.backgroundColor = store?.primaryColor || '#2563eb';
+              e.currentTarget.style.backgroundColor =
+                store?.primaryColor || "#2563eb";
             }
           }}
         >
@@ -190,7 +275,7 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
           ) : (
             <>
               <ShoppingCart className="w-4 h-4 mr-2" />
-              {product.inStock ? 'Agregar al Carrito' : 'Agotado'}
+              {product.inStock ? "Agregar al Carrito" : "Agotado"}
             </>
           )}
         </button>

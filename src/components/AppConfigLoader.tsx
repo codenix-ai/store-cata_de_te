@@ -32,7 +32,7 @@ const GET_STORE_CONFIG = gql`
 
 export function AppConfigLoader({ children }: { children: ReactNode }) {
   const { loading, error, data } = useQuery(GET_STORE_CONFIG, {
-    variables: { storeId: "store2" },
+    variables: { storeId: "store1" },
   });
 
   if (loading) return <p>Loading...</p>;
