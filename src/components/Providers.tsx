@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { ApolloProvider } from '@apollo/client';
-import { SessionProvider } from 'next-auth/react';
-import { Toaster } from 'react-hot-toast';
-import { apolloClient } from '@/lib/apollo';
-import { StoreProvider } from '@/components/StoreProvider';
-import { StoreConfig } from '@/lib/store-config';
+import { ApolloProvider } from "@apollo/client";
+import { SessionProvider } from "next-auth/react";
+import { apolloClient } from "@/lib/apollo";
+import { StoreProvider } from "@/components/StoreProvider";
+import { StoreConfig } from "@/lib/store-config";
+import { AppConfigLoader } from "./AppConfigLoader";
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -17,7 +17,7 @@ export function Providers({ children, session, initialStore }: ProvidersProps) {
   return (
     <SessionProvider session={session}>
       <ApolloProvider client={apolloClient}>
-        <StoreProvider initialStore={initialStore}>{children}</StoreProvider>
+        <AppConfigLoader>{children}</AppConfigLoader>
       </ApolloProvider>
     </SessionProvider>
   );

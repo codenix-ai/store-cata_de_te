@@ -70,13 +70,13 @@ export interface StoreConfig {
 // Default store configurations for different store types
 export const defaultStoreConfigs = {
   fashion: {
-    name: 'SPH',
+    name: 'mi Tienda Fashion',
     description: 'Ropa y accesorios de última tendencia',
-    primaryColor: '#1F2937',
+    primaryColor: '#ff7f7f',
     secondaryColor: '#FFFFFF', // Gray-800
     accentColor: '#F59E0B', // Amber-500
-    backgroundColor: '#000000',
-    textColor: '#111827',
+    backgroundColor: '#FFFFFF',
+    textColor: '#ff6666',
     currency: 'COP',
     language: 'es',
     timezone: 'America/Bogota',
