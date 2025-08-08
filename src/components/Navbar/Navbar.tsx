@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
-import { Menu, X, ShoppingCart, Heart, User, Search, HelpCircle } from 'lucide-react';
+import { Menu, X, ShoppingCart, Heart, User, Search, HelpCircle, ArrowLeftFromLine } from 'lucide-react';
 import { cartService } from '@/lib/cart';
 import { useStore } from '@/components/StoreProvider';
 
@@ -274,8 +274,9 @@ export function Navbar() {
                             handleLogout();
                             setIsMenuOpen(false);
                           }}
-                          className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100"
+                          className="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 flex items-center space-x-2"
                         >
+                          <ArrowLeftFromLine />
                           Cerrar sesión
                         </button>
                       </div>
