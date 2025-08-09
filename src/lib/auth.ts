@@ -24,12 +24,12 @@ export const authOptions: NextAuthOptions = {
         console.log('BACKEND RESPONSE:', JSON.stringify(data).slice(0, 500));
 
         // MUST return an object with id
-        if (!data?.user?.id || !data?.accessToken) return null;
+        if (!data?.accessToken) return null;
 
         return {
-          id: String(data.user.id),
-          name: data.user.name,
-          email: data.user.email,
+          id: String(data.id),
+          name: data.name,
+          email: data.email,
           accessToken: data.accessToken,
           refreshToken: data.refreshToken ?? null,
           accessTokenExpires: Date.now() + (data.expiresIn ?? 3600) * 1000,
