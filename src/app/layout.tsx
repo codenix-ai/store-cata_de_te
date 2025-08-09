@@ -36,9 +36,9 @@ export default function RootLayout({
       >
         <Providers>
           <Toaster position="top-right" toastOptions={{ duration: 3500 }} />
-          <Navbar />
+          {/* <Navbar /> */}
           <main className="flex-1">{children}</main>
-          <Footer />
+          {/* <Footer /> */}
         </Providers>
       </body>
     </html>

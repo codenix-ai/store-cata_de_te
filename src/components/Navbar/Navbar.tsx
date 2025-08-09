@@ -4,7 +4,19 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
-import { Menu, X, ShoppingCart, Heart, User, Search, HelpCircle, ArrowLeftFromLine } from 'lucide-react';
+import {
+  Menu,
+  X,
+  ShoppingCart,
+  Heart,
+  User,
+  Search,
+  HelpCircle,
+  ArrowLeftFromLine,
+  PersonStandingIcon,
+  User2,
+  Settings,
+} from 'lucide-react';
 import { cartService } from '@/lib/cart';
 import { useStore } from '@/components/StoreProvider';
 
@@ -70,6 +82,7 @@ export function Navbar() {
     setIsAccountMenuOpen(false);
   };
 
+  console.log('Store:', store, session);
   return (
     <nav className="shadow-lg sticky top-0 z-50" style={{ backgroundColor: store.backgroundColor }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -144,7 +157,7 @@ export function Navbar() {
                     </svg>
                   </button>
                   <div
-                    className={`absolute right-0 mt-2 w-56 min-w-max bg-white border border-gray-200 rounded-xl shadow-2xl z-50 transition-all duration-200 ${
+                    className={`absolute right-0 top-8 mt-2 w-56 min-w-max bg-white border border-gray-200 rounded-xl shadow-2xl z-50 transition-all duration-200 ${
                       isAccountMenuOpen
                         ? 'opacity-100 translate-y-2 pointer-events-auto'
                         : 'opacity-0 -translate-y-2 pointer-events-none'
@@ -155,12 +168,24 @@ export function Navbar() {
                     }}
                   >
                     <Link
-                      href="/user"
+                      href="/perfil"
                       className="block px-6 py-3 text-gray-700 hover:bg-gray-100 transition-colors text-base rounded-t-xl"
                       onClick={() => setIsAccountMenuOpen(false)}
                     >
+                      <User2 className="inline-block mr-2" />
                       Perfil
                     </Link>
+
+                    {(session as any).user.role === 'ADMIN' && (
+                      <Link
+                        href="/admin/store"
+                        className="block px-6 py-3 text-gray-700 hover:bg-gray-100 transition-colors text-base"
+                        onClick={() => setIsAccountMenuOpen(false)}
+                      >
+                        <Settings className="inline-block mr-2" />
+                        Configuración
+                      </Link>
+                    )}
                     <button
                       onClick={handleLogout}
                       className="block w-full text-left px-6 py-3 text-red-600 hover:bg-gray-100 transition-colors text-base rounded-b-xl"

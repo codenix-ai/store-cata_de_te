@@ -30,6 +30,7 @@ export const authOptions: NextAuthOptions = {
           id: String(data.id),
           name: data.name,
           email: data.email,
+          role: data.role,
           accessToken: data.accessToken,
           refreshToken: data.refreshToken ?? null,
           accessTokenExpires: Date.now() + (data.expiresIn ?? 3600) * 1000,
@@ -40,6 +41,8 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        token.id = (user as any).id;
+        token.role = (user as any).role;
         token.accessToken = (user as any).accessToken;
         token.refreshToken = (user as any).refreshToken;
         token.accessTokenExpires = (user as any).accessTokenExpires;
@@ -47,6 +50,8 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
+      (session as any).user.id = token.id;
+      (session as any).user.role = token.role;
       (session as any).accessToken = token.accessToken;
       (session as any).accessTokenExpires = token.accessTokenExpires;
       return session;
