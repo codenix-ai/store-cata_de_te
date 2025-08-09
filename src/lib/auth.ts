@@ -1,106 +1,54 @@
-import { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
-
-const apiUrl =
-  process.env.NEXT_PUBLIC_REST_API_ENDPOINT || "http://localhost:4000";
+// lib/auth.ts
+import type { NextAuthOptions } from 'next-auth';
+import Credentials from 'next-auth/providers/credentials';
 
 export const authOptions: NextAuthOptions = {
+  session: { strategy: 'jwt' },
   providers: [
-    CredentialsProvider({
-      name: "credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
+    Credentials({
+      name: 'Credentials',
+      credentials: { email: {}, password: { type: 'password' } },
       async authorize(credentials) {
-        console.log("NextAuth credentials:", credentials);
-        if (!credentials?.email || !credentials?.password) {
-          return null;
-        }
-        try {
-          const res = await fetch(`${apiUrl}/auth/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-            }),
-          });
-          if (!res.ok) return null;
-          const user = await res.json();
-          // Must return an object with at least { email: string }
-          if (user && user.email) {
-            return user;
-          }
-          return null;
-        } catch (error) {
-          console.error("Authentication error:", error);
-          return null;
-        }
+        const res = await fetch(`${process.env.API_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: credentials?.email,
+            password: credentials?.password,
+          }),
+        });
+
+        if (!res.ok) return null; // => 401 from NextAuth
+        const data = await res.json();
+
+        // MUST return an object with id
+        if (!data?.user?.id || !data?.accessToken) return null;
+
+        return {
+          id: String(data.user.id),
+          name: data.user.name,
+          email: data.user.email,
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken ?? null,
+          accessTokenExpires: Date.now() + (data.expiresIn ?? 3600) * 1000,
+        } as any;
       },
     }),
   ],
-  session: {
-    strategy: "jwt",
-  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = (user as any).id;
-        token.email = (user as any).email;
-        token.role = (user as any).role;
-        token.storeId = (user as any).storeId;
+        token.accessToken = (user as any).accessToken;
+        token.refreshToken = (user as any).refreshToken;
+        token.accessTokenExpires = (user as any).accessTokenExpires;
       }
       return token;
     },
     async session({ session, token }) {
-      if (token && session.user) {
-        (session.user as any).id = token.id as string;
-        (session.user as any).email = token.email as string;
-        (session.user as any).role = token.role;
-        (session.user as any).storeId = token.storeId;
-      }
+      (session as any).accessToken = token.accessToken;
+      (session as any).accessTokenExpires = token.accessTokenExpires;
       return session;
     },
   },
-  pages: {
-    signIn: "/auth/signin",
-  },
+  secret: process.env.NEXTAUTH_SECRET,
 };
-
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role?: string;
-  avatar?: string;
-  addresses?: Address[];
-  orders?: Order[];
-}
-
-export interface Address {
-  id: string;
-  name: string;
-  street: string;
-  city: string;
-  department: string;
-  postalCode: string;
-  phone: string;
-  isDefault: boolean;
-}
-
-export interface Order {
-  id: string;
-  date: string;
-  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
-  total: number;
-  items: OrderItem[];
-}
-
-export interface OrderItem {
-  id: string;
-  productName: string;
-  quantity: number;
-  price: number;
-  image: string;
-}
