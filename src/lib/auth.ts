@@ -20,6 +20,8 @@ export const authOptions: NextAuthOptions = {
 
         if (!res.ok) return null; // => 401 from NextAuth
         const data = await res.json();
+        console.log('BACKEND STATUS:', res.status);
+        console.log('BACKEND RESPONSE:', JSON.stringify(data).slice(0, 500));
 
         // MUST return an object with id
         if (!data?.user?.id || !data?.accessToken) return null;
