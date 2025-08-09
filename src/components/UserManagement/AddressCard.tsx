@@ -101,7 +101,7 @@ export function AddressCard({ address, onUpdated, onDeleted }: AddressCardProps)
             <input
               type="text"
               value={editData.street}
-              onChange={(e) => setEditData({ ...editData, street: e.target.value })}
+              onChange={e => setEditData({ ...editData, street: e.target.value })}
               placeholder="Calle y número"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
@@ -109,28 +109,28 @@ export function AddressCard({ address, onUpdated, onDeleted }: AddressCardProps)
           <input
             type="text"
             value={editData.city}
-            onChange={(e) => setEditData({ ...editData, city: e.target.value })}
+            onChange={e => setEditData({ ...editData, city: e.target.value })}
             placeholder="Ciudad"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <input
             type="text"
             value={editData.department}
-            onChange={(e) => setEditData({ ...editData, department: e.target.value })}
+            onChange={e => setEditData({ ...editData, department: e.target.value })}
             placeholder="Departamento/Estado"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <input
             type="text"
             value={editData.country}
-            onChange={(e) => setEditData({ ...editData, country: e.target.value })}
+            onChange={e => setEditData({ ...editData, country: e.target.value })}
             placeholder="País"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <input
             type="text"
             value={editData.postalCode}
-            onChange={(e) => setEditData({ ...editData, postalCode: e.target.value })}
+            onChange={e => setEditData({ ...editData, postalCode: e.target.value })}
             placeholder="Código postal"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />

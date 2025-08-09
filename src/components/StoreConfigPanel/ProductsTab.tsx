@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Package, Search, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, Package, Search, Edit, Trash2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { gql, useMutation, useQuery } from '@apollo/client';
 import { Product, CreateProductInput } from '@/types/product';
 import { ProductForm } from './Product/ProductForm';
@@ -10,41 +10,39 @@ import toast from 'react-hot-toast';
 import { useStore } from '../StoreProvider';
 
 // GraphQL Queries and Mutations
-const GET_PRODUCTS = gql`
-  query GetProducts($storeId: String!) {
-    products(storeId: $storeId) {
-      id
-      name
-      title
-      description
-      price
-      currency
-      available
-      inStock
-      stock
-      storeId
-      images {
-        id
-        url
-        order
-      }
-      colors {
+const GET_PRODUCTS_BY_STORE = gql`
+  query GetProductsByStore($storeId: String!, $page: Int, $pageSize: Int) {
+    productsByStore(storeId: $storeId, page: $page, pageSize: $pageSize) {
+      items {
         id
         name
-        hex
+        title
+        price
+        currency
+        available
+        inStock
+        stock
+        images {
+          id
+          url
+          order
+        }
+        colors {
+          id
+          color
+          colorHex
+        }
+        categories {
+          category {
+            id
+            name
+            slug
+          }
+        }
       }
-      sizes {
-        id
-        name
-        value
-      }
-      categories {
-        id
-        name
-        slug
-      }
-      createdAt
-      updatedAt
+      total
+      page
+      pageSize
     }
   }
 `;
@@ -127,29 +125,6 @@ const CREATE_PRODUCT = gql`
   }
 `;
 
-// Mock data - En producción esto vendría de una API
-const MOCK_PRODUCTS: Product[] = [
-  {
-    id: '1',
-    name: 'Camiseta Polo',
-    title: 'Camiseta Polo Premium de Algodón',
-    description: 'Camiseta polo de alta calidad, 100% algodón.',
-    price: 89900,
-    currency: 'COP',
-    available: true,
-    inStock: true,
-    stock: 25,
-    images: [],
-    colors: [],
-    sizes: [],
-    categories: [],
-    comments: [],
-    storeId: 'store-1',
-    createdAt: '2024-01-01',
-    updatedAt: '2024-01-01',
-  },
-];
-
 export function ProductsTab() {
   const [searchTerm, setSearchTerm] = useState('');
   const { store } = useStore();
@@ -157,27 +132,49 @@ export function ProductsTab() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
+
   // GraphQL hooks
   const storeId = (store && store.id) || 'default-store';
   const {
     data: productsData,
     loading: loadingProducts,
     refetch: refetchProducts,
-  } = useQuery(GET_PRODUCTS, {
-    variables: { storeId },
+  } = useQuery(GET_PRODUCTS_BY_STORE, {
+    variables: { storeId, page: currentPage, pageSize },
     skip: !storeId,
   });
   const [createProduct, { loading: creating }] = useMutation(CREATE_PRODUCT);
   const [updateProduct, { loading: updating }] = useMutation(UPDATE_PRODUCT);
 
-  // Use data from GraphQL or fallback to mock data
-  const products: Product[] = productsData?.products || MOCK_PRODUCTS;
+  if (!productsData) {
+    return null;
+  }
+
+  // Use data from GraphQL
+  const products: Product[] = productsData?.productsByStore.items || [];
+  const totalProducts = productsData?.productsByStore.total || 0;
+  const totalPages = Math.ceil(totalProducts / pageSize);
 
   const filteredProducts = products.filter(
     (product: Product) =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    setSelectedProducts([]); // Clear selections when changing pages
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+    setSelectedProducts([]);
+  };
 
   const handleCreateProduct = () => {
     setEditingProduct(null);
@@ -223,8 +220,12 @@ export function ProductsTab() {
         });
 
         if (data?.updateProduct) {
-          // Refetch products to get updated list
-          await refetchProducts();
+          // Refetch products to get updated list with current pagination
+          await refetchProducts({
+            storeId,
+            page: currentPage,
+            pageSize,
+          });
           toast.success('Producto actualizado exitosamente');
         }
       } else {
@@ -259,8 +260,12 @@ export function ProductsTab() {
         });
 
         if (data?.createProduct) {
-          // Refetch products to get updated list
-          await refetchProducts();
+          // Refetch products to get updated list with current pagination
+          await refetchProducts({
+            storeId,
+            page: currentPage,
+            pageSize,
+          });
           toast.success('Producto creado exitosamente');
         }
       }
@@ -485,6 +490,97 @@ export function ProductsTab() {
               Crear Primer Producto
             </button>
           )}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!loadingProducts && totalProducts > 0 && (
+        <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg">
+          <div className="flex flex-1 justify-between sm:hidden">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Anterior
+            </button>
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Siguiente
+            </button>
+          </div>
+          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+            <div className="flex items-center space-x-2">
+              <p className="text-sm text-gray-700">
+                Mostrando{' '}
+                <span className="font-medium">{Math.min((currentPage - 1) * pageSize + 1, totalProducts)}</span> a{' '}
+                <span className="font-medium">{Math.min(currentPage * pageSize, totalProducts)}</span> de{' '}
+                <span className="font-medium">{totalProducts}</span> productos
+              </p>
+              <select
+                value={pageSize}
+                onChange={e => handlePageSizeChange(Number(e.target.value))}
+                className="ml-4 rounded-md border border-gray-300 bg-white px-3 py-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value={10}>10 por página</option>
+                <option value={15}>15 por página</option>
+                <option value={25}>25 por página</option>
+                <option value={50}>50 por página</option>
+              </select>
+            </div>
+            <div>
+              <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="sr-only">Anterior</span>
+                  <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                </button>
+
+                {/* Page numbers */}
+                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                  let pageNumber;
+                  if (totalPages <= 7) {
+                    pageNumber = i + 1;
+                  } else if (currentPage <= 4) {
+                    pageNumber = i + 1;
+                  } else if (currentPage >= totalPages - 3) {
+                    pageNumber = totalPages - 6 + i;
+                  } else {
+                    pageNumber = currentPage - 3 + i;
+                  }
+
+                  return (
+                    <button
+                      key={pageNumber}
+                      onClick={() => handlePageChange(pageNumber)}
+                      className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                        currentPage === pageNumber
+                          ? 'z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
+                          : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                      }`}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span className="sr-only">Siguiente</span>
+                  <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </nav>
+            </div>
+          </div>
         </div>
       )}
     </div>
