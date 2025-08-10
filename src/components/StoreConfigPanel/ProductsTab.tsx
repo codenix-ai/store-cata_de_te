@@ -411,11 +411,13 @@ export function ProductsTab() {
                       <div className="flex items-center">
                         <div className="flex-shrink-0 w-10 h-10">
                           {product.images.length > 0 ? (
-                            <img
-                              src={product.images[0].url}
-                              alt={product.name}
-                              className="w-10 h-10 rounded-lg object-cover"
-                            />
+                            <>
+                              <img
+                                src={`https://emprendyup-images.s3.us-east-1.amazonaws.com/${product.images[0].url}`}
+                                alt={product.name}
+                                className="w-10 h-10 rounded-lg object-cover"
+                              />
+                            </>
                           ) : (
                             <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
                               <Package className="w-5 h-5 text-gray-400" />
