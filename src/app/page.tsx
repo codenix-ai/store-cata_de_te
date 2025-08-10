@@ -87,21 +87,19 @@ export default function HomePage() {
       <div className="space-y-12">
         {/* Hero Section */}
         <section
-          className="text-white"
+          className="text-white relative overflow-hidden h-[500px]"
           style={{
-            background: `linear-gradient(to right, ${store?.primaryColor || '#2563eb'}, ${
-              store?.secondaryColor || '#1d4ed8'
-            })`,
+            background: `linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url('/assets/man.png')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
           }}
         >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
             <div className="text-center">
-              <h1 className="text-4xl md:text-6xl font-bold font-montserrat mb-6">Emprende con Confianza</h1>
-              <p
-                className="text-xl md:text-2xl mb-8"
-                style={{ color: `${store?.primaryColor ? '#e0f2fe' : '#dbeafe'}` }}
-              >
-                Tu tienda online para emprendedores colombianos. Productos de calidad, envío rápido, precios justos.
+              <h1 className="text-4xl md:text-6xl font-bold font-montserrat mb-6 drop-shadow-lg">SPH Moda Masculina</h1>
+              <p className="text-xl md:text-2xl mb-8 drop-shadow-md" style={{ color: '#e0f2fe' }}>
+                Viste con estilo y confianza. Ropa de calidad para cada ocasión.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
@@ -110,9 +108,9 @@ export default function HomePage() {
                   style={{ color: store?.primaryColor || '#2563eb' }}
                 >
                   <ShoppingBag className="w-5 h-5 mr-2" />
-                  Explorar Productos
+                  Ultima Coleccion
                 </Link>
-                <Link
+                {/* <Link
                   href="/auth/signin"
                   className="inline-flex items-center px-8 py-4 border-2 border-white text-white font-semibold rounded-lg transition-colors"
                   onMouseEnter={e => {
@@ -125,31 +123,13 @@ export default function HomePage() {
                   }}
                 >
                   Crear Cuenta
-                </Link>
+                </Link> */}
               </div>
             </div>
           </div>
         </section>
         {/* Features Section */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <div key={index} className="text-center p-6 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-                <div
-                  className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4"
-                  style={{
-                    backgroundColor: store?.primaryColor ? `${store.primaryColor}20` : '#dbeafe',
-                    color: store?.primaryColor || '#2563eb',
-                  }}
-                >
-                  <feature.icon className="w-8 h-8" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-gray-700">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </section>
+
         {/* Featured Products Section */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -181,6 +161,26 @@ export default function HomePage() {
             >
               Ver Todos los Productos
             </Link>
+          </div>
+        </section>
+
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <div key={index} className="text-center p-6 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                <div
+                  className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4"
+                  style={{
+                    backgroundColor: store?.primaryColor ? `${store.primaryColor}20` : '#dbeafe',
+                    color: store?.primaryColor || '#2563eb',
+                  }}
+                >
+                  <feature.icon className="w-8 h-8" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
+                <p className="text-gray-700">{feature.description}</p>
+              </div>
+            ))}
           </div>
         </section>
         {/* Newsletter Section */}

@@ -181,7 +181,7 @@ export function ImageUploader({ images, onChange, maxImages = 10 }: ImageUploade
                     className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-move mb-3"
                   >
                     <Image
-                      src={`https://emprendyup-images.s3.us-east-1.amazonaws.com/${image.url}`}
+                      src={`${image.url}`}
                       alt={image.alt || `Producto imagen ${index + 1}`}
                       fill
                       className="object-cover"
@@ -302,7 +302,7 @@ export function ImageUploader({ images, onChange, maxImages = 10 }: ImageUploade
             <div className="p-4">
               <div className="relative max-w-3xl max-h-96 mx-auto">
                 <Image
-                  src={`https://emprendyup-images.s3.us-east-1.amazonaws.com/${previewImage.url}`}
+                  src={`${previewImage.url}`}
                   alt={previewImage.alt || 'Preview'}
                   width={800}
                   height={600}

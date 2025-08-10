@@ -385,7 +385,7 @@ export default function ProductDetailPage() {
                 <button
                   onClick={handleAddToCart}
                   disabled={!product.inStock || isLoading}
-                  className="flex-1 py-3 px-6 rounded-lg font-medium disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                  className="flex-1 py-3 px-6 rounded-lg font-medium disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center text-white"
                   style={{ background: store?.primaryColor || '#2563eb' }}
                 >
                   {isLoading ? (
@@ -404,13 +404,6 @@ export default function ProductDetailPage() {
                   <Heart className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
                 </button>
               </div>
-
-              <button
-                className="w-full py-3 px-6 rounded-lg font-medium transition-colors"
-                style={{ backgroundColor: store?.secondaryColor || '#2563eb' }}
-              >
-                Comprar Ahora
-              </button>
             </div>
 
             {/* Shipping & Security */}
