@@ -76,7 +76,6 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, className = "" }: ProductCardProps) {
-  console.log("🚀 ~ ProductCard ~ product:", product);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { store } = useStore();
@@ -140,7 +139,7 @@ export function ProductCard({ product, className = "" }: ProductCardProps) {
         ((product.originalPrice - product.price) / product.originalPrice) * 100
       )
     : 0;
-  const imageSrc = `https://emprendyup-images.s3.us-east-1.amazonaws.com/${
+  const imageSrc = `${process.env.NEXT_PUBLIC_AWS_BUCKET_NAME}${
     product.images?.[0]?.url || product.image
   }`;
 

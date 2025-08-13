@@ -167,8 +167,6 @@ export function Favorites({ className = "" }: FavoritesProps) {
     );
   }
 
-  console.log("Displaying favorite products:", favoriteProducts);
-
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Header */}

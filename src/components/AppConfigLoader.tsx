@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { gql, useQuery } from '@apollo/client';
-import { ReactNode } from 'react';
-import { StoreProvider } from './StoreProvider';
+import { gql, useQuery } from "@apollo/client";
+import { ReactNode } from "react";
+import { StoreProvider } from "./StoreProvider";
 
 const GET_STORE_CONFIG = gql`
   query GetStore($storeId: String!) {
@@ -32,7 +32,7 @@ const GET_STORE_CONFIG = gql`
 
 export function AppConfigLoader({ children }: { children: ReactNode }) {
   const { loading, error, data } = useQuery(GET_STORE_CONFIG, {
-    variables: { storeId: 'store1' },
+    variables: { storeId: "store2" },
   });
 
   if (loading) {
@@ -44,33 +44,54 @@ export function AppConfigLoader({ children }: { children: ReactNode }) {
             <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
             <div
               className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-blue-400 rounded-full animate-spin mx-auto"
-              style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}
+              style={{
+                animationDirection: "reverse",
+                animationDuration: "1.5s",
+              }}
             ></div>
           </div>
 
           {/* Loading text with pulse animation */}
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-gray-800 animate-pulse">Cargando tienda...</h2>
-            <p className="text-gray-600 text-sm">Configurando tu experiencia personalizada</p>
+            <h2 className="text-xl font-semibold text-gray-800 animate-pulse">
+              Cargando tienda...
+            </h2>
+            <p className="text-gray-600 text-sm">
+              Configurando tu experiencia personalizada
+            </p>
           </div>
 
           {/* Progress dots */}
           <div className="flex justify-center space-x-1 mt-6">
-            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            <div
+              className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"
+              style={{ animationDelay: "0ms" }}
+            ></div>
+            <div
+              className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"
+              style={{ animationDelay: "150ms" }}
+            ></div>
+            <div
+              className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"
+              style={{ animationDelay: "300ms" }}
+            ></div>
           </div>
         </div>
       </div>
     );
   }
   if (error || !data?.store) {
-    console.error('Error fetching store config:', error);
+    console.error("Error fetching store config:", error);
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center">
         <div className="text-center p-8">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="w-8 h-8 text-red-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -79,9 +100,12 @@ export function AppConfigLoader({ children }: { children: ReactNode }) {
               />
             </svg>
           </div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Error al cargar la configuración</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            Error al cargar la configuración
+          </h2>
           <p className="text-gray-600 text-sm mb-4">
-            No pudimos cargar la configuración de la tienda. Por favor, intenta recargar la página.
+            No pudimos cargar la configuración de la tienda. Por favor, intenta
+            recargar la página.
           </p>
           <button
             onClick={() => window.location.reload()}
