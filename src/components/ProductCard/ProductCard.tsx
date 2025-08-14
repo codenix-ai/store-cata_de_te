@@ -7,6 +7,13 @@ import { Heart, ShoppingCart, Star } from 'lucide-react';
 import { cartService } from '@/lib/cart';
 import { useStore } from '@/components/StoreProvider';
 import toast from 'react-hot-toast';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Pagination, Navigation } from 'swiper/modules';
+
+// Import Swiper styles
+import 'swiper/css';
+import 'swiper/css/pagination';
+import 'swiper/css/navigation';
 
 // Simple favorites service
 const favoritesService = {
@@ -137,7 +144,12 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
   const discountPercentage = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
-  const imageSrc = `${process.env.NEXT_PUBLIC_AWS_BUCKET_NAME}/${product.images?.[0]?.url || product.image}`;
+
+  // Get all product images
+  const allImages =
+    product.images && product.images.length > 0
+      ? product.images.map(img => `${process.env.NEXT_PUBLIC_AWS_BUCKET_NAME}/${img.url}`)
+      : [`${process.env.NEXT_PUBLIC_AWS_BUCKET_NAME}/${product.image}`];
 
   return (
     <div
@@ -145,12 +157,72 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
     >
       <Link href={`/products/${product.id}`}>
         <div className="relative aspect-square overflow-hidden rounded-t-lg">
-          <Image
-            src={imageSrc}
-            alt={product.name}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-          />
+          {/* Image Gallery */}
+          {allImages.length > 1 ? (
+            <Swiper
+              modules={[Pagination, Navigation]}
+              spaceBetween={0}
+              slidesPerView={1}
+              pagination={{
+                clickable: true,
+                dynamicBullets: true,
+              }}
+              navigation={{
+                prevEl: `.product-card-nav-prev-${product.id}`,
+                nextEl: `.product-card-nav-next-${product.id}`,
+              }}
+              className="h-full w-full"
+              onSlideChange={swiper => {
+                // Optional: track which image is being viewed
+              }}
+            >
+              {allImages.map((imageSrc, index) => (
+                <SwiperSlide key={index}>
+                  <div className="relative h-full w-full">
+                    <Image
+                      src={imageSrc}
+                      alt={`${product.name} - Imagen ${index + 1}`}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                    />
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          ) : (
+            <Image
+              src={allImages[0]}
+              alt={product.name}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              sizes="(max-width: 768px) 50vw, 25vw"
+            />
+          )}
+
+          {/* Navigation arrows for multiple images */}
+          {allImages.length > 1 && (
+            <>
+              <button
+                className={`product-card-nav-prev-${product.id} absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full p-1 shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100`}
+                aria-label="Imagen anterior"
+                onClick={e => e.preventDefault()}
+              >
+                <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                className={`product-card-nav-next-${product.id} absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full p-1 shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100`}
+                aria-label="Imagen siguiente"
+                onClick={e => e.preventDefault()}
+              >
+                <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </>
+          )}
 
           {/* Discount Badge */}
           {discountPercentage > 0 && (

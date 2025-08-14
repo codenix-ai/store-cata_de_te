@@ -177,10 +177,10 @@ export default function ProductDetailPage() {
           <Link href="/products" className="hover:text-gray-700">
             Productos
           </Link>
-          <span>/</span>
-          <Link href={`/products?category=${product.category}`} className="hover:text-gray-700">
+          {/* <span>/</span> */}
+          {/* <Link href={`/products?category=${product.category}`} className="hover:text-gray-700">
             {product.category}
-          </Link>
+          </Link> */}
           <span>/</span>
           <span className="text-black">{product.title}</span>
         </nav>
