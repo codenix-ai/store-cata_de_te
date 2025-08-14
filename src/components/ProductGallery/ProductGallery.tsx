@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -17,8 +17,14 @@ export function ProductGallery({
 }: ProductGalleryProps) {
   const [currentImage, setCurrentImage] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
+  const [isZoomActive, setIsZoomActive] = useState(false);
+  const [highResSrc, setHighResSrc] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Convert images to URLs with S3 domain
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+
+  // Normalizamos URLs
   const imageUrls = images.map((image) => {
     const imageUrl = typeof image === "string" ? image : image.url;
     return imageUrl.startsWith("http")
@@ -26,65 +32,67 @@ export function ProductGallery({
       : `https://emprendyup-images.s3.us-east-1.amazonaws.com/${imageUrl}`;
   });
 
+  const goToImage = (index: number) => {
+    setCurrentImage(index);
+    loadHighRes(index);
+  };
+
+  const loadHighRes = (index: number) => {
+    const url = imageUrls[index];
+    const hdUrl = url;
+    setHighResSrc(hdUrl);
+  };
+
   const nextImage = () => {
-    setCurrentImage((prev) => (prev + 1) % imageUrls.length);
+    const newIndex = (currentImage + 1) % imageUrls.length;
+    goToImage(newIndex);
   };
 
   const prevImage = () => {
-    setCurrentImage((prev) => (prev - 1 + imageUrls.length) % imageUrls.length);
+    const newIndex = (currentImage - 1 + imageUrls.length) % imageUrls.length;
+    goToImage(newIndex);
   };
 
-  const goToImage = (index: number) => {
-    setCurrentImage(index);
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!containerRef.current || !highResSrc) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomPos({ x, y });
   };
+
+  const handleMouseEnter = () => {
+    if (!isMobile) {
+      loadHighRes(currentImage);
+      setIsZoomActive(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!isMobile) {
+      setIsZoomActive(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsModalOpen(false);
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
 
   return (
     <>
-      <div className={`space-y-4 ${className}`}>
-        {/* Main Image */}
-        <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden group cursor-zoom-in">
-          <Image
-            src={imageUrls[currentImage]}
-            alt={`${productName} - Imagen ${currentImage + 1}`}
-            fill
-            className="object-cover"
-            onClick={() => setIsModalOpen(true)}
-          />
-
-          {/* Navigation Arrows */}
-          {imageUrls.length > 1 && (
-            <>
-              <button
-                onClick={prevImage}
-                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-75 hover:bg-opacity-100 rounded-full p-2 shadow-md transition-all opacity-0 group-hover:opacity-100"
-              >
-                <ChevronLeft className="w-5 h-5 text-black" />
-              </button>
-              <button
-                onClick={nextImage}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-75 hover:bg-opacity-100 rounded-full p-2 shadow-md transition-all opacity-0 group-hover:opacity-100"
-              >
-                <ChevronRight className="w-5 h-5 text-black" />
-              </button>
-            </>
-          )}
-
-          {/* Image Counter */}
-          {imageUrls.length > 1 && (
-            <div className="absolute bottom-4 right-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
-              {currentImage + 1} / {imageUrls.length}
-            </div>
-          )}
-        </div>
-
-        {/* Thumbnail Navigation */}
+      <div className={`flex flex-col md:flex-row gap-4 ${className}`}>
+        {/* Miniaturas */}
         {imageUrls.length > 1 && (
-          <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-4 gap-2">
+          <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-y-auto md:w-24 md:h-[500px]">
             {imageUrls.slice(0, 10).map((imageUrl, index) => (
               <button
                 key={index}
                 onClick={() => goToImage(index)}
-                className={`relative aspect-square rounded-md overflow-hidden border-2 transition-all ${
+                className={`relative flex-shrink-0 aspect-square rounded-md overflow-hidden border-2 transition-all ${
                   currentImage === index
                     ? "border-blue-500 ring-2 ring-blue-200"
                     : "border-gray-200 hover:border-gray-300"
@@ -94,12 +102,10 @@ export function ProductGallery({
                   src={imageUrl}
                   alt={`${productName} - Miniatura ${index + 1}`}
                   fill
-                  className="object-cover"
+                  className="object-contain bg-white"
                 />
               </button>
             ))}
-
-            {/* Show More Indicator */}
             {imageUrls.length > 10 && (
               <div className="relative aspect-square rounded-md overflow-hidden border-2 border-gray-200 bg-gray-100 flex items-center justify-center">
                 <span className="text-sm font-medium text-gray-600">
@@ -109,88 +115,98 @@ export function ProductGallery({
             )}
           </div>
         )}
+
+        {/* Imagen principal */}
+        <div
+          ref={containerRef}
+          className={`relative flex-1 aspect-square bg-gray-100 rounded-lg overflow-hidden group ${
+            isMobile
+              ? "cursor-zoom-in"
+              : isZoomActive
+              ? "cursor-zoom-out"
+              : "cursor-zoom-in"
+          }`}
+          onMouseMove={handleMouseMove}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onClick={() => {
+            if (isMobile) {
+              setIsModalOpen(true);
+              loadHighRes(currentImage);
+            }
+          }}
+        >
+          {/* Imagen base */}
+          <Image
+            src={imageUrls[currentImage]}
+            alt={`${productName} - Imagen ${currentImage + 1}`}
+            fill
+            className="object-contain bg-white transition-opacity duration-200"
+            priority
+          />
+
+          {/* Zoom */}
+          {isZoomActive && highResSrc && (
+            <div
+              className="absolute inset-0 bg-no-repeat bg-contain"
+              style={{
+                backgroundImage: `url(${highResSrc})`,
+                backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
+                backgroundSize: "200%",
+              }}
+            />
+          )}
+
+          {/* Flechas abajo a la derecha */}
+          {imageUrls.length > 1 && (
+            <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={prevImage}
+                className="bg-white bg-opacity-75 hover:bg-opacity-100 rounded-full p-2 shadow-md"
+              >
+                <ChevronLeft className="w-5 h-5 text-black" />
+              </button>
+              <button
+                onClick={nextImage}
+                className="bg-white bg-opacity-75 hover:bg-opacity-100 rounded-full p-2 shadow-md"
+              >
+                <ChevronRight className="w-5 h-5 text-black" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Full Screen Modal */}
+      {/* Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
-          <div className="relative max-w-4xl w-full h-full flex items-center justify-center">
-            {/* Close Button */}
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-white hover:text-gray-300 z-10"
-            >
-              <svg
-                className="w-8 h-8"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-
-            {/* Main Image */}
-            <div className="relative w-full h-full flex items-center justify-center">
-              <Image
-                src={imageUrls[currentImage]}
-                alt={`${productName} - Imagen ${currentImage + 1}`}
-                width={800}
-                height={800}
-                className="object-contain max-w-full max-h-full"
-              />
-            </div>
-
-            {/* Navigation */}
-            {imageUrls.length > 1 && (
-              <>
-                <button
-                  onClick={prevImage}
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-3 text-black transition-all"
-                >
-                  <ChevronLeft className="w-6 h-6" />
-                </button>
-                <button
-                  onClick={nextImage}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-3 text-black transition-all"
-                >
-                  <ChevronRight className="w-6 h-6" />
-                </button>
-              </>
-            )}
-
-            {/* Image Counter */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white px-4 py-2 rounded-full">
-              {currentImage + 1} / {imageUrls.length}
-            </div>
-
-            {/* Thumbnail Strip */}
-            <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 flex space-x-2 max-w-full overflow-x-auto">
-              {imageUrls.map((imageUrl, index) => (
-                <button
-                  key={index}
-                  onClick={() => goToImage(index)}
-                  className={`relative w-16 h-16 rounded-md overflow-hidden border-2 flex-shrink-0 ${
-                    currentImage === index
-                      ? "border-white ring-2 ring-white ring-opacity-50"
-                      : "border-white border-opacity-50 hover:border-opacity-100"
-                  }`}
-                >
-                  <Image
-                    src={imageUrl}
-                    alt={`${productName} - Miniatura ${index + 1}`}
-                    fill
-                    className="object-cover"
-                  />
-                </button>
-              ))}
-            </div>
-          </div>
+        <div
+          className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <button
+            onClick={() => setIsModalOpen(false)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 z-10 text-2xl"
+          >
+            ✕
+          </button>
+          {highResSrc ? (
+            <Image
+              src={highResSrc}
+              alt={`${productName} - Imagen ampliada`}
+              width={1000}
+              height={1000}
+              className="object-contain max-w-full max-h-full"
+            />
+          ) : (
+            <Image
+              src={imageUrls[currentImage]}
+              alt={`${productName} - Imagen ampliada`}
+              width={1000}
+              height={1000}
+              className="object-contain max-w-full max-h-full"
+            />
+          )}
         </div>
       )}
     </>
