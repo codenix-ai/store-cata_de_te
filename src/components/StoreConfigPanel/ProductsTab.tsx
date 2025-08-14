@@ -1,22 +1,13 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import {
-  Plus,
-  Package,
-  Search,
-  Edit,
-  Trash2,
-  Eye,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import { gql, useMutation, useQuery } from "@apollo/client";
-import { Product, CreateProductInput } from "@/types/product";
-import { ProductForm } from "./Product/ProductForm";
-import { TabProps } from "./types";
-import toast from "react-hot-toast";
-import { useStore } from "../StoreProvider";
+import { useState } from 'react';
+import { Plus, Package, Search, Edit, Trash2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { gql, useMutation, useQuery } from '@apollo/client';
+import { Product, CreateProductInput } from '@/types/product';
+import { ProductFormWizard } from './Product/ProductFormWizard';
+import { TabProps } from './types';
+import toast from 'react-hot-toast';
+import { useStore } from '../StoreProvider';
 
 // GraphQL Queries and Mutations
 const GET_PRODUCTS_BY_STORE = gql`
@@ -134,8 +125,25 @@ const CREATE_PRODUCT = gql`
   }
 `;
 
+const DELETE_PRODUCT = gql`
+  mutation DeleteProduct($id: String!) {
+    deleteProduct(id: $id) {
+      id
+      name
+    }
+  }
+`;
+
+const DELETE_PRODUCTS = gql`
+  mutation DeleteProducts($ids: [String!]!) {
+    deleteProducts(ids: $ids) {
+      count
+    }
+  }
+`;
+
 export function ProductsTab() {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const { store } = useStore();
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -146,7 +154,7 @@ export function ProductsTab() {
   const [pageSize, setPageSize] = useState(15);
 
   // GraphQL hooks
-  const storeId = (store && store.id) || "default-store";
+  const storeId = (store && store.id) || 'default-store';
   const {
     data: productsData,
     loading: loadingProducts,
@@ -157,6 +165,8 @@ export function ProductsTab() {
   });
   const [createProduct, { loading: creating }] = useMutation(CREATE_PRODUCT);
   const [updateProduct, { loading: updating }] = useMutation(UPDATE_PRODUCT);
+  const [deleteProduct, { loading: deleting }] = useMutation(DELETE_PRODUCT);
+  const [deleteProducts, { loading: deletingMultiple }] = useMutation(DELETE_PRODUCTS);
 
   if (!productsData) {
     return null;
@@ -212,15 +222,15 @@ export function ProductsTab() {
               inStock: productData.inStock,
               stock: productData.stock,
               categories: productData.categoryIds || [],
-              images: productData.images.map((img) => ({
+              images: productData.images.map(img => ({
                 url: img.url,
                 order: img.order,
               })),
-              colors: productData.colors.map((color) => ({
+              colors: productData.colors.map(color => ({
                 name: color.name,
                 hex: color.hex,
               })),
-              sizes: productData.sizes.map((size) => ({
+              sizes: productData.sizes.map(size => ({
                 name: size.name,
                 value: size.value,
               })),
@@ -235,7 +245,7 @@ export function ProductsTab() {
             page: currentPage,
             pageSize,
           });
-          toast.success("Producto actualizado exitosamente");
+          toast.success('Producto actualizado exitosamente');
         }
       } else {
         // Create new product using GraphQL mutation
@@ -250,17 +260,17 @@ export function ProductsTab() {
               available: productData.available,
               inStock: productData.inStock,
               stock: productData.stock,
-              storeId: (store && store.id) || "default-store",
+              storeId: (store && store.id) || 'default-store',
               categories: productData.categoryIds || [],
-              images: productData.images.map((img) => ({
+              images: productData.images.map(img => ({
                 url: img.url,
                 order: img.order,
               })),
-              colors: productData.colors.map((color) => ({
+              colors: productData.colors.map(color => ({
                 name: color.name,
                 hex: color.hex,
               })),
-              sizes: productData.sizes.map((size) => ({
+              sizes: productData.sizes.map(size => ({
                 name: size.name,
                 value: size.value,
               })),
@@ -275,49 +285,103 @@ export function ProductsTab() {
             page: currentPage,
             pageSize,
           });
-          toast.success("Producto creado exitosamente");
+          toast.success('Producto creado exitosamente');
         }
       }
       setShowForm(false);
       setEditingProduct(null);
     } catch (error: any) {
-      console.error("Error saving product:", error);
-      const errorMessage = error.message || "Error al guardar el producto";
+      console.error('Error saving product:', error);
+      const errorMessage = error.message || 'Error al guardar el producto';
       toast.error(errorMessage);
       throw error;
     }
   };
 
-  const handleDeleteProduct = (productId: string) => {
-    // TODO: Implement DELETE_PRODUCT mutation
-    toast.error("Eliminación de productos aún no implementada");
+  const handleDeleteProduct = async (productId: string) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
+    try {
+      const { data } = await deleteProduct({
+        variables: { id: productId },
+      });
+
+      if (data?.deleteProduct) {
+        // Remove from selected products if it was selected
+        setSelectedProducts(prev => prev.filter(id => id !== productId));
+
+        // Refetch products to get updated list with current pagination
+        await refetchProducts({
+          storeId,
+          page: currentPage,
+          pageSize,
+        });
+
+        toast.success('Producto eliminado exitosamente');
+      }
+    } catch (error: any) {
+      console.error('Error deleting product:', error);
+      const errorMessage = error.message || 'Error al eliminar el producto';
+      toast.error(errorMessage);
+    }
   };
 
-  const handleDeleteSelected = () => {
-    // TODO: Implement DELETE_PRODUCTS mutation
-    toast.error("Eliminación masiva de productos aún no implementada");
-    console.log("Delete products:", selectedProducts);
+  const handleDeleteSelected = async () => {
+    if (selectedProducts.length === 0) {
+      toast.error('No hay productos seleccionados para eliminar');
+      return;
+    }
+
+    if (
+      !confirm(
+        `¿Estás seguro de que deseas eliminar ${selectedProducts.length} producto(s)? Esta acción no se puede deshacer.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const { data } = await deleteProducts({
+        variables: { ids: selectedProducts },
+      });
+
+      if (data?.deleteProducts) {
+        // Clear selected products
+        setSelectedProducts([]);
+
+        // Refetch products to get updated list with current pagination
+        await refetchProducts({
+          storeId,
+          page: currentPage,
+          pageSize,
+        });
+
+        toast.success(`${data.deleteProducts.count} producto(s) eliminado(s) exitosamente`);
+      }
+    } catch (error: any) {
+      console.error('Error deleting products:', error);
+      const errorMessage = error.message || 'Error al eliminar los productos';
+      toast.error(errorMessage);
+    }
   };
 
   const toggleProductSelection = (productId: string) => {
-    setSelectedProducts((prev) =>
-      prev.includes(productId)
-        ? prev.filter((id) => id !== productId)
-        : [...prev, productId]
+    setSelectedProducts(prev =>
+      prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]
     );
   };
 
   const toggleSelectAll = () => {
-    setSelectedProducts((prev) =>
-      prev.length === filteredProducts.length
-        ? []
-        : filteredProducts.map((p: Product) => p.id)
+    setSelectedProducts(prev =>
+      prev.length === filteredProducts.length ? [] : filteredProducts.map((p: Product) => p.id)
     );
   };
 
   if (showForm) {
     return (
-      <ProductForm
+      <ProductFormWizard
         product={editingProduct || undefined}
         onSave={handleSaveProduct}
         onCancel={() => {
@@ -335,14 +399,12 @@ export function ProductsTab() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">Gestión de Productos</h3>
-          <p className="text-sm text-gray-600">
-            Administra el catálogo de productos de tu tienda
-          </p>
+          <p className="text-sm text-gray-600">Administra el catálogo de productos de tu tienda</p>
         </div>
         <button
           onClick={handleCreateProduct}
           className="text-white px-4 py-2 rounded-lg flex items-center"
-          style={{ backgroundColor: store?.primaryColor || "#2563eb" }}
+          style={{ backgroundColor: store?.primaryColor || '#2563eb' }}
         >
           <Plus className="w-4 h-4 mr-2" />
           Nuevo Producto
@@ -356,7 +418,7 @@ export function ProductsTab() {
           <input
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={e => setSearchTerm(e.target.value)}
             placeholder="Buscar productos..."
             className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
@@ -365,10 +427,11 @@ export function ProductsTab() {
         {selectedProducts.length > 0 && (
           <button
             onClick={handleDeleteSelected}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center"
+            disabled={deletingMultiple}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Trash2 className="w-4 h-4 mr-2" />
-            Eliminar ({selectedProducts.length})
+            {deletingMultiple ? 'Eliminando...' : `Eliminar (${selectedProducts.length})`}
           </button>
         )}
       </div>
@@ -388,10 +451,7 @@ export function ProductsTab() {
                   <th className="px-6 py-3 text-left">
                     <input
                       type="checkbox"
-                      checked={
-                        selectedProducts.length === filteredProducts.length &&
-                        filteredProducts.length > 0
-                      }
+                      checked={selectedProducts.length === filteredProducts.length && filteredProducts.length > 0}
                       onChange={toggleSelectAll}
                       className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     />
@@ -442,40 +502,30 @@ export function ProductsTab() {
                           )}
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {product.name}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {product.title}
-                          </div>
+                          <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                          <div className="text-sm text-gray-500">{product.title}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900">
                       ${product.price.toLocaleString()} {product.currency}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {product.stock}
-                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">{product.stock}</td>
                     <td className="px-6 py-4">
                       <div className="flex space-x-2">
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            product.available
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
+                            product.available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                           }`}
                         >
-                          {product.available ? "Disponible" : "No disponible"}
+                          {product.available ? 'Disponible' : 'No disponible'}
                         </span>
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            product.inStock
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-gray-100 text-gray-800"
+                            product.inStock ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'
                           }`}
                         >
-                          {product.inStock ? "En stock" : "Sin stock"}
+                          {product.inStock ? 'En stock' : 'Sin stock'}
                         </span>
                       </div>
                     </td>
@@ -489,7 +539,9 @@ export function ProductsTab() {
                         </button>
                         <button
                           onClick={() => handleDeleteProduct(product.id)}
-                          className="text-red-600 hover:text-red-900"
+                          disabled={deleting}
+                          className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Eliminar producto"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -505,14 +557,10 @@ export function ProductsTab() {
         <div className="text-center py-12">
           <Package className="w-12 h-12 mx-auto text-gray-300 mb-4" />
           <p className="text-gray-500 text-lg">
-            {searchTerm
-              ? "No se encontraron productos"
-              : "No tienes productos todavía"}
+            {searchTerm ? 'No se encontraron productos' : 'No tienes productos todavía'}
           </p>
           <p className="text-gray-400 text-sm mb-6">
-            {searchTerm
-              ? "Intenta con otros términos de búsqueda"
-              : "Crea tu primer producto para empezar a vender"}
+            {searchTerm ? 'Intenta con otros términos de búsqueda' : 'Crea tu primer producto para empezar a vender'}
           </p>
           {!searchTerm && (
             <button
@@ -548,20 +596,14 @@ export function ProductsTab() {
           <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
             <div className="flex items-center space-x-2">
               <p className="text-sm text-gray-700">
-                Mostrando{" "}
-                <span className="font-medium">
-                  {Math.min((currentPage - 1) * pageSize + 1, totalProducts)}
-                </span>{" "}
-                a{" "}
-                <span className="font-medium">
-                  {Math.min(currentPage * pageSize, totalProducts)}
-                </span>{" "}
-                de <span className="font-medium">{totalProducts}</span>{" "}
-                productos
+                Mostrando{' '}
+                <span className="font-medium">{Math.min((currentPage - 1) * pageSize + 1, totalProducts)}</span> a{' '}
+                <span className="font-medium">{Math.min(currentPage * pageSize, totalProducts)}</span> de{' '}
+                <span className="font-medium">{totalProducts}</span> productos
               </p>
               <select
                 value={pageSize}
-                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                onChange={e => handlePageSizeChange(Number(e.target.value))}
                 className="ml-4 rounded-md border border-gray-300 bg-white px-3 py-1 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 <option value={10}>10 por página</option>
@@ -571,10 +613,7 @@ export function ProductsTab() {
               </select>
             </div>
             <div>
-              <nav
-                className="isolate inline-flex -space-x-px rounded-md shadow-sm"
-                aria-label="Pagination"
-              >
+              <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
@@ -603,8 +642,8 @@ export function ProductsTab() {
                       onClick={() => handlePageChange(pageNumber)}
                       className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
                         currentPage === pageNumber
-                          ? "z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-                          : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                          ? 'z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
+                          : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
                       }`}
                     >
                       {pageNumber}
