@@ -52,7 +52,6 @@ export function Navbar() {
   }
 
   const navigation = [
-    { name: "Tienda", href: "/products", key: "products" },
     {
       name: "",
       href: "/cart",
@@ -62,6 +61,7 @@ export function Navbar() {
     },
     { name: "", href: "/favorites", icon: Heart, key: "favorites" },
     { name: "", href: "/support", icon: HelpCircle, key: "support" },
+    { name: "Tienda", href: "/products", key: "products" },
   ];
 
   // Mobile navigation excludes cart and favorites (they're in the navbar)
@@ -112,16 +112,7 @@ export function Navbar() {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-8">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Buscar productos..."
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
+          <div className="hidden lg:flex items-center space-x-0">
             {navigation.map((item) => (
               <Link
                 key={item.key}
@@ -277,17 +268,6 @@ export function Navbar() {
         {isMenuOpen && (
           <div className="lg:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t">
-              <div className="mb-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-600 w-5 h-5" />
-                  <input
-                    type="text"
-                    placeholder="Buscar productos..."
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2  focus:border-transparent"
-                  />
-                </div>
-              </div>
-
               {mobileNavigation.map((item) => (
                 <Link
                   key={item.key}
