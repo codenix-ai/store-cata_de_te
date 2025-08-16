@@ -27,7 +27,7 @@ export function HeroBanner({
   ),
   leftWidthClass = 'w-full md:w-7/12',
   imageA = '/assets/man.webp',
-  imageB = '/assets/man.png',
+  imageB = '/assets/man.webp',
 }: HeroBannerProps) {
   return (
     <section className="py-16 md:py-20 px-6 md:px-12 lg:px-20 min-h-[70vh] md:min-h-[80vh] flex items-center bg-gradient-to-r from-[#C2B1A5] via-[#E9DCCF] to-[#F7F5F3]">
@@ -40,14 +40,15 @@ export function HeroBanner({
           <p className="mt-6 max-w-xl text-base md:text-lg lg:text-xl text-gray-600 leading-relaxed">{subtitle}</p>
         </div>
 
-        <div className="w-full md:w-[50%] flex justify-end">
-          <div className="hidden sm:block rounded-3xl overflow-hidden shadow-lg w-56 md:w-72 aspect-[3/4] bg-gray-100 relative">
-            <Image src={imageA} alt="banner" fill className="object-cover" />
-          </div>
-          <div className="flex items-start gap-8 relative">
-            {/* Tall left image - fills container */}
+        <div className="w-full md:w-[50%] flex justify-center md:justify-end">
+          <div className="w-full flex flex-col sm:flex-row items-center md:items-start gap-4 sm:gap-6">
+            <div className="rounded-3xl overflow-hidden shadow-lg w-full sm:w-56 md:w-72 aspect-[3/4] bg-gray-100 relative">
+              <Image src={imageA} alt="banner" fill className="object-cover" />
+            </div>
 
-            {/* Tall right image (larger, foreground) - fills container */}
+            <div className="rounded-3xl overflow-hidden shadow-2xl w-full sm:w-64 md:w-80 aspect-[3/4] bg-gray-100 relative">
+              <Image src={imageB} alt="hero image" fill className="object-cover" />
+            </div>
           </div>
         </div>
       </div>
