@@ -64,6 +64,41 @@ const CREATE_PRODUCT_WITH_URLS = gql`
     }
   }
 `;
+const UPDATE_PRODUCT = gql`
+  mutation UpdateProduct($id: String!, $input: UpdateProductInput!) {
+    updateProduct(id: $id, input: $input) {
+      id
+      name
+      title
+      description
+      price
+      currency
+      available
+      inStock
+      stock
+      categories {
+        category {
+          id
+          name
+          slug
+        }
+      }
+      colors {
+        color
+        colorHex
+      }
+      sizes {
+        size
+      }
+      images {
+        url
+        order
+      }
+      createdAt
+      updatedAt
+    }
+  }
+`;
 
 interface ProductFormWizardProps {
   product?: Product;
@@ -72,7 +107,13 @@ interface ProductFormWizardProps {
   loading?: boolean;
 }
 
-type StepType = "basic" | "pricing" | "images" | "categories" | "review";
+type StepType =
+  | "basic"
+  | "pricing"
+  | "categories"
+  | "images"
+  | "description"
+  | "review";
 
 interface Step {
   id: StepType;
@@ -97,15 +138,16 @@ export function ProductFormWizard({
     new Set()
   );
 
-  // GraphQL mutation
+  // GraphQL mutations
   const [createProductWithUrls] = useMutation(CREATE_PRODUCT_WITH_URLS);
+  const [updateProduct] = useMutation(UPDATE_PRODUCT);
 
   // Define steps
   const steps: Step[] = [
     {
       id: "basic",
       title: "Información",
-      description: "Nombre, título y descripción del producto",
+      description: "Nombre y título ",
       icon: <Info className="w-5 h-5" />,
       required: true,
     },
@@ -117,6 +159,13 @@ export function ProductFormWizard({
       required: true,
     },
     {
+      id: "categories",
+      title: "Categorías",
+      description: "Clasificación del producto",
+      icon: <Tag className="w-5 h-5" />,
+      required: true,
+    },
+    {
       id: "images",
       title: "Imágenes y Variantes",
       description: "Fotos, colores y tallas del producto",
@@ -124,10 +173,10 @@ export function ProductFormWizard({
       required: true,
     },
     {
-      id: "categories",
-      title: "Categorías",
-      description: "Clasificación del producto",
-      icon: <Tag className="w-5 h-5" />,
+      id: "description",
+      title: "Descripción",
+      description: "Detalles adicionales del producto",
+      icon: <CheckCircle className="w-5 h-5" />,
       required: true,
     },
     {
@@ -150,11 +199,32 @@ export function ProductFormWizard({
     inStock: product?.inStock ?? true,
     stock: product?.stock || 0,
   });
-  const [images, setImages] = useState<ProductImage[]>(product?.images || []);
-  const [colors, setColors] = useState<ProductColor[]>(product?.colors || []);
-  const [sizes, setSizes] = useState<ProductSize[]>(product?.sizes || []);
+  const [images, setImages] = useState<ProductImage[]>(
+    product?.images?.map((img, index) => ({
+      ...img,
+      order: index,
+    })) || []
+  );
+  const [colors, setColors] = useState<ProductColor[]>(
+    product?.colors?.map((color: any) => ({
+      id: color.id,
+      name: color.color || color.name || "",
+      hex: color.colorHex || color.hex || "#000000",
+    })) || []
+  );
+  const [sizes, setSizes] = useState<ProductSize[]>(
+    product?.sizes?.map((size: any) => ({
+      id: size.id,
+      name: size.size || size.name || "",
+      value: size.size || size.value || size.name || "",
+    })) || []
+  );
   const [categories, setCategories] = useState<ProductCategory[]>(
-    product?.categories || []
+    product?.categories?.map((cat: any) => ({
+      id: cat.category?.id || cat.id,
+      name: cat.category?.name || cat.name,
+      slug: cat.category?.slug || cat.slug,
+    })) || []
   );
 
   // Step validation
@@ -166,6 +236,9 @@ export function ProductFormWizard({
         if (!formData.name.trim()) newErrors.name = "El nombre es obligatorio";
         if (!formData.title.trim())
           newErrors.title = "El título es obligatorio";
+        break;
+
+      case "description":
         if (!formData.description.trim())
           newErrors.description = "La descripción es obligatoria";
         break;
@@ -194,17 +267,15 @@ export function ProductFormWizard({
   const isStepCompleted = (step: StepType): boolean => {
     switch (step) {
       case "basic":
-        return !!(
-          formData.name.trim() &&
-          formData.title.trim() &&
-          formData.description.trim()
-        );
+        return !!(formData.name.trim() && formData.title.trim());
       case "pricing":
         return formData.price > 0;
-      case "images":
-        return images.length > 0;
       case "categories":
         return categories.length > 0;
+      case "images":
+        return images.length > 0;
+      case "description":
+        return !!formData.description.trim();
       case "review":
         return true;
       default:
@@ -347,58 +418,99 @@ export function ProductFormWizard({
       // Upload images before saving the product
       const uploadedImages = await uploadImages(images);
 
-      // Prepare the input for the GraphQL mutation
-      const input = {
-        name: formData.name,
-        title: formData.title,
-        description: formData.description,
-        price: formData.price,
-        currency: formData.currency,
-        storeId: store.id,
-        categories: categories.map((cat) => ({
-          id: cat.id,
-          name: cat.name,
-          slug: cat.slug,
-        })),
-        images: uploadedImages.map((img) => ({
-          url: img.url,
-        })),
-        colors: colors.map((color) => ({
-          color: color.name,
-          colorHex: color.hex,
-        })),
-        sizes: sizes.map((size) => size.name),
-        inStock: formData.inStock,
-        stock: formData.stock,
-      };
+      if (product?.id) {
+        // UPDATE EXISTING PRODUCT
+        const updateInput = {
+          name: formData.name,
+          title: formData.title,
+          description: formData.description,
+          price: formData.price,
+          currency: formData.currency,
+          available: formData.available,
+          inStock: formData.inStock,
+          stock: formData.stock,
+          categories: categories.map((cat) => ({
+            id: cat.id,
+            name: cat.name,
+            slug: cat.slug,
+          })),
+          images: uploadedImages.map((img, index) => ({
+            url: img.url,
+            order: index,
+          })),
+          colors: colors.map((color) => ({
+            color: color.name,
+            colorHex: color.hex,
+          })),
+          sizes: sizes.map((size) => size.name),
+        };
 
-      // Create product using GraphQL mutation
-      const { data } = await createProductWithUrls({
-        variables: { input },
-      });
-
-      if (data.createProductWithUrls) {
-        toast.success("¡Producto creado exitosamente! 🎉");
-        // Reset form
-        setFormData({
-          name: "",
-          title: "",
-          description: "",
-          price: 0,
-          currency: "COP",
-          available: true,
-          inStock: true,
-          stock: 0,
+        const { data } = await updateProduct({
+          variables: {
+            id: product.id,
+            input: updateInput,
+          },
         });
-        setImages([]);
-        setColors([]);
-        setSizes([]);
-        setCategories([]);
-        setCompletedSteps(new Set());
-        setCurrentStep("basic");
-        onCancel(); // Close the form
+
+        if (data.updateProduct) {
+          toast.success("¡Producto actualizado exitosamente! 🎉");
+          onCancel(); // Close the form
+        } else {
+          throw new Error("No se pudo actualizar el producto");
+        }
       } else {
-        throw new Error("No se pudo crear el producto");
+        // CREATE NEW PRODUCT
+        const createInput = {
+          name: formData.name,
+          title: formData.title,
+          description: formData.description,
+          price: formData.price,
+          currency: formData.currency,
+          storeId: store.id,
+          categories: categories.map((cat) => ({
+            id: cat.id,
+            name: cat.name,
+            slug: cat.slug,
+          })),
+          images: uploadedImages.map((img) => ({
+            url: img.url,
+          })),
+          colors: colors.map((color) => ({
+            color: color.name,
+            colorHex: color.hex,
+          })),
+          sizes: sizes.map((size) => size.name),
+          inStock: formData.inStock,
+          stock: formData.stock,
+        };
+
+        const { data } = await createProductWithUrls({
+          variables: { input: createInput },
+        });
+
+        if (data.createProductWithUrls) {
+          toast.success("¡Producto creado exitosamente! 🎉");
+          // Reset form
+          setFormData({
+            name: "",
+            title: "",
+            description: "",
+            price: 0,
+            currency: "COP",
+            available: true,
+            inStock: true,
+            stock: 0,
+          });
+          setImages([]);
+          setColors([]);
+          setSizes([]);
+          setCategories([]);
+          setCompletedSteps(new Set());
+          setCurrentStep("basic");
+          onCancel(); // Close the form
+        } else {
+          throw new Error("No se pudo crear el producto");
+        }
       }
     } catch (error) {
       console.error("Error saving product:", error);
@@ -415,6 +527,78 @@ export function ProductFormWizard({
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  // Function to generate AI description with typewriter effect
+  const generateAIDescription = async () => {
+    if (!formData.name || !formData.title) {
+      toast.error("Por favor completa el nombre y título del producto primero");
+      return;
+    }
+
+    try {
+      toast.loading("Generando descripción con IA...", {
+        id: "ai-description",
+      });
+
+      const requestBody = {
+        title: formData.title,
+        categories: categories.map((cat) => cat.name),
+        colors: colors.map((color) => color.name),
+        sizes: sizes.map((size) => size.name),
+      };
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_REST_API_ENDPOINT}/chatbot/create-product-description`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.description) {
+        // Clear the current description first
+        setFormData((prev) => ({ ...prev, description: "" }));
+
+        toast.success("¡Descripción generada exitosamente! ✨", {
+          id: "ai-description",
+        });
+
+        // Typewriter effect implementation
+        const fullDescription = result.description;
+        const words = fullDescription.split(" ");
+        let currentText = "";
+        let wordIndex = 0;
+
+        const typeWriterInterval = setInterval(() => {
+          if (wordIndex < words.length) {
+            currentText += (wordIndex > 0 ? " " : "") + words[wordIndex];
+            setFormData((prev) => ({ ...prev, description: currentText }));
+            wordIndex++;
+          } else {
+            clearInterval(typeWriterInterval);
+          }
+        }, 80); // Velocidad de escritura: 80ms por palabra (ajustable)
+      } else {
+        throw new Error("No se recibió descripción del servidor");
+      }
+    } catch (error) {
+      console.error("Error generating AI description:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Error al generar descripción con IA";
+      toast.error(errorMessage, { id: "ai-description" });
     }
   };
 
@@ -465,28 +649,6 @@ export function ProductFormWizard({
                 />
                 {errors.title && (
                   <p className="text-red-500 text-sm mt-2">{errors.title}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Descripción *
-                </label>
-                <textarea
-                  rows={4}
-                  value={formData.description}
-                  onChange={(e) =>
-                    handleInputChange("description", e.target.value)
-                  }
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all ${
-                    errors.description ? "border-red-500" : "border-gray-300"
-                  }`}
-                  placeholder="Describe las características, materiales, y beneficios de tu producto..."
-                />
-                {errors.description && (
-                  <p className="text-red-500 text-sm mt-2">
-                    {errors.description}
-                  </p>
                 )}
               </div>
             </div>
@@ -595,6 +757,28 @@ export function ProductFormWizard({
             </div>
           </div>
         );
+      case "categories":
+        return (
+          <div className="space-y-6">
+            <div className="text-center mb-8">
+              <Tag className="w-12 h-12 text-orange-500 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900">
+                Categorías
+              </h3>
+              <p className="text-gray-600 mt-2">
+                Clasifica tu producto para que sea fácil de encontrar
+              </p>
+            </div>
+
+            <CategorySelector
+              selectedCategories={categories}
+              onChange={setCategories}
+            />
+            {errors.categories && (
+              <p className="text-red-500 text-sm">{errors.categories}</p>
+            )}
+          </div>
+        );
 
       case "images":
         return (
@@ -644,7 +828,7 @@ export function ProductFormWizard({
                   </span>
                 </h4>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
                   {/* Colors */}
                   <div>
                     <h5 className="text-md font-medium text-gray-800 mb-4 flex items-center">
@@ -668,25 +852,47 @@ export function ProductFormWizard({
           </div>
         );
 
-      case "categories":
+      case "description":
         return (
-          <div className="space-y-6">
-            <div className="text-center mb-8">
-              <Tag className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900">
-                Categorías
-              </h3>
-              <p className="text-gray-600 mt-2">
-                Clasifica tu producto para que sea fácil de encontrar
-              </p>
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Descripción *
+              </label>
+              {/* AI Generate Button */}
+              <button
+                type="button"
+                onClick={generateAIDescription}
+                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-slate-900 to-slate-500 hover:from-slate-700 hover:to-slate-300 text-white text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-105 hover:shadow-lg"
+              >
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
+                Generar Descripción IA
+              </button>
             </div>
-
-            <CategorySelector
-              selectedCategories={categories}
-              onChange={setCategories}
+            <textarea
+              rows={4}
+              value={formData.description}
+              onChange={(e) => handleInputChange("description", e.target.value)}
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all ${
+                errors.description ? "border-red-500" : "border-gray-300"
+              }`}
+              placeholder="Describe las características, materiales, y beneficios de tu producto..."
             />
-            {errors.categories && (
-              <p className="text-red-500 text-sm">{errors.categories}</p>
+
+            {errors.description && (
+              <p className="text-red-500 text-sm mt-2">{errors.description}</p>
             )}
           </div>
         );
@@ -710,7 +916,11 @@ export function ProductFormWizard({
                 <div className="flex items-start space-x-4">
                   {images.length > 0 && (
                     <img
-                      src={images[0].url}
+                      src={
+                        images[0].url.startsWith("blob:")
+                          ? images[0].url
+                          : `https://emprendyup-images.s3.us-east-1.amazonaws.com/${images[0].url}`
+                      }
                       alt={formData.name}
                       className="w-20 h-20 object-cover rounded-lg"
                     />
@@ -999,18 +1209,7 @@ export function ProductFormWizard({
                     steps.findIndex((s) => s.id === currentStep) ===
                     steps.length - 1
                   }
-                  className="flex items-center px-4 md:px-6 py-2 text-white rounded-lg transition-colors hover:shadow-lg"
-                  style={{
-                    backgroundColor: store?.primaryColor || "#2563eb",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      store?.secondaryColor || "#1e293b";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      store?.primaryColor || "#2563eb";
-                  }}
+                  className="flex items-center px-4 md:px-6 py-2 text-white rounded-lg transition-colors hover:shadow-lg bg-slate-800"
                 >
                   <span className="hidden sm:inline">Siguiente</span>
                   <span className="sm:hidden">Sig.</span>

@@ -27,6 +27,7 @@ const GET_PRODUCTS_BY_STORE = gql`
         id
         name
         title
+        description
         price
         currency
         available
@@ -41,6 +42,10 @@ const GET_PRODUCTS_BY_STORE = gql`
           id
           color
           colorHex
+        }
+        sizes {
+          id
+          size
         }
         categories {
           category {

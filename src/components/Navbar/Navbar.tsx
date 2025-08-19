@@ -94,7 +94,11 @@ export function Navbar() {
             <Link href="/" className="flex-shrink-0 flex items-center">
               {store.logoUrl ? (
                 <Image
-                  src={store.logoUrl}
+                  src={
+                    store.logoUrl.startsWith("http")
+                      ? store.logoUrl
+                      : `https://emprendyup-images.s3.us-east-1.amazonaws.com/${store.logoUrl}`
+                  }
                   alt={store.name}
                   width={120}
                   height={40}

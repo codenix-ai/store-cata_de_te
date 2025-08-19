@@ -1,9 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useCallback } from 'react';
-import { Upload, X, Move, Image as ImageIcon, Eye, ZoomIn, Grid, List } from 'lucide-react';
-import Image from 'next/image';
-import { ProductImage } from '@/types/product';
+import { useState, useCallback } from "react";
+import {
+  Upload,
+  X,
+  Move,
+  Image as ImageIcon,
+  Eye,
+  ZoomIn,
+  Grid,
+  List,
+} from "lucide-react";
+import Image from "next/image";
+import { ProductImage } from "@/types/product";
 
 interface ImageUploaderProps {
   images: ProductImage[];
@@ -11,12 +20,19 @@ interface ImageUploaderProps {
   maxImages?: number;
 }
 
-export function ImageUploader({ images, onChange, maxImages = 10 }: ImageUploaderProps) {
+export function ImageUploader({
+  images,
+  onChange,
+  maxImages = 10,
+}: ImageUploaderProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState<ProductImage | null>(null);
   const [hoveredImage, setHoveredImage] = useState<ProductImage | null>(null);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const inputId = useState(
+    () => `file-input-${Math.random().toString(36).slice(2)}`
+  )[0];
 
   const handleFileUpload = useCallback(
     async (files: FileList) => {
@@ -30,7 +46,7 @@ export function ImageUploader({ images, onChange, maxImages = 10 }: ImageUploade
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        if (!file.type.startsWith('image/')) continue;
+        if (!file.type.startsWith("image/")) continue;
 
         // Create a temporary URL for preview
         const url = URL.createObjectURL(file);
@@ -107,19 +123,23 @@ export function ImageUploader({ images, onChange, maxImages = 10 }: ImageUploade
       {/* Upload Area */}
       <div
         onDrop={handleDrop}
-        onDragOver={e => e.preventDefault()}
+        onDragOver={(e) => e.preventDefault()}
         className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors"
       >
         <input
           type="file"
-          multiple
+          multiple={maxImages > 1}
           accept="image/*"
           onChange={handleFileChange}
           className="hidden"
-          id="image-upload"
+          id={inputId}
           disabled={isUploading || images.length >= maxImages}
         />
-        <label htmlFor="image-upload" className="cursor-pointer flex flex-col items-center space-y-2">
+
+        <label
+          htmlFor={inputId}
+          className="cursor-pointer flex flex-col items-center space-y-2"
+        >
           {isUploading ? (
             <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
           ) : (
@@ -127,9 +147,13 @@ export function ImageUploader({ images, onChange, maxImages = 10 }: ImageUploade
           )}
           <div>
             <p className="text-sm font-medium text-gray-900">
-              {isUploading ? 'Subiendo...' : 'Arrastra imágenes aquí o haz clic para seleccionar'}
+              {isUploading
+                ? "Subiendo..."
+                : "Arrastra imágenes aquí o haz clic para seleccionar"}
             </p>
-            <p className="text-xs text-gray-500">PNG, JPG, GIF hasta 10MB. Máximo {maxImages} imágenes.</p>
+            <p className="text-xs text-gray-500">
+              PNG, JPG, GIF hasta 10MB. Máximo {maxImages} imágenes.
+            </p>
           </div>
         </label>
       </div>
@@ -140,22 +164,27 @@ export function ImageUploader({ images, onChange, maxImages = 10 }: ImageUploade
           {/* View Mode Toggle */}
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-gray-700">
-              {images.length} imagen{images.length !== 1 ? 'es' : ''} subida{images.length !== 1 ? 's' : ''}
+              {images.length} imagen{images.length !== 1 ? "es" : ""} subida
+              {images.length !== 1 ? "s" : ""}
             </p>
             <div className="flex items-center space-x-2">
               <button
-                onClick={() => setViewMode('grid')}
+                onClick={() => setViewMode("grid")}
                 className={`p-2 rounded-lg transition-colors ${
-                  viewMode === 'grid' ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600'
+                  viewMode === "grid"
+                    ? "bg-blue-100 text-blue-600"
+                    : "text-gray-400 hover:text-gray-600"
                 }`}
                 title="Vista de cuadrícula"
               >
                 <Grid className="w-4 h-4" />
               </button>
               <button
-                onClick={() => setViewMode('list')}
+                onClick={() => setViewMode("list")}
                 className={`p-2 rounded-lg transition-colors ${
-                  viewMode === 'list' ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600'
+                  viewMode === "list"
+                    ? "bg-blue-100 text-blue-600"
+                    : "text-gray-400 hover:text-gray-600"
                 }`}
                 title="Vista de lista"
               >
@@ -165,7 +194,7 @@ export function ImageUploader({ images, onChange, maxImages = 10 }: ImageUploade
           </div>
 
           {/* Grid View */}
-          {viewMode === 'grid' && (
+          {viewMode === "grid" && (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {images.map((image, index) => (
                 <div
@@ -176,12 +205,16 @@ export function ImageUploader({ images, onChange, maxImages = 10 }: ImageUploade
                   <div
                     draggable
                     onDragStart={() => handleDragStart(index)}
-                    onDragOver={e => handleDragOver(e, index)}
+                    onDragOver={(e) => handleDragOver(e, index)}
                     onDragEnd={handleDragEnd}
                     className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden cursor-move mb-3"
                   >
                     <Image
-                      src={`${image.url}`}
+                      src={
+                        image.url.startsWith("blob:")
+                          ? image.url
+                          : `https://emprendyup-images.s3.us-east-1.amazonaws.com/${image.url}`
+                      }
                       alt={image.alt || `Producto imagen ${index + 1}`}
                       fill
                       className="object-cover"
@@ -195,8 +228,12 @@ export function ImageUploader({ images, onChange, maxImages = 10 }: ImageUploade
 
                   {/* Image Info */}
                   <div className="mb-3">
-                    <p className="text-sm font-medium text-gray-900 truncate">{image.alt || `Imagen ${index + 1}`}</p>
-                    <p className="text-xs text-gray-500">Posición: {index + 1}</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {image.alt || `Imagen ${index + 1}`}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Posición: {index + 1}
+                    </p>
                   </div>
 
                   {/* Action Buttons */}
@@ -229,14 +266,14 @@ export function ImageUploader({ images, onChange, maxImages = 10 }: ImageUploade
           )}
 
           {/* List View */}
-          {viewMode === 'list' && (
+          {viewMode === "list" && (
             <div className="space-y-3">
               {images.map((image, index) => (
                 <div
                   key={image.id}
                   draggable
                   onDragStart={() => handleDragStart(index)}
-                  onDragOver={e => handleDragOver(e, index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
                   onDragEnd={handleDragEnd}
                   className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-move"
                 >
@@ -252,8 +289,12 @@ export function ImageUploader({ images, onChange, maxImages = 10 }: ImageUploade
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{image.alt || `Imagen ${index + 1}`}</p>
-                    <p className="text-xs text-gray-500">Posición: {index + 1}</p>
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {image.alt || `Imagen ${index + 1}`}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Posición: {index + 1}
+                    </p>
                   </div>
 
                   {/* Actions */}
@@ -272,7 +313,10 @@ export function ImageUploader({ images, onChange, maxImages = 10 }: ImageUploade
                     >
                       <X className="w-4 h-4" />
                     </button>
-                    <div className="p-2 text-gray-400" title="Arrastrar para reordenar">
+                    <div
+                      className="p-2 text-gray-400"
+                      title="Arrastrar para reordenar"
+                    >
                       <Move className="w-4 h-4" />
                     </div>
                   </div>
@@ -289,7 +333,9 @@ export function ImageUploader({ images, onChange, maxImages = 10 }: ImageUploade
           <div className="relative max-w-4xl max-h-full bg-white rounded-lg overflow-hidden">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">Vista Previa de Imagen</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Vista Previa de Imagen
+              </h3>
               <button
                 onClick={() => setPreviewImage(null)}
                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -302,8 +348,12 @@ export function ImageUploader({ images, onChange, maxImages = 10 }: ImageUploade
             <div className="p-4">
               <div className="relative max-w-3xl max-h-96 mx-auto">
                 <Image
-                  src={`${previewImage.url}`}
-                  alt={previewImage.alt || 'Preview'}
+                  src={
+                    previewImage.url.startsWith("blob:")
+                      ? previewImage.url
+                      : `https://emprendyup-images.s3.us-east-1.amazonaws.com/${previewImage.url}`
+                  }
+                  alt={previewImage.alt || "Preview"}
                   width={800}
                   height={600}
                   className="object-contain w-full h-full rounded-lg"
@@ -313,7 +363,10 @@ export function ImageUploader({ images, onChange, maxImages = 10 }: ImageUploade
               {/* Image Info */}
               <div className="mt-4 text-center text-sm text-gray-600">
                 <p className="font-medium">
-                  {previewImage.alt || `Imagen ${images.findIndex(img => img.id === previewImage.id) + 1}`}
+                  {previewImage.alt ||
+                    `Imagen ${
+                      images.findIndex((img) => img.id === previewImage.id) + 1
+                    }`}
                 </p>
                 <p>Orden: {previewImage.order + 1}</p>
               </div>
@@ -322,20 +375,26 @@ export function ImageUploader({ images, onChange, maxImages = 10 }: ImageUploade
               <div className="flex justify-center space-x-3 mt-4">
                 <button
                   onClick={() => {
-                    const currentIndex = images.findIndex(img => img.id === previewImage.id);
+                    const currentIndex = images.findIndex(
+                      (img) => img.id === previewImage.id
+                    );
                     if (currentIndex > 0) {
                       const prevImage = images[currentIndex - 1];
                       setPreviewImage(prevImage);
                     }
                   }}
-                  disabled={images.findIndex(img => img.id === previewImage.id) === 0}
+                  disabled={
+                    images.findIndex((img) => img.id === previewImage.id) === 0
+                  }
                   className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   ← Anterior
                 </button>
                 <button
                   onClick={() => {
-                    const currentIndex = images.findIndex(img => img.id === previewImage.id);
+                    const currentIndex = images.findIndex(
+                      (img) => img.id === previewImage.id
+                    );
                     removeImage(currentIndex);
                     setPreviewImage(null);
                   }}
@@ -345,13 +404,18 @@ export function ImageUploader({ images, onChange, maxImages = 10 }: ImageUploade
                 </button>
                 <button
                   onClick={() => {
-                    const currentIndex = images.findIndex(img => img.id === previewImage.id);
+                    const currentIndex = images.findIndex(
+                      (img) => img.id === previewImage.id
+                    );
                     if (currentIndex < images.length - 1) {
                       const nextImage = images[currentIndex + 1];
                       setPreviewImage(nextImage);
                     }
                   }}
-                  disabled={images.findIndex(img => img.id === previewImage.id) === images.length - 1}
+                  disabled={
+                    images.findIndex((img) => img.id === previewImage.id) ===
+                    images.length - 1
+                  }
                   className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Siguiente →

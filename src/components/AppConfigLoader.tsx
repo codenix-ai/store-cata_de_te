@@ -16,6 +16,22 @@ const GET_STORE_CONFIG = gql`
       backgroundColor
       textColor
       description
+      logoUrl
+      email
+      phone
+      address
+      city
+      department
+      country
+      businessType
+      taxId
+      businessName
+      facebookUrl
+      instagramUrl
+      twitterUrl
+      youtubeUrl
+      tiktokUrl
+      whatsappNumber
       platform
       shopUrl
       status
@@ -24,6 +40,9 @@ const GET_STORE_CONFIG = gql`
       timezone
       isActive
       maintenanceMode
+      metaTitle
+      metaDescription
+      metaKeywords
       createdAt
       updatedAt
     }

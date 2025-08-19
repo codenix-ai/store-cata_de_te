@@ -108,14 +108,12 @@ export function StoreConfigPanel() {
 
     setIsSaving(true);
     try {
-      // Prepare the input data for the mutation
+      // Prepare the input data for the mutation - include only basic supported fields
       const input = {
         name: config.name,
         description: config.description,
         logoUrl: config.logoUrl,
         primaryColor: config.primaryColor,
-        faviconUrl: config.faviconUrl,
-        bannerUrl: config.bannerUrl,
         secondaryColor: config.secondaryColor,
         accentColor: config.accentColor,
         backgroundColor: config.backgroundColor,
@@ -124,13 +122,27 @@ export function StoreConfigPanel() {
         phone: config.phone,
         address: config.address,
         city: config.city,
+        department: config.department,
         country: config.country,
-        twitterUrl: config.twitterUrl,
-        facebook: config.facebookUrl,
+        businessType: config.businessType,
+        taxId: config.taxId,
+        businessName: config.businessName,
+        facebookUrl: config.facebookUrl,
         instagramUrl: config.instagramUrl,
-        tiktokUrl: config.tiktokUrl,
+        twitterUrl: config.twitterUrl,
         youtubeUrl: config.youtubeUrl,
+        tiktokUrl: config.tiktokUrl,
+        whatsappNumber: config.whatsappNumber,
+        currency: config.currency,
+        language: config.language,
+        timezone: config.timezone,
+        isActive: config.isActive,
+        maintenanceMode: config.maintenanceMode,
+        metaTitle: config.metaTitle,
+        metaDescription: config.metaDescription,
       };
+
+      console.log("Sending update with input:", input);
 
       // Execute the GraphQL mutation
       const result = await updateStoreMutation({
