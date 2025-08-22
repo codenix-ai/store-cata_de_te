@@ -52,6 +52,7 @@ const categories = [
   'Audio',
   'Hogar',
   'Deportes',
+  'Servicios',
 ];
 
 const sortOptions = [
