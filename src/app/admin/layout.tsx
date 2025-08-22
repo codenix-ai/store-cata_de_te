@@ -14,6 +14,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ShoppingCart,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -89,6 +90,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       name: "Productos",
       href: "/admin/products",
       icon: Package,
+      roles: ["ADMIN", "STORE_OWNER"],
+    },
+    {
+      name: "Ordenes",
+      href: "/admin/orders",
+      icon: ShoppingCart,
       roles: ["ADMIN", "STORE_OWNER"],
     },
     {
