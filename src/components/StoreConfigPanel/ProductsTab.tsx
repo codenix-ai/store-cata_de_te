@@ -43,10 +43,7 @@ const GET_PRODUCTS_BY_STORE = gql`
           color
           colorHex
         }
-        sizes {
-          id
-          size
-        }
+
         categories {
           category {
             id
@@ -125,9 +122,15 @@ const CREATE_PRODUCT = gql`
         color
         colorHex
       }
-      sizes {
+      variants {
         id
-        size
+        typeVariant
+        nameVariant
+        jsonData
+      }
+      stocks {
+        id
+        price
       }
       categories {
         id
@@ -192,7 +195,7 @@ export function ProductsTab() {
   // Use data from GraphQL
   const products: Product[] = productsData?.productsByStore.items || [];
   const totalProducts = productsData?.productsByStore.total || 0;
-  const totalPages = Math.ceil(totalProducts / pageSize);
+  const totalPages = productsData?.productsByStore.totalPages || 1; // Use backend-provided totalPages
 
   const filteredProducts = products.filter(
     (product: Product) =>
@@ -247,14 +250,32 @@ export function ProductsTab() {
                 url: img.url,
                 order: img.order,
               })),
-              colors: productData.colors.map((color) => ({
-                name: color.name,
-                hex: color.hex,
-              })),
-              sizes: productData.sizes.map((size) => ({
-                name: size.name,
-                value: size.value,
-              })),
+              variants: [
+                // Convert colors to variants
+                ...productData.colors.map((color) => ({
+                  typeVariant: "COLOR",
+                  nameVariant: color.name,
+                  jsonData: {
+                    hex: color.hex,
+                    name: color.name,
+                  },
+                })),
+                // Add size variants if available
+                ...(productData.sizes || []).map((size: any) => ({
+                  typeVariant: "SIZE",
+                  nameVariant: size.name || size,
+                  jsonData: {
+                    name: size.name || size,
+                    value: size.name || size,
+                  },
+                })),
+              ],
+              stocks: [
+                {
+                  price: productData.price,
+                  stock: productData.stock,
+                },
+              ],
             },
           },
         });
@@ -285,14 +306,32 @@ export function ProductsTab() {
                 url: img.url,
                 order: img.order,
               })),
-              colors: productData.colors.map((color) => ({
-                name: color.name,
-                hex: color.hex,
-              })),
-              sizes: productData.sizes.map((size) => ({
-                name: size.name,
-                value: size.value,
-              })),
+              variants: [
+                // Convert colors to variants
+                ...productData.colors.map((color) => ({
+                  typeVariant: "COLOR",
+                  nameVariant: color.name,
+                  jsonData: {
+                    hex: color.hex,
+                    name: color.name,
+                  },
+                })),
+                // Add size variants if available
+                ...(productData.sizes || []).map((size: any) => ({
+                  typeVariant: "SIZE",
+                  nameVariant: size.name || size,
+                  jsonData: {
+                    name: size.name || size,
+                    value: size.name || size,
+                  },
+                })),
+              ],
+              stocks: [
+                {
+                  price: productData.price,
+                  stock: productData.stock,
+                },
+              ],
             },
           },
         });

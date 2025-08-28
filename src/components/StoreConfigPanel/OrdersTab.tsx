@@ -326,7 +326,7 @@ export function OrdersTab() {
                   </td>
                 </tr>
                 {expandedOrders.has(order.id) && (
-                  <tr>
+                  <tr key={order.id + "-expanded"}>
                     <td colSpan={6} className="px-6 py-4 bg-gray-50">
                       <div className="space-y-4">
                         {/* Products Section */}

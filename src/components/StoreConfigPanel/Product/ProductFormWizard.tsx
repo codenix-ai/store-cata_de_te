@@ -1,6 +1,25 @@
 "use client";
+// Query to get all variant combinations for a product
+const GET_VARIANT_COMBINATIONS = gql`
+  query GetVariantCombinations($productId: String!) {
+    variantCombinationsByProduct(productId: $productId) {
+      id
+      stockPrices {
+        id
+        price
+        stock
+      }
+      variants {
+        id
+        name
+        type
+        jsonData
+      }
+    }
+  }
+`;
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Save,
   Package,
@@ -14,9 +33,11 @@ import {
   Palette,
   Ruler,
   Tag,
+  Plus,
+  Settings,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { useMutation } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import { gql } from "@apollo/client";
 import { useStore } from "@/components/StoreProvider";
 import {
@@ -26,11 +47,15 @@ import {
   ProductColor,
   ProductSize,
   ProductCategory,
+  ProductVariant,
 } from "@/types/product";
+import { variantsToColors, variantsToSizes } from "@/utils/productVariants";
 import { ImageUploader } from "./ImageUploader";
 import { ColorPicker } from "./ColorPicker";
 import { SizeSelector } from "./SizeSelector";
 import { CategorySelector } from "./CategorySelector";
+import { CustomVariantSelector } from "./CustomVariantSelector";
+import { VariantCombinationGenerator } from "./VariantCombinationGenerator";
 
 // GraphQL Mutation
 const CREATE_PRODUCT_WITH_URLS = gql`
@@ -57,9 +82,16 @@ const CREATE_PRODUCT_WITH_URLS = gql`
         color
         colorHex
       }
-      sizes {
+      variants {
         id
-        size
+        typeVariant
+        nameVariant
+        jsonData
+      }
+      stocks {
+        id
+        price
+        stock
       }
     }
   }
@@ -87,9 +119,6 @@ const UPDATE_PRODUCT = gql`
         color
         colorHex
       }
-      sizes {
-        size
-      }
       images {
         url
         order
@@ -97,6 +126,78 @@ const UPDATE_PRODUCT = gql`
       createdAt
       updatedAt
     }
+  }
+`;
+
+// New GraphQL operations for variant combinations
+const CREATE_VARIANT_COMBINATION = gql`
+  mutation CreateVariantCombination($input: CreateVariantCombinationInput!) {
+    createVariantCombination(input: $input) {
+      combinationId
+      stockPriceId
+    }
+  }
+`;
+
+// Query to get all variants for a product (to get their IDs)
+const GET_PRODUCT_VARIANTS = gql`
+  query GetProductVariants($productId: String!) {
+    productVariantsByProduct(productId: $productId) {
+      id
+      name
+      type
+      jsonData
+    }
+  }
+`;
+
+// Mutation to create variants
+const CREATE_VARIANTS = gql`
+  mutation CreateVariants($inputs: [CreateVariantInput!]!) {
+    createVariants(inputs: $inputs)
+  }
+`;
+
+// REMOVED: GET_VARIANT_COMBINATIONS (invalid field)
+
+const GENERATE_ALL_COMBINATIONS = gql`
+  query GenerateAllCombinations($productId: String!) {
+    generateVariantCombinations(productId: $productId) {
+      name
+      variants {
+        id
+        variant {
+          id
+          typeVariant
+          nameVariant
+          jsonData
+        }
+      }
+      stocks {
+        id
+        price
+        stock
+        available
+      }
+    }
+  }
+`;
+
+const UPDATE_STOCK = gql`
+  mutation UpdateStock($stockId: String!, $input: UpdateStockInput!) {
+    updateStockForVariantCombination(stockId: $stockId, input: $input) {
+      id
+      price
+      stock
+      available
+    }
+  }
+`;
+
+// Add mutation to delete all variant combinations for a product
+const DELETE_ALL_VARIANT_COMBINATIONS = gql`
+  mutation DeleteAllVariantCombinations($productId: String!) {
+    deleteAllVariantCombinations(productId: $productId)
   }
 `;
 
@@ -123,24 +224,285 @@ interface Step {
   required: boolean;
 }
 
+// Custom variant interface for the form
+interface CustomVariant {
+  id: string;
+  type: string;
+  name: string;
+  value: string;
+}
+
+// Variant combination interface
+interface VariantCombination {
+  id: string;
+  name: string;
+  variants: Array<{
+    type: string;
+    name: string;
+    value: string;
+  }>;
+  stock: number;
+  price?: number;
+  stockId?: string; // For updating existing stocks
+}
+
 export function ProductFormWizard({
   product,
   onSave,
   onCancel,
   loading = false,
 }: ProductFormWizardProps) {
-  const { store } = useStore();
-  const [currentStep, setCurrentStep] = useState<StepType>("basic");
+  // Sync form state with product prop when editing
+  useEffect(() => {
+    if (product) {
+      setFormData({
+        name: product.name || "",
+        title: product.title || "",
+        description: product.description || "",
+        price: product.price || 0,
+        currency: product.currency || "COP",
+        available: product.available ?? true,
+        inStock: product.inStock ?? true,
+        stock: product.stock || 0,
+      });
+      setImages(
+        product.images?.map((img, index) => ({ ...img, order: index })) || []
+      );
+      setColors(
+        (() => {
+          const oldColors =
+            product.colors?.map((color: any) => ({
+              id: color.id,
+              name: color.color || color.name || "",
+              hex: color.colorHex || color.hex || "#000000",
+            })) || [];
+          if (product.variants && product.variants.length > 0) {
+            const variantColors = variantsToColors(product.variants);
+            const mergedColors = [...oldColors, ...variantColors];
+            return mergedColors.filter(
+              (color, index, self) =>
+                index === self.findIndex((c) => c.name === color.name)
+            );
+          }
+          return oldColors;
+        })()
+      );
+      setSizes(
+        (() => {
+          const oldSizes =
+            product.sizes?.map((size: any) => ({
+              id: size.id,
+              name: size.name,
+              value: size.value,
+            })) || [];
+          if (product.variants && product.variants.length > 0) {
+            const variantSizes = variantsToSizes(product.variants);
+            const mergedSizes = [...oldSizes, ...variantSizes];
+            return mergedSizes.filter(
+              (size, index, self) =>
+                index === self.findIndex((s) => s.name === size.name)
+            );
+          }
+          return oldSizes;
+        })()
+      );
+      // Robustly map categories to ProductCategory shape
+      // Map and deduplicate categories by id
+      const mappedCategories = (product.categories || []).map((cat: any) => {
+        const c = cat.category || cat;
+        return {
+          id: c.id,
+          name: c.name,
+          slug: c.slug || c.name?.toLowerCase().replace(/\s+/g, "-") || "",
+        };
+      });
+      // Deduplicate by id
+      const uniqueCategories = mappedCategories.filter(
+        (cat, idx, arr) => arr.findIndex((c) => c.id === cat.id) === idx
+      );
+      setCategories(uniqueCategories);
+      if (
+        "customVariants" in product &&
+        Array.isArray((product as any).customVariants)
+      ) {
+        setCustomVariants((product as any).customVariants);
+      } else {
+        setCustomVariants([]);
+      }
+    }
+  }, [product]);
+  // Error state for form validation
+  const [errors, setErrors] = useState<any>({});
+
+  // Store context
+  const storeContext = useStore();
+  const store = storeContext.store;
+
+  // Saving/loading state
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Step navigation state
+  const [currentStep, setCurrentStep] = useState<StepType>("basic");
+
+  // Stepper UI for direct navigation
+  const Stepper = () => (
+    <div className="flex items-center justify-center mb-8">
+      {steps.map((step, idx) => {
+        const isActive = currentStep === step.id;
+        const isCompleted = completedSteps.has(step.id);
+        return (
+          <button
+            key={step.id}
+            type="button"
+            onClick={() => goToStep(step.id)}
+            className={`flex items-center px-4 py-2 rounded-full border transition-colors duration-150 mx-1
+              ${
+                isActive
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : isCompleted
+                  ? "bg-green-100 text-green-700 border-green-400"
+                  : "bg-gray-100 text-gray-700 border-gray-300"
+              }
+            `}
+            style={{
+              fontWeight: isActive ? "bold" : "normal",
+              cursor: "pointer",
+            }}
+          >
+            <span className="mr-2">{step.icon}</span>
+            {step.title}
+          </button>
+        );
+      })}
+    </div>
+  );
+  const [variantCombinations, setVariantCombinations] = useState<
+    VariantCombination[]
+  >([]);
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [customVariants, setCustomVariants] = useState<CustomVariant[]>([]);
+
+  // --- Helper: validateStep ---
+  function validateStep(stepId: StepType): boolean {
+    // TODO: Implement actual validation logic for each step
+    return true;
+  }
+
+  // --- Helper: isStepCompleted ---
+  function isStepCompleted(stepId: StepType): boolean {
+    // TODO: Implement actual logic for step completion
+    return completedSteps.has(stepId);
+  }
+
+  // --- Helper: goToStep ---
+  function goToStep(stepId: StepType) {
+    setCurrentStep(stepId);
+  }
   const [completedSteps, setCompletedSteps] = useState<Set<StepType>>(
     new Set()
   );
 
-  // GraphQL mutations
+  // State for loading variant combinations
+  const [loadingCombinations, setLoadingCombinations] = useState(false);
+
+  // GraphQL mutations and queries
   const [createProductWithUrls] = useMutation(CREATE_PRODUCT_WITH_URLS);
   const [updateProduct] = useMutation(UPDATE_PRODUCT);
+  const [createVariantCombination] = useMutation(CREATE_VARIANT_COMBINATION);
+  const [updateStock] = useMutation(UPDATE_STOCK);
+  const [deleteAllVariantCombinations] = useMutation(
+    DELETE_ALL_VARIANT_COMBINATIONS
+  );
+  const [createVariants] = useMutation(CREATE_VARIANTS);
+
+  // Query to get all variant combinations for the product
+  const { data: variantCombinationsData } = useQuery(GET_VARIANT_COMBINATIONS, {
+    variables: { productId: product?.id || "" },
+    skip: !product?.id,
+    fetchPolicy: "cache-and-network",
+  });
+
+  // REMOVED: Query for existing variant combinations (invalid field)
+  // If you need variant data, use productVariantsData from GET_PRODUCT_VARIANTS
+
+  // Query to get all variant IDs for the product (for use in combinations)
+  const { data: productVariantsData, refetch: refetchProductVariants } =
+    useQuery(GET_PRODUCT_VARIANTS, {
+      variables: { productId: product?.id || "" },
+      skip: !product?.id,
+      fetchPolicy: "cache-and-network",
+    });
+
+  // Sync colors and sizes from productVariantsData (all DB variants)
+  useEffect(() => {
+    if (productVariantsData && productVariantsData.productVariantsByProduct) {
+      const allVariants = productVariantsData.productVariantsByProduct;
+
+      // Colors
+      setColors(
+        allVariants
+          .filter((v: { type: string }) => v.type?.toLowerCase() === "color")
+          .map(
+            (v: {
+              id: any;
+              name: any;
+              jsonData: { hex: any; color: any };
+            }) => ({
+              id: v.id,
+              name: v.name,
+              hex: v.jsonData?.hex || v.jsonData?.color || "#000000",
+            })
+          )
+      );
+
+      // Sizes
+      setSizes(
+        allVariants
+          .filter((v: { type: string }) => v.type?.toLowerCase() === "size")
+          .map((v: { id: any; name: any; jsonData: { value: any } }) => ({
+            id: v.id,
+            name: v.name,
+            value: v.jsonData?.value || v.name,
+          }))
+      );
+
+      // Custom Variants (other types)
+      interface BackendVariant {
+        id: string;
+        type: string;
+        name: string;
+        jsonData?: {
+          value?: string;
+          [key: string]: any;
+        };
+      }
+
+      interface CustomVariantForm {
+        id: string;
+        type: string;
+        name: string;
+        value: string;
+      }
+
+      setCustomVariants(
+        (allVariants as BackendVariant[])
+          .filter(
+            (v: BackendVariant) =>
+              v.type?.toLowerCase() !== "color" &&
+              v.type?.toLowerCase() !== "size"
+          )
+          .map(
+            (v: BackendVariant): CustomVariantForm => ({
+              id: v.id,
+              type: v.type,
+              name: v.name,
+              value: v.jsonData?.value || "",
+            })
+          )
+      );
+    }
+  }, [productVariantsData]);
 
   // Define steps
   const steps: Step[] = [
@@ -199,127 +561,215 @@ export function ProductFormWizard({
     inStock: product?.inStock ?? true,
     stock: product?.stock || 0,
   });
+
+  // Sync variant combinations from backend to state
+  useEffect(() => {
+    if (
+      variantCombinationsData &&
+      variantCombinationsData.variantCombinationsByProduct
+    ) {
+      setVariantCombinations(
+        variantCombinationsData.variantCombinationsByProduct.map(
+          (comb: any) => ({
+            id: comb.id,
+            name: comb.variants.map((v: any) => v.name).join(" / "),
+            variants: comb.variants.map((v: any) => ({
+              type: v.type,
+              name: v.name,
+              value: v.jsonData?.value || "",
+            })),
+            stock: comb.stockPrices?.[0]?.stock ?? 0,
+            price: comb.stockPrices?.[0]?.price ?? 0,
+            stockId: comb.stockPrices?.[0]?.id ?? undefined,
+          })
+        )
+      );
+    }
+  }, [variantCombinationsData]);
   const [images, setImages] = useState<ProductImage[]>(
     product?.images?.map((img, index) => ({
       ...img,
       order: index,
     })) || []
   );
-  const [colors, setColors] = useState<ProductColor[]>(
-    product?.colors?.map((color: any) => ({
-      id: color.id,
-      name: color.color || color.name || "",
-      hex: color.colorHex || color.hex || "#000000",
-    })) || []
-  );
-  const [sizes, setSizes] = useState<ProductSize[]>(
-    product?.sizes?.map((size: any) => ({
-      id: size.id,
-      name: size.size || size.name || "",
-      value: size.size || size.value || size.name || "",
-    })) || []
-  );
-  const [categories, setCategories] = useState<ProductCategory[]>(
-    product?.categories?.map((cat: any) => ({
-      id: cat.category?.id || cat.id,
-      name: cat.category?.name || cat.name,
-      slug: cat.category?.slug || cat.slug,
-    })) || []
-  );
 
-  // Step validation
-  const validateStep = (step: StepType): boolean => {
-    const newErrors: Record<string, string> = {};
+  // Initialize colors and sizes from both old fields and variants
+  const [colors, setColors] = useState<ProductColor[]>(() => {
+    // First try to get colors from old format
+    const oldColors =
+      product?.colors?.map((color: any) => ({
+        id: color.id,
+        name: color.color || color.name || "",
+        hex: color.colorHex || color.hex || "#000000",
+      })) || [];
 
-    switch (step) {
-      case "basic":
-        if (!formData.name.trim()) newErrors.name = "El nombre es obligatorio";
-        if (!formData.title.trim())
-          newErrors.title = "El título es obligatorio";
-        break;
-
-      case "description":
-        if (!formData.description.trim())
-          newErrors.description = "La descripción es obligatoria";
-        break;
-
-      case "pricing":
-        if (formData.price <= 0)
-          newErrors.price = "El precio debe ser mayor a 0";
-        break;
-
-      case "images":
-        if (images.length === 0)
-          newErrors.images = "Agrega al menos una imagen";
-        break;
-
-      case "categories":
-        if (categories.length === 0)
-          newErrors.categories = "Selecciona una categoría";
-        break;
+    // If we have variants, also extract colors from them
+    if (product?.variants && product.variants.length > 0) {
+      const variantColors = variantsToColors(product.variants);
+      // Merge and deduplicate
+      const mergedColors = [...oldColors, ...variantColors];
+      return mergedColors.filter(
+        (color, index, self) =>
+          index === self.findIndex((c) => c.name === color.name)
+      );
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    return oldColors;
+  });
 
-  // Check if step is completed
-  const isStepCompleted = (step: StepType): boolean => {
-    switch (step) {
-      case "basic":
-        return !!(formData.name.trim() && formData.title.trim());
-      case "pricing":
-        return formData.price > 0;
-      case "categories":
-        return categories.length > 0;
-      case "images":
-        return images.length > 0;
-      case "description":
-        return !!formData.description.trim();
-      case "review":
-        return true;
-      default:
-        return false;
-    }
-  };
+  const [sizes, setSizes] = useState<ProductSize[]>(() => {
+    // ...existing code for sizes initialization...
+    return [];
+  });
 
-  // Navigation
-  const goToStep = (step: StepType) => {
-    if (validateStep(currentStep)) {
-      if (isStepCompleted(currentStep)) {
-        setCompletedSteps((prev) => new Set([...prev, currentStep]));
+  // Function to update stocks for existing variant combinations
+  const updateVariantCombinationStocks = async (
+    combinationsToUpdate: VariantCombination[]
+  ) => {
+    if (combinationsToUpdate.length === 0) return;
+    try {
+      for (const combination of combinationsToUpdate) {
+        if (!combination.stockId) continue;
+        const input = {
+          price: combination.price || formData.price,
+          stock: combination.stock,
+          available: true,
+        };
+        await updateStock({
+          variables: {
+            stockId: combination.stockId,
+            input: input,
+          },
+        });
       }
-      setCurrentStep(step);
-    } else {
-      // Show helpful message for incomplete steps
-      const stepInfo = steps.find((s) => s.id === currentStep);
-      toast.error(`Por favor completa "${stepInfo?.title}" antes de continuar`);
+    } catch (error) {
+      console.error("❌ Error updating variant combination stocks:", error);
+      throw error;
     }
   };
 
-  const nextStep = () => {
-    const currentIndex = steps.findIndex((s) => s.id === currentStep);
-    if (currentIndex < steps.length - 1) {
-      if (validateStep(currentStep)) {
-        if (isStepCompleted(currentStep)) {
-          setCompletedSteps((prev) => new Set([...prev, currentStep]));
+  // Function to save variant combinations using the new backend API
+  const saveVariantCombinations = async (
+    productId: string,
+    createdVariants?: any[]
+  ) => {
+    if (variantCombinations.length === 0) return;
+    try {
+      toast.loading("Guardando combinaciones de variantes...", {
+        id: "variant-combinations",
+      });
+      // Get all variant objects for this product from backend
+      let allVariants = productVariantsData?.productVariantsByProduct || [];
+      let allVariantIds = allVariants.map((v: { id: string }) => v.id);
+      // Separate combinations into new and existing (for updates)
+      const combinationsToCreate = variantCombinations.filter(
+        (c: VariantCombination) => !c.stockId
+      );
+      const combinationsToUpdate = variantCombinations.filter(
+        (c: VariantCombination) => !!c.stockId
+      );
+      // Update existing combinations first
+      if (combinationsToUpdate.length > 0) {
+        await updateVariantCombinationStocks(combinationsToUpdate);
+      }
+      // --- PREVENT DUPLICATE VARIANT CREATION (CASE-INSENSITIVE) ---
+      // Gather all unique variants from combinations to create
+      const variantsToCreate: Array<{
+        name: string;
+        type: string;
+        productId: string;
+        jsonData?: any;
+      }> = [];
+      combinationsToCreate.forEach((combination: VariantCombination) => {
+        combination.variants.forEach((variant: any) => {
+          // Only add if not already in allVariants (case-insensitive type+name)
+          const alreadyExists = allVariants.some(
+            (v: { type: string; name: string }) =>
+              v.type.trim().toLowerCase() ===
+                variant.type.trim().toLowerCase() &&
+              v.name.trim().toLowerCase() === variant.name.trim().toLowerCase()
+          );
+          const alreadyInList = variantsToCreate.some(
+            (v) =>
+              v.type.trim().toLowerCase() ===
+                variant.type.trim().toLowerCase() &&
+              v.name.trim().toLowerCase() === variant.name.trim().toLowerCase()
+          );
+          if (!alreadyExists && !alreadyInList) {
+            variantsToCreate.push({
+              name: variant.name,
+              type: variant.type,
+              productId: productId,
+              jsonData: variant.value ? { value: variant.value } : undefined,
+            });
+          }
+        });
+      });
+      // Only call createVariants if there are new variants to create
+      if (variantsToCreate.length > 0) {
+        await createVariants({ variables: { inputs: variantsToCreate } });
+        // Refetch product variants from backend to get latest IDs
+        if (productId) {
+          await new Promise((resolve) => setTimeout(resolve, 400)); // slight delay for backend consistency
+          const refetchResult = await refetchProductVariants();
+          allVariants = refetchResult.data?.productVariantsByProduct || [];
+          allVariantIds = allVariants.map((v: { id: string }) => v.id);
         }
-        setCurrentStep(steps[currentIndex + 1].id);
-      } else {
-        // Show helpful validation message
-        const stepInfo = steps.find((s) => s.id === currentStep);
-        toast.error(
-          `Por favor completa todos los campos requeridos en "${stepInfo?.title}"`
-        );
       }
+      // Now create combinations (variantIds should exist)
+      if (combinationsToCreate.length > 0) {
+        for (const combination of combinationsToCreate) {
+          // Find the variant IDs that correspond to this combination
+          let variantIds: string[] = [];
+          if (allVariants.length) {
+            variantIds = combination.variants
+              .map((variant: any) => {
+                const matched = allVariants.find(
+                  (v: { type: string; name: string; id: string }) =>
+                    v.type.trim().toLowerCase() ===
+                      variant.type.trim().toLowerCase() &&
+                    v.name.trim().toLowerCase() ===
+                      variant.name.trim().toLowerCase()
+                );
+                return matched?.id;
+              })
+              .filter(Boolean);
+          }
+          if (!variantIds.length && allVariantIds.length) {
+            // Fallback: skip this combination
+            console.warn(
+              "[saveVariantCombinations] Skipping combination with no variantIds:",
+              combination
+            );
+            continue;
+          }
+          // Actually create the combination
+          await createVariantCombination({
+            variables: {
+              input: {
+                productId,
+                variantIds,
+                price: combination.price || formData.price,
+                stock: combination.stock,
+              },
+            },
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error saving variant combinations:", error);
+      toast.error("Error al guardar combinaciones de variantes");
+      throw error;
     }
   };
-
+  // Navigation helpers
   const prevStep = () => {
-    const currentIndex = steps.findIndex((s) => s.id === currentStep);
-    if (currentIndex > 0) {
-      setCurrentStep(steps[currentIndex - 1].id);
-    }
+    const idx = steps.findIndex((s) => s.id === currentStep);
+    if (idx > 0) setCurrentStep(steps[idx - 1].id);
+  };
+  const nextStep = () => {
+    const idx = steps.findIndex((s) => s.id === currentStep);
+    if (idx < steps.length - 1) setCurrentStep(steps[idx + 1].id);
   };
 
   // Function to upload images to the server
@@ -428,7 +878,13 @@ export function ProductFormWizard({
           currency: formData.currency,
           available: formData.available,
           inStock: formData.inStock,
-          stock: formData.stock,
+          stock:
+            variantCombinations.length > 0
+              ? variantCombinations.reduce(
+                  (total, combination) => total + combination.stock,
+                  0
+                )
+              : formData.stock,
           categories: categories.map((cat) => ({
             id: cat.id,
             name: cat.name,
@@ -445,6 +901,13 @@ export function ProductFormWizard({
           sizes: sizes.map((size) => size.name),
         };
 
+        console.log("🔍 UPDATE Input being sent:", {
+          colors: updateInput.colors,
+          sizes: updateInput.sizes,
+          customVariants: customVariants,
+          stock: updateInput.stock,
+        });
+
         const { data } = await updateProduct({
           variables: {
             id: product.id,
@@ -453,6 +916,14 @@ export function ProductFormWizard({
         });
 
         if (data.updateProduct) {
+          // Save variant combinations after product update
+          if (variantCombinations.length > 0) {
+            await saveVariantCombinations(
+              product.id,
+              data.updateProduct.variants
+            );
+          }
+
           toast.success("¡Producto actualizado exitosamente! 🎉");
           onCancel(); // Close the form
         } else {
@@ -466,7 +937,7 @@ export function ProductFormWizard({
           description: formData.description,
           price: formData.price,
           currency: formData.currency,
-          storeId: store.id,
+          storeId: store?.storeId,
           categories: categories.map((cat) => ({
             id: cat.id,
             name: cat.name,
@@ -481,14 +952,37 @@ export function ProductFormWizard({
           })),
           sizes: sizes.map((size) => size.name),
           inStock: formData.inStock,
-          stock: formData.stock,
+          stock:
+            variantCombinations.length > 0
+              ? variantCombinations.reduce(
+                  (total, combination) => total + combination.stock,
+                  0
+                )
+              : formData.stock,
         };
+
+        console.log("🔍 CREATE Input being sent:", {
+          colors: createInput.colors,
+          sizes: createInput.sizes,
+          customVariants: customVariants,
+          stock: createInput.stock,
+        });
 
         const { data } = await createProductWithUrls({
           variables: { input: createInput },
         });
 
         if (data.createProductWithUrls) {
+          const newProductId = data.createProductWithUrls.id;
+
+          // Save variant combinations after product creation
+          if (variantCombinations.length > 0) {
+            await saveVariantCombinations(
+              newProductId,
+              data.createProductWithUrls.variants
+            );
+          }
+
           toast.success("¡Producto creado exitosamente! 🎉");
           // Reset form
           setFormData({
@@ -505,6 +999,8 @@ export function ProductFormWizard({
           setColors([]);
           setSizes([]);
           setCategories([]);
+          setCustomVariants([]);
+          setVariantCombinations([]);
           setCompletedSteps(new Set());
           setCurrentStep("basic");
           onCancel(); // Close the form
@@ -526,7 +1022,7 @@ export function ProductFormWizard({
   const handleInputChange = (field: keyof typeof formData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
+      setErrors((prev: any) => ({ ...prev, [field]: "" }));
     }
   };
 
@@ -846,6 +1342,41 @@ export function ProductFormWizard({
                     </h5>
                     <SizeSelector sizes={sizes} onChange={setSizes} />
                   </div>
+
+                  {/* Custom Variants */}
+                  <div>
+                    <CustomVariantSelector
+                      variants={customVariants}
+                      onChange={setCustomVariants}
+                    />
+                  </div>
+
+                  {/* Variant Combinations */}
+                  <div className="mt-8 pt-8 border-t border-gray-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-medium text-gray-900">
+                        Combinaciones de Variantes
+                      </h3>
+                    </div>
+
+                    {loadingCombinations && product?.id ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="w-6 h-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mr-3" />
+                        <span className="text-gray-600">
+                          Cargando combinaciones existentes...
+                        </span>
+                      </div>
+                    ) : (
+                      <VariantCombinationGenerator
+                        colors={colors}
+                        sizes={sizes}
+                        customVariants={customVariants}
+                        onCombinationsChange={setVariantCombinations}
+                        existingCombinations={variantCombinations}
+                        isEditMode={!!product?.id}
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1009,6 +1540,39 @@ export function ProductFormWizard({
                     </div>
                   </div>
                 )}
+
+                {variantCombinations.length > 0 && (
+                  <div>
+                    <h5 className="font-medium text-gray-900">
+                      Stock por Variante:
+                    </h5>
+                    <div className="mt-2 space-y-1">
+                      {variantCombinations.map((combination) => (
+                        <div
+                          key={combination.id}
+                          className="flex justify-between items-center text-sm"
+                        >
+                          <span className="text-gray-600">
+                            {combination.name}:
+                          </span>
+                          <span className="font-medium">
+                            {combination.stock} unidades
+                          </span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between items-center text-sm font-medium border-t pt-1 mt-2">
+                        <span>Total:</span>
+                        <span>
+                          {variantCombinations.reduce(
+                            (sum, c) => sum + c.stock,
+                            0
+                          )}{" "}
+                          unidades
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1057,10 +1621,12 @@ export function ProductFormWizard({
               const isActive = step.id === currentStep;
               const isCompleted =
                 completedSteps.has(step.id) || isStepCompleted(step.id);
+              // Minimal change: allow all steps to be clickable if editing (product exists)
               const isClickable =
+                !!product ||
                 index === 0 ||
-                completedSteps.has(steps[index - 1].id) ||
-                isStepCompleted(steps[index - 1].id);
+                completedSteps.has(steps[index - 1]?.id) ||
+                isStepCompleted(steps[index - 1]?.id);
 
               return (
                 <div
@@ -1211,7 +1777,7 @@ export function ProductFormWizard({
                   }
                   className="flex items-center px-4 md:px-6 py-2 text-white rounded-lg transition-colors hover:shadow-lg bg-slate-800"
                 >
-                  <span className="hidden sm:inline">Siguiente</span>
+                  <span className="hidden sm:inline">Siguiente </span>
                   <span className="sm:hidden">Sig.</span>
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </button>

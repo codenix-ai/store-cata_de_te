@@ -31,6 +31,7 @@ const GET_PRODUCTS_BY_STORE = gql`
           color
           colorHex
         }
+
         categories {
           category {
             id

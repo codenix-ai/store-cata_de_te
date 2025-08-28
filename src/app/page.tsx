@@ -190,6 +190,7 @@ export default function HomePage() {
     if (!product.inStock || (product.stock && product.stock === 0)) {
       return "Agotado";
     }
+    // Check basic stock level
     if (product.stock && product.stock < 5) {
       return "Últimas unidades";
     }
@@ -200,6 +201,11 @@ export default function HomePage() {
       return "No disponible";
     }
     return "Disponible";
+  };
+
+  // Helper function to get best price (simplified)
+  const getBestPrice = (product: any) => {
+    return product.price;
   };
   return (
     <Layout>
@@ -375,8 +381,9 @@ export default function HomePage() {
                                 <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
                                   <span className="text-sm sm:text-lg font-bold text-gray-900">
                                     {product.currency || "$"}
-                                    {product.price?.toLocaleString()}
+                                    {getBestPrice(product)?.toLocaleString()}
                                   </span>
+                                  {/* Show stock info */}
                                   {product.stock && product.stock < 10 && (
                                     <span className="text-xs text-orange-500">
                                       Solo {product.stock} disponibles

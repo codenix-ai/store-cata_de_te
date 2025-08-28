@@ -1,10 +1,10 @@
-'use client';
-import { ProductCard } from '@/components/ProductCard/ProductCard';
-import { useStore } from '@/components/StoreProvider';
-import { Search, Filter, SlidersHorizontal } from 'lucide-react';
-import { useState, useMemo } from 'react';
-import { useQuery, gql } from '@apollo/client';
-import Layout from '@/components/Layout/Layout';
+"use client";
+import { ProductCard } from "@/components/ProductCard/ProductCard";
+import { useStore } from "@/components/StoreProvider";
+import { Search, Filter, SlidersHorizontal } from "lucide-react";
+import { useState, useMemo } from "react";
+import { useQuery, gql } from "@apollo/client";
+import Layout from "@/components/Layout/Layout";
 
 const GET_PRODUCTS_BY_STORE = gql`
   query GetProductsByStore($storeId: String!, $page: Int, $pageSize: Int) {
@@ -13,6 +13,7 @@ const GET_PRODUCTS_BY_STORE = gql`
         id
         name
         title
+        description
         price
         currency
         available
@@ -44,23 +45,23 @@ const GET_PRODUCTS_BY_STORE = gql`
 `;
 
 const categories = [
-  'Todas las Categorías',
-  'Tecnología',
-  'Oficina',
-  'Fotografía',
-  'Mobiliario',
-  'Audio',
-  'Hogar',
-  'Deportes',
-  'Servicios',
+  "Todas las Categorías",
+  "Tecnología",
+  "Oficina",
+  "Fotografía",
+  "Mobiliario",
+  "Audio",
+  "Hogar",
+  "Deportes",
+  "Servicios",
 ];
 
 const sortOptions = [
-  { value: 'featured', label: 'Destacados' },
-  { value: 'price-low', label: 'Precio: Menor a Mayor' },
-  { value: 'price-high', label: 'Precio: Mayor a Menor' },
-  { value: 'rating', label: 'Mejor Calificados' },
-  { value: 'newest', label: 'Más Nuevos' },
+  { value: "featured", label: "Destacados" },
+  { value: "price-low", label: "Precio: Menor a Mayor" },
+  { value: "price-high", label: "Precio: Mayor a Menor" },
+  { value: "rating", label: "Mejor Calificados" },
+  { value: "newest", label: "Más Nuevos" },
 ];
 
 export default function ProductsPage() {
@@ -73,7 +74,7 @@ export default function ProductsPage() {
   // GraphQL query for products by store
   const { loading, error, data } = useQuery(GET_PRODUCTS_BY_STORE, {
     variables: {
-      storeId: store?.id || 'default-store',
+      storeId: store?.id || "default-store",
       page: currentPage,
       pageSize: productsPerPage,
     },
@@ -81,12 +82,13 @@ export default function ProductsPage() {
   });
   const products = data?.productsByStore.items || [];
   const totalProducts = data?.productsByStore.total || 0;
-  const totalPages = Math.ceil(totalProducts / productsPerPage);
+  // Calcula el total de páginas manualmente ya que el backend no retorna totalPages
+  const totalPages = Math.ceil(totalProducts / productsPerPage) || 1;
 
   // Pagination handlers
   const goToPage = (page: number) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const goToPrevious = () => {
@@ -115,21 +117,21 @@ export default function ProductsPage() {
         for (let i = 1; i <= 4; i++) {
           pages.push(i);
         }
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       } else if (currentPage >= totalPages - 2) {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         for (let i = totalPages - 3; i <= totalPages; i++) {
           pages.push(i);
         }
       } else {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           pages.push(i);
         }
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       }
     }
@@ -141,8 +143,12 @@ export default function ProductsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-black font-montserrat mb-4">Todos los Productos</h1>
-          <p className="text-gray-600">Encuentra todo lo que necesitas para hacer crecer tu emprendimiento</p>
+          <h1 className="text-3xl font-bold text-black font-montserrat mb-4">
+            Todos los Productos
+          </h1>
+          <p className="text-gray-600">
+            Encuentra todo lo que necesitas para hacer crecer tu emprendimiento
+          </p>
         </div>
 
         {/* Search and Filters */}
@@ -160,7 +166,7 @@ export default function ProductsPage() {
           {/* Category Filter */}
           <div className="relative">
             <select className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-3 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-              {categories.map(category => (
+              {categories.map((category) => (
                 <option key={category} value={category}>
                   {category}
                 </option>
@@ -172,7 +178,7 @@ export default function ProductsPage() {
           {/* Sort Filter */}
           <div className="relative">
             <select className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-3 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-              {sortOptions.map(option => (
+              {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -195,7 +201,8 @@ export default function ProductsPage() {
           ) : (
             <p className="text-gray-600">
               Mostrando {(currentPage - 1) * productsPerPage + 1}-
-              {Math.min(currentPage * productsPerPage, totalProducts)} de {totalProducts} productos
+              {Math.min(currentPage * productsPerPage, totalProducts)} de{" "}
+              {totalProducts} productos
               {totalPages > 1 && ` (Página ${currentPage} de ${totalPages})`}
             </p>
           )}
@@ -218,18 +225,24 @@ export default function ProductsPage() {
               <button
                 onClick={() => window.location.reload()}
                 className="px-4 py-2 text-white rounded hover:bg-blue-600"
-                style={{ backgroundColor: store?.primaryColor || '#2563eb' }}
+                style={{ backgroundColor: store?.primaryColor || "#2563eb" }}
               >
                 Intentar de nuevo
               </button>
             </div>
           ) : products.length === 0 ? (
             <div className="col-span-full text-center py-12">
-              <p className="text-gray-600 text-lg mb-4">No se encontraron productos</p>
-              <p className="text-gray-500">Intenta ajustar tus filtros de búsqueda</p>
+              <p className="text-gray-600 text-lg mb-4">
+                No se encontraron productos
+              </p>
+              <p className="text-gray-500">
+                Intenta ajustar tus filtros de búsqueda
+              </p>
             </div>
           ) : (
-            products.map((product: any) => <ProductCard key={product.id} product={product} />)
+            products.map((product: any) => (
+              <ProductCard key={product.id} product={product} />
+            ))
           )}
         </div>
 
@@ -247,14 +260,22 @@ export default function ProductsPage() {
 
               {getPageNumbers().map((page, index) => (
                 <span key={index}>
-                  {page === '...' ? (
+                  {page === "..." ? (
                     <span className="px-3 py-2 text-gray-500">...</span>
                   ) : (
                     <button
                       className={`px-3 py-2 rounded-md transition-colors ${
-                        currentPage === page ? 'text-white' : 'text-gray-700 hover:text-black hover:bg-gray-100'
+                        currentPage === page
+                          ? "text-white"
+                          : "text-gray-700 hover:text-black hover:bg-gray-100"
                       }`}
-                      style={currentPage === page ? { backgroundColor: store?.primaryColor || '#2563eb' } : {}}
+                      style={
+                        currentPage === page
+                          ? {
+                              backgroundColor: store?.primaryColor || "#2563eb",
+                            }
+                          : {}
+                      }
                       onClick={() => goToPage(page as number)}
                     >
                       {page}
