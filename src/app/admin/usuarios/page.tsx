@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { gql, useQuery } from "@apollo/client";
+import { useStore } from "@/components/StoreProvider";
 import {
   Users,
   Search,
@@ -19,209 +21,102 @@ import {
   X,
 } from "lucide-react";
 
-// Mock data types
-interface MockUser {
+// User type for type safety
+type User = {
   id: string;
-  email: string;
   name: string;
-  membershipLevel: string | null;
-  role: "USER" | "ADMIN" | "STORE_OWNER";
+  email: string;
+  role: UserRole;
+  storeId?: string;
+  membershipLevel?: string | null;
   createdAt: string;
   updatedAt: string;
-  storeId: string | null;
-  store: {
-    id: string;
-    name: string;
-  } | null;
+  store?: { id: string; name: string } | null;
   addresses: {
     id: string;
     street: string;
     city: string;
     department: string;
-    country: string;
+    isDefault: boolean;
+    name: string;
+    phone: string;
+    postalCode: string;
+    userId: string;
   }[];
-}
+};
 
-// Mock data
-const mockUsers: MockUser[] = [
-  {
-    id: "1",
-    email: "admin@emprendy.com",
-    name: "Carlos Administrador",
-    membershipLevel: "PREMIUM",
-    role: "ADMIN",
-    createdAt: "2024-01-15T10:30:00Z",
-    updatedAt: "2024-08-10T14:20:00Z",
-    storeId: null,
-    store: null,
-    addresses: [
-      {
-        id: "1",
-        street: "Calle 123 #45-67",
-        city: "Bogotá",
-        department: "Cundinamarca",
-        country: "Colombia",
-      },
-    ],
-  },
-  {
-    id: "2",
-    email: "maria.garcia@tienda.com",
-    name: "María García",
-    membershipLevel: "GOLD",
-    role: "STORE_OWNER",
-    createdAt: "2024-02-20T09:15:00Z",
-    updatedAt: "2024-08-12T16:45:00Z",
-    storeId: "1",
-    store: {
-      id: "1",
-      name: "Tienda María",
-    },
-    addresses: [
-      {
-        id: "2",
-        street: "Carrera 15 #23-45",
-        city: "Medellín",
-        department: "Antioquia",
-        country: "Colombia",
-      },
-    ],
-  },
-  {
-    id: "3",
-    email: "juan.perez@email.com",
-    name: "Juan Pérez",
-    membershipLevel: "BASIC",
-    role: "USER",
-    createdAt: "2024-03-10T11:20:00Z",
-    updatedAt: "2024-08-05T13:30:00Z",
-    storeId: null,
-    store: null,
-    addresses: [],
-  },
-  {
-    id: "4",
-    email: "ana.rodriguez@tienda.com",
-    name: "Ana Rodríguez",
-    membershipLevel: "PREMIUM",
-    role: "STORE_OWNER",
-    createdAt: "2024-04-05T14:45:00Z",
-    updatedAt: "2024-08-08T10:15:00Z",
-    storeId: "2",
-    store: {
-      id: "2",
-      name: "Boutique Ana",
-    },
-    addresses: [
-      {
-        id: "3",
-        street: "Avenida 68 #12-34",
-        city: "Cali",
-        department: "Valle del Cauca",
-        country: "Colombia",
-      },
-    ],
-  },
-  {
-    id: "5",
-    email: "pedro.martinez@email.com",
-    name: "Pedro Martínez",
-    membershipLevel: null,
-    role: "USER",
-    createdAt: "2024-05-12T08:30:00Z",
-    updatedAt: "2024-07-20T15:45:00Z",
-    storeId: null,
-    store: null,
-    addresses: [],
-  },
-  {
-    id: "6",
-    email: "laura.lopez@tienda.com",
-    name: "Laura López",
-    membershipLevel: "GOLD",
-    role: "STORE_OWNER",
-    createdAt: "2024-06-18T12:00:00Z",
-    updatedAt: "2024-08-14T09:30:00Z",
-    storeId: "3",
-    store: {
-      id: "3",
-      name: "Laura Style",
-    },
-    addresses: [
-      {
-        id: "4",
-        street: "Calle 50 #78-90",
-        city: "Barranquilla",
-        department: "Atlántico",
-        country: "Colombia",
-      },
-    ],
-  },
-  {
-    id: "7",
-    email: "ricardo.silva@email.com",
-    name: "Ricardo Silva",
-    membershipLevel: "BASIC",
-    role: "USER",
-    createdAt: "2024-07-22T16:15:00Z",
-    updatedAt: "2024-08-01T11:20:00Z",
-    storeId: null,
-    store: null,
-    addresses: [],
-  },
-  {
-    id: "8",
-    email: "sofia.herrera@tienda.com",
-    name: "Sofía Herrera",
-    membershipLevel: "PREMIUM",
-    role: "STORE_OWNER",
-    createdAt: "2024-08-02T13:45:00Z",
-    updatedAt: "2024-08-15T14:10:00Z",
-    storeId: "4",
-    store: {
-      id: "4",
-      name: "Sofía Fashion",
-    },
-    addresses: [
-      {
-        id: "5",
-        street: "Transversal 25 #45-67",
-        city: "Bucaramanga",
-        department: "Santander",
-        country: "Colombia",
-      },
-    ],
-  },
-];
+// GraphQL query to get all CUSTOMER users for a store
+const GET_CUSTOMERS_BY_STORE = gql`
+  query GetCustomersByStore($storeId: String!) {
+    customersByStore(storeId: $storeId) {
+      id
+      name
+      email
+      role
+      storeId
+      membershipLevel
+      createdAt
+      updatedAt
+      store {
+        id
+        name
+      }
+      addresses {
+        id
+        street
+        city
+        department
+        isDefault
+        name
+        phone
+        postalCode
+        userId
+      }
+    }
+  }
+`;
 
-type UserRole = "USER" | "ADMIN" | "STORE_OWNER";
+type UserRole = "USER" | "ADMIN" | "MODERATOR" | "CUSTOMER";
 
 export default function UsuariosPage() {
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
-  const [selectedUser, setSelectedUser] = useState<MockUser | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   const pageSize = 10;
 
-  // Filter and paginate mock data
-  const filteredUsers = useMemo(() => {
-    return mockUsers.filter((user) => {
+  // Get storeId from context
+  const { store } = useStore();
+  const storeId = store?.id;
+
+  // Apollo query for customers
+  const { data, loading, error } = useQuery(GET_CUSTOMERS_BY_STORE, {
+    variables: { storeId },
+    skip: !storeId,
+  });
+
+  const customers: User[] = data?.customersByStore || [];
+
+  // Filter and paginate customers
+  const filteredUsers = useMemo<User[]>(() => {
+    return customers.filter((user) => {
       const matchesSearch =
         search === "" ||
         user.name.toLowerCase().includes(search.toLowerCase()) ||
         user.email.toLowerCase().includes(search.toLowerCase());
 
+      // Only show CUSTOMER role (should already be filtered by backend)
       const matchesRole = roleFilter === "" || user.role === roleFilter;
 
       return matchesSearch && matchesRole;
     });
-  }, [search, roleFilter]);
+  }, [customers, search, roleFilter]);
 
-  const paginatedUsers = useMemo(() => {
+  const paginatedUsers = useMemo<User[]>(() => {
     const startIndex = page * pageSize;
     return filteredUsers.slice(startIndex, startIndex + pageSize);
   }, [filteredUsers, page, pageSize]);
@@ -235,19 +130,21 @@ export default function UsuariosPage() {
   };
 
   const getRoleBadge = (role: UserRole) => {
-    const styles = {
+    const styles: Record<UserRole, string> = {
       USER: "bg-green-100 text-green-800",
       ADMIN: "bg-red-100 text-red-800",
-      STORE_OWNER: "bg-blue-100 text-blue-800",
+      MODERATOR: "bg-blue-100 text-blue-800",
+      CUSTOMER: "bg-purple-100 text-purple-800",
     };
     return styles[role] || "bg-gray-100 text-gray-800";
   };
 
   const getRoleText = (role: UserRole) => {
-    const text = {
+    const text: Record<UserRole, string> = {
       USER: "Usuario",
       ADMIN: "Admin",
-      STORE_OWNER: "Propietario",
+      MODERATOR: "Moderador",
+      CUSTOMER: "Cliente",
     };
     return text[role] || role;
   };
@@ -313,29 +210,7 @@ export default function UsuariosPage() {
           </div>
 
           {/* Filter Toggle Button (Mobile) */}
-          <div className="flex justify-between items-center">
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="sm:hidden flex items-center space-x-2 text-gray-600 bg-white border border-gray-200 px-4 py-2 rounded-lg"
-            >
-              <Filter className="w-4 h-4" />
-              <span>Filtros</span>
-            </button>
-
-            {/* Desktop Filters */}
-            <div className="hidden sm:flex space-x-4">
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-              >
-                <option value="">Todos los roles</option>
-                <option value="USER">Usuario</option>
-                <option value="STORE_OWNER">Propietario</option>
-                <option value="ADMIN">Administrador</option>
-              </select>
-            </div>
-
+          <div className="flex justify-end items-center">
             <div className="text-sm text-gray-600">
               {totalUsers} usuario{totalUsers !== 1 ? "s" : ""}
             </div>
@@ -380,57 +255,6 @@ export default function UsuariosPage() {
               </div>
             </div>
           </div>
-
-          <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500">
-                  Admins
-                </p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                  {mockUsers.filter((u: MockUser) => u.role === "ADMIN").length}
-                </p>
-              </div>
-              <div className="p-2 bg-red-100 rounded-lg">
-                <Shield className="w-5 h-5 text-red-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500">
-                  Propietarios
-                </p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                  {
-                    mockUsers.filter((u: MockUser) => u.role === "STORE_OWNER")
-                      .length
-                  }
-                </p>
-              </div>
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <Store className="w-5 h-5 text-yellow-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500">
-                  Usuarios
-                </p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                  {mockUsers.filter((u: MockUser) => u.role === "USER").length}
-                </p>
-              </div>
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Users className="w-5 h-5 text-green-600" />
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Users List */}
@@ -462,7 +286,7 @@ export default function UsuariosPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-100">
-                  {paginatedUsers.map((user) => (
+                  {paginatedUsers.map((user: User) => (
                     <tr
                       key={user.id}
                       className="hover:bg-gray-50 transition-colors"
@@ -557,7 +381,7 @@ export default function UsuariosPage() {
 
           {/* Mobile/Tablet Cards */}
           <div className="lg:hidden space-y-3">
-            {paginatedUsers.map((user) => (
+            {paginatedUsers.map((user: User) => (
               <div
                 key={user.id}
                 className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden"
@@ -901,27 +725,28 @@ export default function UsuariosPage() {
                         Direcciones Registradas
                       </h5>
                       <div className="space-y-3">
-                        {selectedUser.addresses.map((address, index) => (
-                          <div
-                            key={address.id}
-                            className="bg-gray-50 rounded-xl p-4 border border-gray-200"
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="text-sm font-medium text-gray-900 mb-1">
-                                  Dirección {index + 1}
-                                </div>
-                                <div className="text-sm text-gray-700 space-y-1">
-                                  <p>{address.street}</p>
-                                  <p>
-                                    {address.city}, {address.department}
-                                  </p>
-                                  <p>{address.country}</p>
+                        {selectedUser.addresses.map(
+                          (address: User["addresses"][0], index: number) => (
+                            <div
+                              key={address.id}
+                              className="bg-gray-50 rounded-xl p-4 border border-gray-200"
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="text-sm font-medium text-gray-900 mb-1">
+                                    Dirección {index + 1}
+                                  </div>
+                                  <div className="text-sm text-gray-700 space-y-1">
+                                    <p>{address.street}</p>
+                                    <p>
+                                      {address.city}, {address.department}
+                                    </p>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          )
+                        )}
                       </div>
                     </div>
                   )}

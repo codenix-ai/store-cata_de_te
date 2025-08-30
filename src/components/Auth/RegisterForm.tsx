@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { gql, useMutation } from "@apollo/client";
 import { useStore } from "@/components/StoreProvider";
 
 export function RegisterForm() {
@@ -14,29 +15,39 @@ export function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // GraphQL mutation for new input
+  const CREATE_USER = gql`
+    mutation CreateUser($input: CreateUserInput!) {
+      createUser(input: $input) {
+        id
+        email
+        name
+        role
+        membershipLevel
+        storeId
+      }
+    }
+  `;
+
+  const [createUser] = useMutation(CREATE_USER);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
-
     try {
-      const apiUrl =
-        process.env.NEXT_PUBLIC_REST_API_ENDPOINT || "http://localhost:4000";
-      const res = await fetch(`${apiUrl}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          storeId: store?.id,
-          role: "USER",
-        }),
+      const input = {
+        email,
+        name,
+        password,
+        role: "CUSTOMER",
+        storeId: store?.id || undefined,
+        membershipLevel: undefined,
+      };
+      const { data } = await createUser({
+        variables: { input },
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Registro fallido");
-
+      if (!data?.createUser) throw new Error("Registro fallido");
       setSuccess("¡Registro exitoso! Ahora puedes iniciar sesión.");
       setTimeout(() => {
         router.push("/auth/signin");

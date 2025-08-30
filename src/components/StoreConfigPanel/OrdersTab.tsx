@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { gql, useQuery } from "@apollo/client";
 import {
   Search,
   Eye,
@@ -14,146 +15,38 @@ import {
 } from "lucide-react";
 import { useStore } from "../StoreProvider";
 
-// Mock Orders with OrderItems
-const mockOrders = [
-  {
-    id: "ord_001",
-    status: "PENDING",
-    subtotal: 50000,
-    tax: 9500,
-    shipping: 10000,
-    total: 69500,
-    createdAt: "2025-08-10T14:32:00Z",
-    user: { name: "Juan Pérez", email: "juan@example.com" },
-    orderItems: [
-      {
-        id: "oi_001",
-        quantity: 2,
-        price: 25000,
-        product: {
-          id: "prod_001",
-          name: "Camiseta Básica",
-          image:
-            "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=100&h=100&fit=crop&crop=center",
-        },
-      },
-    ],
-  },
-  {
-    id: "ord_002",
-    status: "COMPLETED",
-    subtotal: 120000,
-    tax: 22800,
-    shipping: 15000,
-    total: 157800,
-    createdAt: "2025-08-11T10:15:00Z",
-    user: { name: "María López", email: "maria@example.com" },
-    orderItems: [
-      {
-        id: "oi_002",
-        quantity: 1,
-        price: 80000,
-        product: {
-          id: "prod_002",
-          name: "Chaqueta de Cuero",
-          image:
-            "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=100&h=100&fit=crop&crop=center",
-        },
-      },
-      {
-        id: "oi_003",
-        quantity: 2,
-        price: 20000,
-        product: {
-          id: "prod_003",
-          name: "Pantalón Jeans",
-          image:
-            "https://images.unsplash.com/photo-1542272604-787c3835535d?w=100&h=100&fit=crop&crop=center",
-        },
-      },
-    ],
-  },
-  {
-    id: "ord_003",
-    status: "CANCELLED",
-    subtotal: 80000,
-    tax: 15200,
-    shipping: 10000,
-    total: 105200,
-    createdAt: "2025-08-12T08:45:00Z",
-    user: { name: "Carlos Sánchez", email: "carlos@example.com" },
-    orderItems: [
-      {
-        id: "oi_004",
-        quantity: 1,
-        price: 80000,
-        product: {
-          id: "prod_004",
-          name: "Zapatos Deportivos",
-          image:
-            "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=100&h=100&fit=crop&crop=center",
-        },
-      },
-    ],
-  },
-  {
-    id: "ord_004",
-    status: "PENDING",
-    subtotal: 75000,
-    tax: 14250,
-    shipping: 12000,
-    total: 101250,
-    createdAt: "2025-08-13T16:20:00Z",
-    user: { name: "Ana García", email: "ana@example.com" },
-    orderItems: [
-      {
-        id: "oi_005",
-        quantity: 3,
-        price: 25000,
-        product: {
-          id: "prod_005",
-          name: "Blusa Elegante",
-          image:
-            "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=100&h=100&fit=crop&crop=center",
-        },
-      },
-    ],
-  },
-  {
-    id: "ord_005",
-    status: "COMPLETED",
-    subtotal: 200000,
-    tax: 38000,
-    shipping: 20000,
-    total: 258000,
-    createdAt: "2025-08-14T09:30:00Z",
-    user: { name: "Roberto Silva", email: "roberto@example.com" },
-    orderItems: [
-      {
-        id: "oi_006",
-        quantity: 1,
-        price: 150000,
-        product: {
-          id: "prod_006",
-          name: "Traje Formal",
-          image:
-            "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=100&h=100&fit=crop&crop=center",
-        },
-      },
-      {
-        id: "oi_007",
-        quantity: 1,
-        price: 50000,
-        product: {
-          id: "prod_007",
-          name: "Camisa Premium",
-          image:
-            "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=100&h=100&fit=crop&crop=center",
-        },
-      },
-    ],
-  },
-];
+// GraphQL query for orders by store
+const GET_ORDERS_BY_STORE = gql`
+  query OrdersByStore($storeId: String!) {
+    ordersByStore(storeId: $storeId) {
+      id
+      status
+      total
+      createdAt
+      items {
+        id
+        productName
+        quantity
+        price
+        product {
+          name
+          images {
+            url
+          }
+        }
+      }
+      address {
+        name
+        street
+      }
+      store {
+        id
+        name
+        logoUrl
+      }
+    }
+  }
+`;
 
 export function OrdersTab() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -162,15 +55,33 @@ export function OrdersTab() {
   const pageSize = 10;
   const { store } = useStore();
 
+  // Apollo query for orders
+  const storeId = store?.id;
+  const { data, loading, error } = useQuery(GET_ORDERS_BY_STORE, {
+    variables: { storeId },
+    skip: !storeId,
+  });
+
+  // Map backend fields to UI shape
+  const orders = (data?.ordersByStore || []).map((order: any) => ({
+    ...order,
+    user: order.user || { name: "", email: "" },
+    orderItems: order.items || [],
+  }));
+
   // Colores
   const primaryColor = "#0F172A"; // slate-900
   const secondaryColor = store?.secondaryColor || "#10B981";
 
   // Filtrado por búsqueda
-  const filteredOrders = mockOrders.filter(
-    (order) =>
-      order.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredOrders = orders.filter(
+    (order: any) =>
+      (order.user?.name || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      (order.user?.email || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
       order.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -220,6 +131,21 @@ export function OrdersTab() {
         return status;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <span className="text-gray-500">Cargando órdenes...</span>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <span className="text-red-500">Error al cargar las órdenes.</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -280,7 +206,7 @@ export function OrdersTab() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
-            {paginatedOrders.map((order) => (
+            {paginatedOrders.map((order: any) => (
               <>
                 <tr
                   key={order.id}
@@ -335,7 +261,7 @@ export function OrdersTab() {
                             Productos ({order.orderItems.length})
                           </h4>
                           <div className="grid gap-3 md:grid-cols-2">
-                            {order.orderItems.map((item) => (
+                            {order.orderItems.map((item: any) => (
                               <div
                                 key={item.id}
                                 className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-gray-200"
@@ -429,7 +355,7 @@ export function OrdersTab() {
 
       {/* Mobile Cards - Visible on mobile and tablet */}
       <div className="lg:hidden space-y-4">
-        {paginatedOrders.map((order) => (
+        {paginatedOrders.map((order: any) => (
           <div
             key={order.id}
             className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
@@ -505,7 +431,7 @@ export function OrdersTab() {
                   <h4 className="text-sm font-medium text-gray-900">
                     Productos:
                   </h4>
-                  {order.orderItems.map((item) => (
+                  {order.orderItems.map((item: any) => (
                     <div
                       key={item.id}
                       className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-100"
