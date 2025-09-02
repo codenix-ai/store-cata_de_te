@@ -85,7 +85,7 @@ export function Navbar() {
   return (
     <nav
       className="shadow-lg sticky top-0 z-50"
-      style={{ backgroundColor: store.backgroundColor }}
+      style={{ backgroundColor: store.primaryColor }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
@@ -107,7 +107,7 @@ export function Navbar() {
               ) : (
                 <span
                   className="text-2xl font-bold font-montserrat"
-                  style={{ color: store.secondaryColor }}
+                  style={{ color: store.textColor }}
                 >
                   {store.name}
                 </span>
@@ -123,7 +123,7 @@ export function Navbar() {
                 href={item.href}
                 className="flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors relative hover:opacity-80"
                 style={{
-                  color: store.secondaryColor,
+                  color: store.textColor,
                 }}
               >
                 {item.icon && <item.icon className="w-5 h-5 mr-1" />}

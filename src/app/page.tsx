@@ -5,7 +5,6 @@ import { useQuery, gql } from "@apollo/client";
 import Link from "next/link";
 import Image from "next/image";
 import {
-  ShoppingBag,
   Heart,
   Truck,
   Shield,
@@ -13,14 +12,9 @@ import {
   Headphones,
   Star,
   ArrowRight,
-  Play,
-  TrendingUp,
-  Users,
-  Award,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { ProductCard } from "@/components/ProductCard/ProductCard";
 import { useStore } from "@/components/StoreProvider";
 import Layout from "@/components/Layout/Layout";
 import { HeroBanner } from "@/components/HeroBanner";
@@ -84,8 +78,8 @@ const features = [
   },
   {
     icon: Headphones,
-    title: "Asesoría Personal",
-    description: "Expertos en moda masculina",
+    title: "Asesoría Técnica",
+    description: "Expertos en dotaciones industriales",
     highlight: "Chat 24/7",
   },
 ];
@@ -93,23 +87,29 @@ const features = [
 const testimonials = [
   {
     name: "Carlos Mendoza",
-    role: "CEO StartupCo",
+    role: "Supervisor de Planta",
+    company: "Avianca",
+    logo: "/assets/avianca.png",
     content:
-      "La calidad es excepcional. Mis camisas SPH siempre me dan confianza en reuniones importantes.",
+      "Hemos trabajado con esta empresa por más de 2 años en el suministro de dotaciones para nuestras áreas de mantenimiento. Los buzos térmicos mantienen a nuestro equipo protegido durante las operaciones en hangares.",
     rating: 5,
   },
   {
     name: "Miguel Rodriguez",
-    role: "Arquitecto",
+    role: "Jefe de Producción",
+    company: "Cream Helado",
+    logo: "/assets/cream_helado.webp",
     content:
-      "Encontré mi estilo perfecto. El blazer que compré se ha convertido en mi favorito.",
+      "Llevamos trabajando con ellos desde hace 3 años para equipar a nuestro personal de cuartos fríos. Los guantes y gorros de lana son perfectos para nuestras operaciones de producción de helados.",
     rating: 5,
   },
   {
     name: "Juan Pablo",
-    role: "Emprendedor",
+    role: "Gerente de Operaciones",
+    company: "Mac Pollo",
+    logo: "/assets/mac_pollo.png",
     content:
-      "Excelente atención al cliente y productos de primera. Recomiendo 100%.",
+      "Las dotaciones térmicas son fundamentales para mantener la cadena de frío y la seguridad de nuestros trabajadores.",
     rating: 5,
   },
 ];
@@ -184,7 +184,10 @@ export default function HomePage() {
     }
     return "/placeholder.jpg";
   };
-
+  const imageA = "/assets/img2.png";
+  const imageB = "/assets/img1.png";
+  const imageC = "/assets/img3.png";
+  const imageD = "/assets/img4.png";
   // Helper function to get product badge
   const getProductBadge = (product: any) => {
     if (!product.inStock || (product.stock && product.stock === 0)) {
@@ -213,26 +216,27 @@ export default function HomePage() {
         {/* Hero Section - reusable component */}
         <HeroBanner />
 
-        {/* Features Section - Enhanced */}
-        <section className="py-12 sm:py-20 bg-gradient-to-b from-white to-gray-50">
+        {/* About Us Section - Image & Text Alternating */}
+        <section className="py-12 sm:py-20 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12 sm:mb-16">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 font-montserrat mb-3 sm:mb-4">
-                ¿Por qué Elegir SPH?
-              </h2>
-              <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto px-4">
-                Más que una tienda, somos tu aliado en el estilo masculino
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
-              {features.map((feature, index) => (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center mb-16 lg:mb-24">
+              <div className="relative group aspect-[4/3] overflow-hidden rounded-3xl shadow-2xl">
+                <Image
+                  src={imageA}
+                  alt="Dotaciones industriales para cuartos fríos"
+                  fill
+                  className="object-cover object-top group-hover:scale-105 transition-transform duration-700 rounded-3xl"
+                />
                 <div
-                  key={index}
-                  className="group text-center p-6 sm:p-8 rounded-2xl bg-white hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100"
-                >
-                  <div
-                    className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300"
+                  className="absolute -bottom-6 -right-6 w-24 h-24 rounded-3xl opacity-20 blur-xl"
+                  style={{ backgroundColor: store?.primaryColor || "#2563eb" }}
+                />
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <span
+                    className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4"
                     style={{
                       backgroundColor: getColorWithOpacity(
                         store?.primaryColor || "#2563eb",
@@ -241,22 +245,120 @@ export default function HomePage() {
                       color: store?.primaryColor || "#2563eb",
                     }}
                   >
-                    <feature.icon className="w-8 h-8 sm:w-10 sm:h-10" />
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3">
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm sm:text-base text-gray-600 mb-2">
-                    {feature.description}
-                  </p>
-                  <p
-                    className="text-xs sm:text-sm font-medium"
-                    style={{ color: store?.primaryColor || "#2563eb" }}
-                  >
-                    {feature.highlight}
-                  </p>
+                    Nuestra Historia
+                  </span>
+                  <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 font-montserrat mb-6">
+                    Especialistas en Dotaciones Industriales
+                  </h2>
                 </div>
-              ))}
+
+                <p className="text-lg text-gray-600 leading-relaxed">
+                  Durante más de 5 años, hemos sido pioneros en ofrecer
+                  dotaciones industriales de alta calidad para cuartos fríos,
+                  combinando protección térmica, durabilidad y comodidad
+                  laboral.
+                </p>
+
+                <p className="text-gray-600 leading-relaxed">
+                  Cada prenda es cuidadosamente seleccionada pensando en el
+                  trabajador que necesita protección óptima en ambientes de baja
+                  temperatura, desde buzos térmicos hasta guantes y gorros de
+                  lana especializados.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+              <div className="space-y-6 order-2 lg:order-1">
+                <div>
+                  <span
+                    className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4"
+                    style={{
+                      backgroundColor: getColorWithOpacity(
+                        store?.accentColor || "#60a5fa",
+                        0.1
+                      ),
+                      color: store?.accentColor || "#60a5fa",
+                    }}
+                  >
+                    Compromiso Industrial
+                  </span>
+                  <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 font-montserrat mb-6">
+                    Protección que Marca la Diferencia
+                  </h2>
+                </div>
+
+                <p className="text-lg text-gray-600 leading-relaxed">
+                  Trabajamos directamente con los mejores fabricantes de equipos
+                  industriales para garantizar que cada dotación cumpla con los
+                  más altos estándares de protección térmica y durabilidad.
+                </p>
+              </div>
+
+              <div className="relative group order-1 lg:order-2">
+                <div className="aspect-[4/3] overflow-hidden rounded-3xl shadow-2xl">
+                  <Image
+                    src={imageB}
+                    alt="Equipos de protección industrial"
+                    fill
+                    className="object-cover object-bottom rounded-3xl group-hover:scale-105 transition-transform duration-700"
+                  />
+                </div>
+                <div
+                  className="absolute -bottom-6 -left-6 w-24 h-24 rounded-3xl opacity-20 blur-xl"
+                  style={{ backgroundColor: store?.accentColor || "#60a5fa" }}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Extra Section - Two Columns with BG */}
+        <section
+          className="relative text-white py-16 px-6 lg:px-16 my-12"
+          style={{ backgroundColor: store?.primaryColor || "#2563eb" }}
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Imagen */}
+            <div className="overflow-hidden aspect-[4/3] rounded-3xl shadow-2xl">
+              <Image
+                src={imageC}
+                alt="Área de trabajo industrial con cuartos fríos"
+                width={600}
+                height={400}
+                className="object-cover object-top w-full h-full"
+              />
+            </div>
+
+            {/* Texto */}
+            <div>
+              <h2 className="text-4xl font-extrabold mb-4">
+                Nuestra{" "}
+                <span
+                  className="text-cyan-300"
+                  style={{ color: store?.secondaryColor || "#60a5fa" }}
+                >
+                  Misión
+                </span>{" "}
+                es tu protección
+              </h2>
+              <p className="text-lg mb-4">
+                Desde nuestros inicios, trabajamos con pasión para ofrecer
+                dotaciones industriales de la más alta calidad para cuartos
+                fríos. Nos aseguramos de cuidar cada detalle en el proceso,
+                porque la seguridad de tu equipo es nuestra mayor prioridad.
+              </p>
+              <ul className="list-disc list-inside space-y-2 mb-6">
+                <li>Materiales térmicos de alta calidad</li>
+                <li>Control de calidad riguroso para ambientes extremos</li>
+                <li>Compromiso con la seguridad laboral</li>
+              </ul>
+              <button
+                className="px-6 py-3 bg-white font-semibold rounded-full shadow-lg hover:bg-gray-100 transition"
+                style={{ color: store?.primaryColor || "#2563eb" }}
+              >
+                Conoce más
+              </button>
             </div>
           </div>
         </section>
@@ -275,14 +377,14 @@ export default function HomePage() {
                   color: store?.primaryColor || "#2563eb",
                 }}
               >
-                Lo Más Popular
+                Lo Más Solicitado
               </span>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 font-montserrat mb-3 sm:mb-4 px-4">
-                Productos Destacados
+                Dotaciones Destacadas
               </h2>
               <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto px-4">
-                Descubre los favoritos de nuestros clientes. Calidad premium y
-                estilo inigualable.
+                Descubre los equipos favoritos de nuestros clientes
+                industriales. Calidad premium y protección garantizada.
               </p>
             </div>
 
@@ -312,15 +414,14 @@ export default function HomePage() {
                       className="flex transition-transform duration-500 ease-in-out"
                       style={{
                         transform: `translateX(-${
-                          currentSlide * (100 / Math.min(products.length, 4))
+                          currentSlide * (100 / Math.min(products.length, 3))
                         }%)`,
-                        width: `${Math.max(products.length * 25, 100)}%`,
                       }}
                     >
                       {products.map((product: any) => (
                         <div
                           key={product.id}
-                          className="w-full sm:w-1/2 lg:w-1/4 flex-shrink-0 px-2 sm:px-4"
+                          className="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-2 sm:px-3"
                         >
                           <div className="group relative bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 h-full">
                             {/* Badge */}
@@ -374,7 +475,7 @@ export default function HomePage() {
                                 {product.categories &&
                                 product.categories.length > 0
                                   ? product.categories[0].category.name
-                                  : "Producto de calidad premium"}
+                                  : "Dotación industrial de calidad premium"}
                               </p>
 
                               <div className="flex items-center justify-between">
@@ -472,6 +573,54 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Features Section - Enhanced */}
+        <section className="py-12 sm:py-20 bg-gradient-to-b from-white to-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12 sm:mb-16">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 font-montserrat mb-3 sm:mb-4">
+                ¿Por qué Elegir Nuestras Dotaciones?
+              </h2>
+              <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto px-4">
+                Más que un proveedor, somos tu aliado en protección industrial
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+              {features.map((feature, index) => (
+                <div
+                  key={index}
+                  className="group text-center p-6 sm:p-8 rounded-2xl bg-white hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100"
+                >
+                  <div
+                    className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300"
+                    style={{
+                      backgroundColor: getColorWithOpacity(
+                        store?.primaryColor || "#2563eb",
+                        0.1
+                      ),
+                      color: store?.primaryColor || "#2563eb",
+                    }}
+                  >
+                    <feature.icon className="w-8 h-8 sm:w-10 sm:h-10" />
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3">
+                    {feature.title}
+                  </h3>
+                  <p className="text-sm sm:text-base text-gray-600 mb-2">
+                    {feature.description}
+                  </p>
+                  <p
+                    className="text-xs sm:text-sm font-medium"
+                    style={{ color: store?.primaryColor || "#2563eb" }}
+                  >
+                    {feature.highlight}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Testimonials Section - New */}
         <section
           className="py-12 sm:py-20 relative overflow-hidden"
@@ -491,7 +640,8 @@ export default function HomePage() {
                 Lo que Dicen Nuestros Clientes
               </h2>
               <p className="text-base sm:text-lg text-gray-600 px-4">
-                Más de 10,000 hombres confían en SPH para su estilo
+                Más de 1,000 empresas confían en nosotros para sus dotaciones
+                industriales
               </p>
             </div>
 
@@ -512,16 +662,175 @@ export default function HomePage() {
                   <blockquote className="text-sm sm:text-base text-gray-700 mb-4 sm:mb-6 italic leading-relaxed">
                     &ldquo;{testimonial.content}&rdquo;
                   </blockquote>
-                  <div>
-                    <div className="font-semibold text-gray-900 text-sm sm:text-base">
-                      {testimonial.name}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold text-gray-900 text-sm sm:text-base">
+                        {testimonial.name}
+                      </div>
+                      <div className="text-xs sm:text-sm text-gray-500">
+                        {testimonial.role}
+                      </div>
                     </div>
-                    <div className="text-xs sm:text-sm text-gray-500">
-                      {testimonial.role}
+                    <div className="flex-shrink-0 ml-4">
+                      <Image
+                        src={testimonial.logo}
+                        alt={`Logo de ${testimonial.company}`}
+                        width={50}
+                        height={50}
+                        className="max-w-full max-h-full object-contain"
+                      />
                     </div>
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Contact Form Section */}
+        <section id="contact-form" className="py-16 bg-gray-100">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Contact Form */}
+            <div className="bg-white p-6 sm:p-10 rounded-3xl shadow-xl border border-gray-100">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">
+                Solicita tu Cotización
+              </h2>
+
+              <form className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      htmlFor="firstName"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Nombre *
+                    </label>
+                    <input
+                      type="text"
+                      id="firstName"
+                      name="firstName"
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      placeholder="Tu nombre"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="lastName"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Apellido *
+                    </label>
+                    <input
+                      type="text"
+                      id="lastName"
+                      name="lastName"
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      placeholder="Tu apellido"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="company"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Empresa *
+                  </label>
+                  <input
+                    type="text"
+                    id="company"
+                    name="company"
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder="Nombre de tu empresa"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      placeholder="tu@email.com"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="phone"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Teléfono
+                    </label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      placeholder="+57 123 456 7890"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="message"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Mensaje *
+                  </label>
+                  <textarea
+                    id="message"
+                    name="message"
+                    rows={4}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                    placeholder="Cuéntanos sobre las dotaciones que necesitas: buzos térmicos, guantes, gorros de lana, etc."
+                  ></textarea>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3 px-6 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+                  style={{ backgroundColor: store?.primaryColor || "#2563eb" }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor =
+                      store?.secondaryColor || "#1d4ed8";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor =
+                      store?.primaryColor || "#2563eb";
+                  }}
+                >
+                  Enviar Solicitud
+                </button>
+              </form>
+
+              <p className="mt-4 text-xs text-gray-500 text-center">
+                * Campos obligatorios. Nos comprometemos a proteger tu
+                privacidad.
+              </p>
+            </div>
+
+            {/* Contact Image */}
+            <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl">
+              <Image
+                src={imageD}
+                alt="Equipo de atención al cliente especializado en dotaciones industriales"
+                fill
+                className="object-cover object-bottom"
+              />
             </div>
           </div>
         </section>
