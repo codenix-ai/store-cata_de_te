@@ -80,6 +80,7 @@ export default function ProductsPage() {
     },
     skip: !store?.id,
   });
+  
   const products = data?.productsByStore.items || [];
   const totalProducts = data?.productsByStore.total || 0;
   // Calcula el total de páginas manualmente ya que el backend no retorna totalPages
