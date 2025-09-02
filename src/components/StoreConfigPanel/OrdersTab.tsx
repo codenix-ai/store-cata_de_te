@@ -15,6 +15,14 @@ import {
 } from "lucide-react";
 import { useStore } from "../StoreProvider";
 
+// SSR-safe number formatting helper
+function formatNumber(num: number) {
+  if (typeof window !== "undefined") {
+    return num.toLocaleString("es-CO");
+  }
+  return num.toString();
+}
+
 // GraphQL query for orders by store
 const GET_ORDERS_BY_STORE = gql`
   query OrdersByStore($storeId: String!) {
@@ -22,7 +30,11 @@ const GET_ORDERS_BY_STORE = gql`
       id
       status
       total
+      subtotal
+      tax
+      shipping
       createdAt
+      userName
       items {
         id
         productName
@@ -66,7 +78,7 @@ export function OrdersTab() {
   const orders = (data?.ordersByStore || []).map((order: any) => ({
     ...order,
     user: order.user || { name: "", email: "" },
-    orderItems: order.items || [],
+    items: order.items || [],
   }));
 
   // Colores
@@ -108,10 +120,14 @@ export function OrdersTab() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "COMPLETED":
-        return "bg-green-100 text-green-800 border-green-200";
       case "PENDING":
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "PROCESSING":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "SHIPPED":
+        return "bg-indigo-100 text-indigo-800 border-indigo-200";
+      case "DELIVERED":
+        return "bg-green-100 text-green-800 border-green-200";
       case "CANCELLED":
         return "bg-red-100 text-red-800 border-red-200";
       default:
@@ -121,10 +137,14 @@ export function OrdersTab() {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "COMPLETED":
-        return "Completada";
       case "PENDING":
         return "Pendiente";
+      case "PROCESSING":
+        return "Procesando";
+      case "SHIPPED":
+        return "Enviado";
+      case "DELIVERED":
+        return "Entregado";
       case "CANCELLED":
         return "Cancelada";
       default:
@@ -147,6 +167,9 @@ export function OrdersTab() {
     );
   }
 
+  function formatNumber(value: number): string {
+    return value.toLocaleString("es-CO");
+  }
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -186,9 +209,6 @@ export function OrdersTab() {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
-                Orden ID
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
                 Cliente
               </th>
               <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase">
@@ -212,19 +232,16 @@ export function OrdersTab() {
                   key={order.id}
                   className="hover:bg-gray-50 transition-colors"
                 >
-                  <td className="px-6 py-4 font-mono text-sm font-medium">
-                    {order.id}
-                  </td>
                   <td className="px-6 py-4">
                     <div className="text-sm font-medium text-gray-900">
-                      {order.user.name}
+                      {order.userName}
                     </div>
                     <div className="text-sm text-gray-500">
                       {order.user.email}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                    ${order.total.toLocaleString("es-CO")}
+                    {(order.total ?? 0).toLocaleString("es-CO")}
                   </td>
                   <td className="px-6 py-4">
                     <span
@@ -258,10 +275,10 @@ export function OrdersTab() {
                         {/* Products Section */}
                         <div>
                           <h4 className="text-sm font-semibold text-gray-900 mb-3">
-                            Productos ({order.orderItems.length})
+                            Productos ({order.items.length})
                           </h4>
                           <div className="grid gap-3 md:grid-cols-2">
-                            {order.orderItems.map((item: any) => (
+                            {order.items.map((item: any) => (
                               <div
                                 key={item.id}
                                 className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-gray-200"
@@ -270,7 +287,7 @@ export function OrdersTab() {
                                   <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-white border border-gray-200">
                                     <img
                                       src={item.product.image}
-                                      alt={item.product.name}
+                                      alt={item.productName}
                                       className="w-full h-full object-cover"
                                       onError={(e) => {
                                         e.currentTarget.style.display = "none";
@@ -283,7 +300,7 @@ export function OrdersTab() {
                                 </div>
                                 <div className="flex-grow min-w-0">
                                   <p className="text-sm font-medium text-gray-900 truncate">
-                                    {item.product.name}
+                                    {item.product.productName}
                                   </p>
                                   <div className="flex items-center justify-between mt-1">
                                     <span className="text-xs text-gray-500">
@@ -294,14 +311,13 @@ export function OrdersTab() {
                                     </span>
                                     <div className="text-right">
                                       <div className="text-sm font-semibold text-gray-900">
-                                        $
                                         {(
-                                          item.price * item.quantity
+                                          (item.price ?? 0) *
+                                          (item.quantity ?? 0)
                                         ).toLocaleString("es-CO")}
                                       </div>
                                       <div className="text-xs text-gray-500">
-                                        ${item.price.toLocaleString("es-CO")}{" "}
-                                        c/u
+                                        {formatNumber(item.price ?? 0)} c/u
                                       </div>
                                     </div>
                                   </div>
@@ -320,25 +336,25 @@ export function OrdersTab() {
                             <div className="flex justify-between">
                               <span className="text-gray-600">Subtotal:</span>
                               <span className="font-medium">
-                                ${order.subtotal.toLocaleString("es-CO")}
+                                {(order.subtotal ?? 0).toLocaleString("es-CO")}
                               </span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Impuestos:</span>
                               <span className="font-medium">
-                                ${order.tax.toLocaleString("es-CO")}
+                                {(order.tax ?? 0).toLocaleString("es-CO")}
                               </span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Envío:</span>
                               <span className="font-medium">
-                                ${order.shipping.toLocaleString("es-CO")}
+                                {(order.shipping ?? 0).toLocaleString("es-CO")}
                               </span>
                             </div>
                             <div className="flex justify-between font-bold text-base">
                               <span>Total:</span>
                               <span>
-                                ${order.total.toLocaleString("es-CO")}
+                                {(order.total ?? 0).toLocaleString("es-CO")}
                               </span>
                             </div>
                           </div>
@@ -383,7 +399,7 @@ export function OrdersTab() {
             <div className="space-y-2 mb-3">
               <div className="flex items-center text-sm text-gray-700">
                 <User className="w-4 h-4 mr-2 text-gray-400" />
-                <span className="font-medium">{order.user.name}</span>
+                <span className="font-medium">{order.userName}</span>
               </div>
               <div className="flex items-center text-sm text-gray-600">
                 <Mail className="w-4 h-4 mr-2 text-gray-400" />
@@ -399,7 +415,7 @@ export function OrdersTab() {
                   <span>Total</span>
                 </div>
                 <span className="text-lg font-bold text-gray-900">
-                  ${order.total.toLocaleString("es-CO")}
+                  {formatNumber(order.total ?? 0)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -422,8 +438,8 @@ export function OrdersTab() {
             {/* Order breakdown - collapsible details */}
             <details className="mt-3">
               <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-800 transition-colors">
-                Ver detalles del pedido ({order.orderItems.length}{" "}
-                {order.orderItems.length === 1 ? "producto" : "productos"})
+                Ver detalles del pedido ({order.items.length}{" "}
+                {order.items.length === 1 ? "producto" : "productos"})
               </summary>
               <div className="mt-3 pt-3 border-t border-gray-100 space-y-4">
                 {/* Products List */}
@@ -431,7 +447,7 @@ export function OrdersTab() {
                   <h4 className="text-sm font-medium text-gray-900">
                     Productos:
                   </h4>
-                  {order.orderItems.map((item: any) => (
+                  {order.items.map((item: any) => (
                     <div
                       key={item.id}
                       className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-100"
@@ -440,7 +456,7 @@ export function OrdersTab() {
                         <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-white border border-gray-200">
                           <img
                             src={item.product.image}
-                            alt={item.product.name}
+                            alt={item.product.productName}
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               e.currentTarget.style.display = "none";
@@ -453,7 +469,7 @@ export function OrdersTab() {
                       </div>
                       <div className="flex-grow min-w-0">
                         <p className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2">
-                          {item.product.name}
+                          {item.product.productName}
                         </p>
                         <div className="flex items-center justify-between">
                           <div className="text-xs text-gray-500">
@@ -467,12 +483,12 @@ export function OrdersTab() {
                           <div className="text-right">
                             <div className="text-sm font-bold text-gray-900">
                               $
-                              {(item.price * item.quantity).toLocaleString(
-                                "es-CO"
+                              {formatNumber(
+                                (item.price ?? 0) * (item.quantity ?? 0)
                               )}
                             </div>
                             <div className="text-xs text-gray-500">
-                              ${item.price.toLocaleString("es-CO")} c/u
+                              {formatNumber(item.price ?? 0)} c/u
                             </div>
                           </div>
                         </div>
@@ -485,19 +501,19 @@ export function OrdersTab() {
                 <div className="border-t border-gray-200 pt-3 text-sm space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Subtotal:</span>
-                    <span>${order.subtotal.toLocaleString("es-CO")}</span>
+                    <span>{formatNumber(order.subtotal ?? 0)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Impuestos:</span>
-                    <span>${order.tax.toLocaleString("es-CO")}</span>
+                    <span>{formatNumber(order.tax ?? 0)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Envío:</span>
-                    <span>${order.shipping.toLocaleString("es-CO")}</span>
+                    <span>{formatNumber(order.shipping ?? 0)}</span>
                   </div>
                   <div className="flex justify-between font-semibold text-base border-t border-gray-200 pt-2">
                     <span>Total:</span>
-                    <span>${order.total.toLocaleString("es-CO")}</span>
+                    <span>{formatNumber(order.total ?? 0)}</span>
                   </div>
                 </div>
               </div>

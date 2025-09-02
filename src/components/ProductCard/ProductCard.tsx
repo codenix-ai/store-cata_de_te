@@ -154,7 +154,7 @@ export function ProductCard({ product, className = "" }: ProductCardProps) {
           (img) => `${process.env.NEXT_PUBLIC_AWS_BUCKET_NAME}/${img.url}`
         )
       : [`${process.env.NEXT_PUBLIC_AWS_BUCKET_NAME}/${product.image}`];
-  console.log("All images:", allImages);
+
   return (
     <div
       className={`group relative bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 ${className}`}
