@@ -1202,21 +1202,6 @@ export function ProductFormWizard({
                   <option value="EUR">EUR - Euro</option>
                 </select>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cantidad en Stock
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  value={formData.stock}
-                  onChange={(e) =>
-                    handleInputChange("stock", parseInt(e.target.value) || 0)
-                  }
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
-                />
-              </div>
             </div>
 
             <div className="bg-gray-50 p-6 rounded-xl">
@@ -1374,6 +1359,7 @@ export function ProductFormWizard({
                         onCombinationsChange={setVariantCombinations}
                         existingCombinations={variantCombinations}
                         isEditMode={!!product?.id}
+                        basePrice={formData.price}
                       />
                     )}
                   </div>
@@ -1730,11 +1716,8 @@ export function ProductFormWizard({
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor =
-                      store?.secondaryColor || "#1e293b";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      store?.primaryColor || "#2563eb";
+                      store?.primaryColor || "#1e293b";
+                    e.currentTarget.style.opacity = "0.8";
                   }}
                 >
                   {loading || isSaving || isUploadingImages ? (

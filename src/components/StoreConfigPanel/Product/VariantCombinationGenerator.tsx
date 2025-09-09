@@ -30,6 +30,7 @@ interface VariantCombinationGeneratorProps {
   onCombinationsChange: (combinations: VariantCombination[]) => void;
   existingCombinations?: VariantCombination[];
   isEditMode?: boolean;
+  basePrice?: number;
 }
 
 export function VariantCombinationGenerator({
@@ -39,6 +40,7 @@ export function VariantCombinationGenerator({
   onCombinationsChange,
   existingCombinations = [],
   isEditMode = false,
+  basePrice,
 }: VariantCombinationGeneratorProps) {
   const [showCombinations, setShowCombinations] = useState(
     isEditMode && existingCombinations.length > 0
@@ -149,7 +151,8 @@ export function VariantCombinationGenerator({
               value: variant.value,
             },
           ],
-          stock: 0,
+          stock: 10,
+          price: basePrice ?? 0,
         }));
       }
 
@@ -171,7 +174,8 @@ export function VariantCombinationGenerator({
               },
               ...restCombination.variants,
             ],
-            stock: 0,
+            stock: 10,
+            price: basePrice ?? 0,
           });
         });
       });
@@ -196,7 +200,8 @@ export function VariantCombinationGenerator({
 
       return {
         ...newCombo,
-        stock: existingCombo ? existingCombo.stock : 0,
+        stock: existingCombo ? existingCombo.stock : 10,
+        price: existingCombo?.price ?? basePrice ?? 0,
       };
     });
 

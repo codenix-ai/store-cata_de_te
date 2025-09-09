@@ -349,10 +349,9 @@ export function ProductCard({ product, className = "" }: ProductCardProps) {
                 : undefined,
           }}
           onMouseEnter={(e) => {
-            if (product.inStock && !isLoading) {
-              e.currentTarget.style.backgroundColor =
-                store?.hoverBackgroundColor || "#d3d3d3";
-            }
+            e.currentTarget.style.backgroundColor = store?.primaryColor
+              ? `${store.primaryColor}CC`
+              : "#d3d3d3";
           }}
           onMouseLeave={(e) => {
             if (product.inStock && !isLoading) {

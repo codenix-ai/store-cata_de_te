@@ -26,7 +26,6 @@ export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [cartItemCount, setCartItemCount] = useState(0);
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
-
   useEffect(() => {
     setCartItemCount(cartService.getItemCount());
 
