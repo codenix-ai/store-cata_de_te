@@ -1,27 +1,28 @@
-import type { Metadata } from 'next';
-import { Roboto, Montserrat } from 'next/font/google';
-import './globals.css';
-import { Providers } from '@/components/Providers';
-import { Navbar } from '@/components/Navbar/Navbar';
-import { Footer } from '@/components/Footer/Footer';
-import { Toaster } from 'react-hot-toast';
+import type { Metadata } from "next";
+import { Roboto, Montserrat } from "next/font/google";
+import "./globals.css";
+import { Providers } from "@/components/Providers";
+import { Navbar } from "@/components/Navbar/Navbar";
+import { Footer } from "@/components/Footer/Footer";
+import { Toaster } from "react-hot-toast";
+import CookieWrapper from "@/components/CookieWrapper";
 
 const roboto = Roboto({
-  variable: '--font-roboto',
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '700'],
+  variable: "--font-roboto",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "700"],
 });
 
 const montserrat = Montserrat({
-  variable: '--font-montserrat',
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700'],
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: 'EmprendyUp Store - Modern eCommerce for Colombia',
+  title: "EmprendyUp Store - Modern eCommerce for Colombia",
   description:
-    'Modern eCommerce boilerplate for entrepreneurs in Colombia, built with Next.js 15, GraphQL, and Tailwind CSS',
+    "Modern eCommerce boilerplate for entrepreneurs in Colombia, built with Next.js 15, GraphQL, and Tailwind CSS",
 };
 
 export default function RootLayout({
@@ -39,6 +40,7 @@ export default function RootLayout({
           {/* <Navbar /> */}
           <main className="flex-1">{children}</main>
           {/* <Footer /> */}
+          <CookieWrapper />
         </Providers>
       </body>
     </html>
