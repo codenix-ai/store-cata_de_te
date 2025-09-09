@@ -1384,7 +1384,10 @@ export function ProductFormWizard({ product, onSave, onCancel, loading = false }
                               variantes
                             </p>
                             <p>• Cada combinación de variantes tendrá su propio stock individual</p>
-                            <p>• El stock total se mostrará en la sección "Disponibilidad" cuando tengas variantes</p>
+                            <p>
+                              • El stock total se mostrará en la sección &quot;Disponibilidad&quot; cuando tengas
+                              variantes
+                            </p>
                           </div>
                         </div>
                       </div>
