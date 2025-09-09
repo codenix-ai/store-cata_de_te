@@ -1,7 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Check, ChevronDown, Search, Tag, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import {
+  Check,
+  ChevronDown,
+  Search,
+  Tag,
+  Loader2,
+  X,
+  Plus,
+} from "lucide-react";
 import { useQuery, gql } from "@apollo/client";
 import { ProductCategory } from "@/types/product";
 
@@ -28,6 +36,45 @@ export function CategorySelector({
 }: CategorySelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+        setSearchTerm("");
+      }
+    };
+
+    const handleScroll = () => {
+      if (isOpen) {
+        setIsOpen(false);
+        setSearchTerm("");
+      }
+    };
+
+    const handleResize = () => {
+      if (isOpen) {
+        setIsOpen(false);
+        setSearchTerm("");
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      window.addEventListener("scroll", handleScroll, true);
+      window.addEventListener("resize", handleResize);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+        window.removeEventListener("scroll", handleScroll, true);
+        window.removeEventListener("resize", handleResize);
+      };
+    }
+  }, [isOpen]);
 
   // Fetch categories from GraphQL
   const { data, loading, error } = useQuery(GET_CATEGORIES);
@@ -52,6 +99,12 @@ export function CategorySelector({
       );
       onChange(newCategories);
     }
+
+    // Close the dropdown after selection
+    setIsOpen(false);
+
+    // Clear search term for next time
+    setSearchTerm("");
   };
 
   const removeCategory = (categoryId: string) => {
@@ -90,52 +143,67 @@ export function CategorySelector({
   }
 
   return (
-    <div className="space-y-4">
-      <label className="block text-sm font-medium text-gray-700">
-        Categorías
-      </label>
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Categorías
+        </label>
+        <p className="text-sm text-gray-500">
+          Selecciona una categoría para tu producto
+        </p>
+      </div>
 
-      {/* Selected Categories */}
+      {/* Selected Categories - Improved Design */}
       {selectedCategories.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {selectedCategories
-            .filter(
-              (cat, idx, arr) => arr.findIndex((c) => c.id === cat.id) === idx
-            )
-            .map((category, idx) => (
-              <span
-                key={category.id + "-" + idx}
-                className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
-              >
-                <Tag className="w-3 h-3 mr-1" />
-                {category.name}
-                <button
-                  type="button"
-                  onClick={() => removeCategory(category.id)}
-                  className="ml-2 text-blue-600 hover:text-blue-800"
+        <div className="space-y-3">
+          <h4 className="text-sm font-medium text-gray-700">
+            Categorías seleccionadas ({selectedCategories.length})
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {selectedCategories
+              .filter(
+                (cat, idx, arr) => arr.findIndex((c) => c.id === cat.id) === idx
+              )
+              .map((category, idx) => (
+                <div
+                  key={category.id + "-" + idx}
+                  className="inline-flex items-center px-3 py-2 rounded-lg text-sm bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-sm hover:shadow-md transition-all duration-200"
                 >
-                  ×
-                </button>
-              </span>
-            ))}
+                  <Tag className="w-3 h-3 mr-2" />
+                  <span className="font-medium">{category.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeCategory(category.id)}
+                    className="ml-2 p-0.5 rounded-full hover:bg-white/20 transition-colors"
+                    title="Remover categoría"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+          </div>
         </div>
       )}
 
-      {/* Dropdown */}
-      <div className="relative">
+      {/* Enhanced Dropdown */}
+      <div className="relative" ref={dropdownRef}>
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-left bg-white hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-left bg-white hover:bg-gray-50 hover:border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 shadow-sm"
         >
           <div className="flex items-center justify-between">
-            <span className="text-gray-700">
-              {selectedCategories.length > 0
-                ? selectedCategories.map((cat) => cat.name).join(", ")
-                : "Seleccionar categoría"}
-            </span>
+            <div className="flex items-center">
+              <Plus className="w-4 h-4 text-gray-400 mr-2" />
+              <span className="text-gray-700 font-medium">
+                {selectedCategories.length > 0
+                  ? "Agregar otra categoría"
+                  : "Seleccionar categoría"}
+              </span>
+            </div>
             <ChevronDown
-              className={`w-4 h-4 text-gray-400 transition-transform ${
+              className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
                 isOpen ? "rotate-180" : ""
               }`}
             />
@@ -143,9 +211,26 @@ export function CategorySelector({
         </button>
 
         {isOpen && (
-          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
-            {/* Search */}
-            <div className="p-3 border-b border-gray-200">
+          <div
+            className="fixed bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden animate-in slide-in-from-top-2 duration-200"
+            style={{
+              zIndex: 9999,
+              top: dropdownRef.current
+                ? dropdownRef.current.getBoundingClientRect().bottom +
+                  window.scrollY +
+                  8
+                : 0,
+              left: dropdownRef.current
+                ? dropdownRef.current.getBoundingClientRect().left +
+                  window.scrollX
+                : 0,
+              width: dropdownRef.current
+                ? dropdownRef.current.getBoundingClientRect().width
+                : "auto",
+            }}
+          >
+            {/* Enhanced Search */}
+            <div className="p-4 bg-gray-50 border-b border-gray-200">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -153,35 +238,78 @@ export function CategorySelector({
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Buscar categorías..."
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all duration-200 text-sm"
+                  autoFocus
                 />
               </div>
             </div>
 
-            {/* Categories List */}
-            <div className="max-h-60 overflow-y-auto">
+            {/* Enhanced Categories List */}
+            <div className="max-h-64 overflow-y-auto">
               {filteredCategories.length > 0 ? (
-                filteredCategories.map((category: ProductCategory) => {
-                  const isSelected = selectedCategories.some(
-                    (selected) => selected.id === category.id
-                  );
-                  return (
-                    <button
-                      key={category.id}
-                      type="button"
-                      onClick={() => toggleCategory(category)}
-                      className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center justify-between"
-                    >
-                      <span className="text-gray-900">{category.name}</span>
-                      {isSelected && (
-                        <Check className="w-4 h-4 text-blue-600" />
-                      )}
-                    </button>
-                  );
-                })
+                <div className="py-1">
+                  {filteredCategories.map(
+                    (category: ProductCategory, index) => {
+                      const isSelected = selectedCategories.some(
+                        (selected) => selected.id === category.id
+                      );
+                      return (
+                        <div key={category.id}>
+                          <button
+                            type="button"
+                            onClick={() => toggleCategory(category)}
+                            className={`w-full px-4 py-4 text-left hover:bg-blue-50 flex items-center justify-between group transition-all duration-150 ${
+                              isSelected
+                                ? "bg-blue-50 border-r-4 border-blue-500"
+                                : ""
+                            } ${
+                              index !== filteredCategories.length - 1
+                                ? "border-b border-gray-100"
+                                : ""
+                            }`}
+                          >
+                            <div className="flex items-center">
+                              <div
+                                className={`w-3 h-3 rounded-full mr-3 transition-all duration-200 shadow-sm ${
+                                  isSelected
+                                    ? "bg-blue-500 ring-2 ring-blue-200"
+                                    : "bg-gray-300 group-hover:bg-blue-300"
+                                }`}
+                              />
+                              <div>
+                                <span
+                                  className={`font-medium transition-colors duration-150 ${
+                                    isSelected
+                                      ? "text-blue-900"
+                                      : "text-gray-900 group-hover:text-blue-700"
+                                  }`}
+                                >
+                                  {category.name}
+                                </span>
+                              </div>
+                            </div>
+                            {isSelected ? (
+                              <div className="bg-blue-500 rounded-full p-1.5 shadow-sm">
+                                <Check className="w-3 h-3 text-white" />
+                              </div>
+                            ) : (
+                              <div className="w-6 h-6 rounded-full border-2 border-gray-300 group-hover:border-blue-400 transition-colors duration-150" />
+                            )}
+                          </button>
+                        </div>
+                      );
+                    }
+                  )}
+                </div>
               ) : (
-                <div className="px-3 py-2 text-gray-500 text-sm">
-                  No se encontraron categorías
+                <div className="px-4 py-8 text-center">
+                  <Tag className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm font-medium">
+                    No se encontraron categorías
+                  </p>
+                  <p className="text-gray-400 text-xs mt-1">
+                    Intenta con otro término de búsqueda
+                  </p>
                 </div>
               )}
             </div>
@@ -189,12 +317,19 @@ export function CategorySelector({
         )}
       </div>
 
+      {/* Empty State */}
       {selectedCategories.length === 0 && (
-        <p className="text-sm text-gray-500">
-          {categories.length === 0
-            ? "No hay categorías disponibles"
-            : "Selecciona una categoría para tu producto"}
-        </p>
+        <div className="text-center py-6 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+          <Tag className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+          <p className="text-sm text-gray-500 font-medium">
+            {categories.length === 0
+              ? "No hay categorías disponibles"
+              : "Selecciona al menos una categoría"}
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            Las categorías ayudan a los clientes a encontrar tu producto
+          </p>
+        </div>
       )}
     </div>
   );
