@@ -175,7 +175,7 @@ export function Footer() {
             </div>
             <div className="flex space-x-6 text-sm">
               <Link
-                href="/privacy"
+                href="/privacidad"
                 className="hover:opacity-80 transition-opacity"
               >
                 Política de Privacidad
@@ -187,7 +187,7 @@ export function Footer() {
                 Términos de Servicio
               </Link>
               <Link
-                href="/returns"
+                href="/politica-devoluciones"
                 className="hover:opacity-80 transition-opacity"
               >
                 Política de Devoluciones
