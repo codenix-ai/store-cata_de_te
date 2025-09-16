@@ -159,6 +159,21 @@ export function OrdersTab() {
       </div>
     );
   }
+  if (orders.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+          <Package className="w-6 h-6 text-gray-400" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">
+          No hay órdenes aún
+        </h3>
+        <p className="text-gray-600">
+          Las órdenes realizadas por los clientes aparecerán aquí
+        </p>
+      </div>
+    );
+  }
   if (error) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -241,7 +256,7 @@ export function OrdersTab() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                    {(order.total ?? 0).toLocaleString("es-CO")}
+                    ${(order.total ?? 0).toLocaleString("es-CO")}
                   </td>
                   <td className="px-6 py-4">
                     <span
@@ -278,52 +293,60 @@ export function OrdersTab() {
                             Productos ({order.items.length})
                           </h4>
                           <div className="grid gap-3 md:grid-cols-2">
-                            {order.items.map((item: any) => (
-                              <div
-                                key={item.id}
-                                className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-gray-200"
-                              >
-                                <div className="flex-shrink-0">
-                                  <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-white border border-gray-200">
-                                    <img
-                                      src={item.product.image}
-                                      alt={item.productName}
-                                      className="w-full h-full object-cover"
-                                      onError={(e) => {
-                                        e.currentTarget.style.display = "none";
-                                      }}
-                                    />
-                                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100 hidden">
-                                      <Package className="w-5 h-5 text-gray-400" />
+                            {order.items.map((item: any) => {
+                              const imageKey = item?.product?.images?.[0]?.url;
+                              const imageUrl = imageKey
+                                ? `https://emprendyup-images.s3.us-east-1.amazonaws.com/${imageKey}`
+                                : "/assets/default-product.jpg";
+
+                              return (
+                                <div
+                                  key={item.id}
+                                  className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-gray-200"
+                                >
+                                  <div className="flex-shrink-0">
+                                    <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-white border border-gray-200">
+                                      <img
+                                        src={imageUrl}
+                                        alt={
+                                          item.product?.name ?? item.productName
+                                        }
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          e.currentTarget.src =
+                                            "/assets/default-product.jpg";
+                                        }}
+                                      />
                                     </div>
                                   </div>
-                                </div>
-                                <div className="flex-grow min-w-0">
-                                  <p className="text-sm font-medium text-gray-900 truncate">
-                                    {item.product.productName}
-                                  </p>
-                                  <div className="flex items-center justify-between mt-1">
-                                    <span className="text-xs text-gray-500">
-                                      Cantidad:{" "}
-                                      <span className="font-semibold">
-                                        {item.quantity}
+                                  <div className="flex-grow min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                      {item.product?.name ?? item.productName}
+                                    </p>
+                                    <div className="flex items-center justify-between mt-1">
+                                      <span className="text-xs text-gray-500">
+                                        Cantidad:{" "}
+                                        <span className="font-semibold">
+                                          {item.quantity}
+                                        </span>
                                       </span>
-                                    </span>
-                                    <div className="text-right">
-                                      <div className="text-sm font-semibold text-gray-900">
-                                        {(
-                                          (item.price ?? 0) *
-                                          (item.quantity ?? 0)
-                                        ).toLocaleString("es-CO")}
-                                      </div>
-                                      <div className="text-xs text-gray-500">
-                                        {formatNumber(item.price ?? 0)} c/u
+                                      <div className="text-right">
+                                        <div className="text-sm font-semibold text-gray-900">
+                                          $
+                                          {(
+                                            (item.price ?? 0) *
+                                            (item.quantity ?? 0)
+                                          ).toLocaleString("es-CO")}
+                                        </div>
+                                        <div className="text-xs text-gray-500">
+                                          ${formatNumber(item.price ?? 0)} c/u
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
 
@@ -336,25 +359,25 @@ export function OrdersTab() {
                             <div className="flex justify-between">
                               <span className="text-gray-600">Subtotal:</span>
                               <span className="font-medium">
-                                {(order.subtotal ?? 0).toLocaleString("es-CO")}
+                                ${(order.subtotal ?? 0).toLocaleString("es-CO")}
                               </span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Impuestos:</span>
                               <span className="font-medium">
-                                {(order.tax ?? 0).toLocaleString("es-CO")}
+                                ${(order.tax ?? 0).toLocaleString("es-CO")}
                               </span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Envío:</span>
                               <span className="font-medium">
-                                {(order.shipping ?? 0).toLocaleString("es-CO")}
+                                ${(order.shipping ?? 0).toLocaleString("es-CO")}
                               </span>
                             </div>
                             <div className="flex justify-between font-bold text-base">
                               <span>Total:</span>
                               <span>
-                                {(order.total ?? 0).toLocaleString("es-CO")}
+                                ${(order.total ?? 0).toLocaleString("es-CO")}
                               </span>
                             </div>
                           </div>
@@ -369,155 +392,84 @@ export function OrdersTab() {
         </table>
       </div>
 
-      {/* Mobile Cards - Visible on mobile and tablet */}
+      {/* Mobile Cards - Vista simplificada como el primer componente */}
       <div className="lg:hidden space-y-4">
         {paginatedOrders.map((order: any) => (
           <div
             key={order.id}
-            className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
+            className="p-4 bg-white rounded-lg border border-gray-200 shadow-sm"
           >
-            {/* Header with ID and Status */}
-            <div className="flex justify-between items-start mb-3">
-              <div>
-                <p className="font-mono text-sm font-semibold text-gray-900 mb-1">
-                  {order.id}
-                </p>
-                <span
-                  className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${getStatusColor(
-                    order.status
-                  )}`}
-                >
-                  {getStatusText(order.status)}
-                </span>
-              </div>
-              <button className="p-2 text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
-                <Eye className="w-5 h-5" />
-              </button>
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-gray-900">{order.id}</h3>
+              <span
+                className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                  order.status === "PENDING"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : order.status === "COMPLETED"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-gray-100 text-gray-800"
+                }`}
+              >
+                {getStatusText(order.status)}
+              </span>
             </div>
 
-            {/* Customer Info */}
-            <div className="space-y-2 mb-3">
-              <div className="flex items-center text-sm text-gray-700">
-                <User className="w-4 h-4 mr-2 text-gray-400" />
-                <span className="font-medium">{order.userName}</span>
-              </div>
-              <div className="flex items-center text-sm text-gray-600">
-                <Mail className="w-4 h-4 mr-2 text-gray-400" />
-                <span>{order.user.email}</span>
-              </div>
+            <p className="mt-1 text-sm text-gray-600">{order.userName}</p>
+
+            <div className="mt-2 text-sm text-gray-600 space-y-1">
+              <p>
+                <strong>Total:</strong>{" "}
+                {order.total.toLocaleString("es-CO", {
+                  style: "currency",
+                  currency: "COP",
+                })}
+              </p>
+              <p>
+                <strong>Fecha:</strong>{" "}
+                {formatNumber(new Date(order.createdAt).getDate())}/
+                {formatNumber(new Date(order.createdAt).getMonth() + 1)}/
+                {new Date(order.createdAt).getFullYear()}
+              </p>
             </div>
 
-            {/* Order Details */}
-            <div className="border-t border-gray-100 pt-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center text-sm text-gray-600">
-                  <CreditCard className="w-4 h-4 mr-2 text-gray-400" />
-                  <span>Total</span>
-                </div>
-                <span className="text-lg font-bold text-gray-900">
-                  {formatNumber(order.total ?? 0)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center text-sm text-gray-600">
-                  <Calendar className="w-4 h-4 mr-2 text-gray-400" />
-                  <span>Fecha</span>
-                </div>
-                <span className="text-sm text-gray-600">
-                  {new Date(order.createdAt).toLocaleDateString("es-CO", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-              </div>
-            </div>
+            {/* Items */}
+            <div className="mt-3 space-y-2">
+              {order.items.map((item: any) => {
+                const imageKey = item?.product?.images?.[0]?.url;
+                const imageUrl = imageKey
+                  ? `https://emprendyup-images.s3.us-east-1.amazonaws.com/${imageKey}`
+                  : "/assets/default-product.jpg";
 
-            {/* Order breakdown - collapsible details */}
-            <details className="mt-3">
-              <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-800 transition-colors">
-                Ver detalles del pedido ({order.items.length}{" "}
-                {order.items.length === 1 ? "producto" : "productos"})
-              </summary>
-              <div className="mt-3 pt-3 border-t border-gray-100 space-y-4">
-                {/* Products List */}
-                <div className="space-y-3">
-                  <h4 className="text-sm font-medium text-gray-900">
-                    Productos:
-                  </h4>
-                  {order.items.map((item: any) => (
-                    <div
-                      key={item.id}
-                      className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg border border-gray-100"
-                    >
-                      <div className="flex-shrink-0">
-                        <div className="relative w-14 h-14 rounded-lg overflow-hidden bg-white border border-gray-200">
-                          <img
-                            src={item.product.image}
-                            alt={item.product.productName}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 hidden">
-                            <Package className="w-6 h-6 text-gray-400" />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex-grow min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 mb-1 line-clamp-2">
-                          {item.product.productName}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <div className="text-xs text-gray-500">
-                            <span className="inline-flex items-center">
-                              Cantidad:{" "}
-                              <span className="font-semibold ml-1">
-                                {item.quantity}
-                              </span>
-                            </span>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-sm font-bold text-gray-900">
-                              $
-                              {formatNumber(
-                                (item.price ?? 0) * (item.quantity ?? 0)
-                              )}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {formatNumber(item.price ?? 0)} c/u
-                            </div>
-                          </div>
-                        </div>
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-gray-200"
+                  >
+                    <div className="flex-shrink-0">
+                      <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-white border border-gray-200">
+                        <img
+                          src={imageUrl}
+                          alt={item.product?.name ?? item.productName}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = "/assets/default-product.jpg";
+                          }}
+                        />
                       </div>
                     </div>
-                  ))}
-                </div>
-
-                {/* Order Summary */}
-                <div className="border-t border-gray-200 pt-3 text-sm space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Subtotal:</span>
-                    <span>{formatNumber(order.subtotal ?? 0)}</span>
+                    <div className="flex-grow min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {item.product?.name ?? item.productName}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Cantidad: {item.quantity} · $
+                        {item.price.toLocaleString("es-CO")}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Impuestos:</span>
-                    <span>{formatNumber(order.tax ?? 0)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Envío:</span>
-                    <span>{formatNumber(order.shipping ?? 0)}</span>
-                  </div>
-                  <div className="flex justify-between font-semibold text-base border-t border-gray-200 pt-2">
-                    <span>Total:</span>
-                    <span>{formatNumber(order.total ?? 0)}</span>
-                  </div>
-                </div>
-              </div>
-            </details>
+                );
+              })}
+            </div>
           </div>
         ))}
       </div>
