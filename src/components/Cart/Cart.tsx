@@ -160,7 +160,11 @@ function CartItemCard({
           {/* Product Image with Preview */}
           <div className="relative w-20 h-20 bg-gray-100 rounded-md overflow-hidden flex-shrink-0 group">
             <Image
-              src={item.image}
+              src={
+                item.image?.startsWith("http")
+                  ? item.image
+                  : `https://emprendyup-images.s3.us-east-1.amazonaws.com/${item.image}`
+              }
               alt={item.name}
               fill
               className="object-cover transition-transform group-hover:scale-105"
@@ -294,7 +298,11 @@ function CartItemCard({
             <div className="p-6">
               <div className="relative w-full h-80 mb-4">
                 <Image
-                  src={item.image}
+                  src={
+                    item.image?.startsWith("http")
+                      ? item.image
+                      : `https://emprendyup-images.s3.us-east-1.amazonaws.com/${item.image}`
+                  }
                   alt={item.name}
                   fill
                   className="object-contain rounded-lg"
