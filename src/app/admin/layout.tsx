@@ -87,6 +87,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       roles: ["ADMIN", "STORE_OWNER"],
     },
     {
+      name: "Leads",
+      href: "/admin/leads",
+      icon: ShoppingCart,
+      roles: ["ADMIN", "STORE_OWNER"],
+    },
+    {
       name: "Productos",
       href: "/admin/products",
       icon: Package,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useQuery, gql } from "@apollo/client";
+import { useQuery, gql, useMutation } from "@apollo/client";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -18,6 +18,7 @@ import {
 import { useStore } from "@/components/StoreProvider";
 import Layout from "@/components/Layout/Layout";
 import { HeroBanner } from "@/components/HeroBanner";
+import toast from "react-hot-toast";
 
 // GraphQL Query
 const GET_PRODUCTS_BY_STORE = gql`
@@ -56,7 +57,26 @@ const GET_PRODUCTS_BY_STORE = gql`
     }
   }
 `;
-
+const CREATE_CONTACT_LEAD = gql`
+  mutation CreateContactLead($input: CreateContactLeadInput!) {
+    createContactLead(input: $input) {
+      id
+      firstName
+      lastName
+      companyName
+      email
+      phoneNumber
+      message
+      storeId
+      createdAt
+      store {
+        id
+        name
+        email
+      }
+    }
+  }
+`;
 const features = [
   {
     icon: Truck,
@@ -118,7 +138,8 @@ export default function HomePage() {
   const { store } = useStore();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-
+  const [createContactLead, { loading, error, data }] =
+    useMutation(CREATE_CONTACT_LEAD);
   // Fetch products from GraphQL
   const {
     data: productsData,
@@ -127,7 +148,7 @@ export default function HomePage() {
   } = useQuery(GET_PRODUCTS_BY_STORE, {
     variables: {
       storeId: store?.id || "default-store",
-      page: 2,
+      page: 1,
       pageSize: 8,
     },
     skip: !store?.id,
@@ -172,7 +193,32 @@ export default function HomePage() {
 
   const handleMouseEnter = () => setIsAutoPlaying(false);
   const handleMouseLeave = () => setIsAutoPlaying(true);
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const formData = new FormData(form);
 
+    const input = {
+      firstName: formData.get("firstName"),
+      lastName: formData.get("lastName"),
+      companyName: formData.get("companyName"),
+      email: formData.get("email"),
+      phoneNumber: formData.get("phoneNumber"),
+      message: formData.get("message"),
+      storeId: store?.id || "default-store",
+    };
+    try {
+      await createContactLead({ variables: { input } });
+
+      toast.success("Cotización enviada con éxito 🚀", {});
+
+      form.reset();
+    } catch (error) {
+      console.error("Error al enviar la cotización:", error);
+
+      toast.error("Hubo un error al enviar la cotización ❌", {});
+    }
+  };
   // Helper function to get product image
   const getProductImage = (product: any) => {
     if (product.images && product.images.length > 0) {
@@ -696,7 +742,7 @@ export default function HomePage() {
                 Solicita tu Cotización
               </h2>
 
-              <form className="space-y-4">
+              <form className="space-y-4" onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label
@@ -734,53 +780,52 @@ export default function HomePage() {
 
                 <div>
                   <label
-                    htmlFor="company"
+                    htmlFor="companyName"
                     className="block text-sm font-medium text-gray-700 mb-2"
                   >
-                    Empresa *
+                    Empresa
                   </label>
                   <input
                     type="text"
-                    id="company"
-                    name="company"
-                    required
+                    id="companyName"
+                    name="companyName"
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="Nombre de tu empresa"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      Email *
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="tu@email.com"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="phone"
-                      className="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      Teléfono
-                    </label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="+57 123 456 7890"
-                    />
-                  </div>
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Correo electrónico *
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder="ejemplo@correo.com"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="phoneNumber"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Teléfono *
+                  </label>
+                  <input
+                    type="tel"
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder="+57 300 123 4567"
+                  />
                 </div>
 
                 <div>
@@ -788,43 +833,38 @@ export default function HomePage() {
                     htmlFor="message"
                     className="block text-sm font-medium text-gray-700 mb-2"
                   >
-                    Mensaje *
+                    Mensaje
                   </label>
                   <textarea
                     id="message"
                     name="message"
                     rows={4}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-                    placeholder="Cuéntanos sobre las dotaciones que necesitas: buzos térmicos, guantes, gorros de lana, etc."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    placeholder="Cuéntanos qué necesitas..."
                   ></textarea>
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full py-3 px-6 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
-                  style={{ backgroundColor: store?.primaryColor || "#2563eb" }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      store?.secondaryColor || "#1d4ed8";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      store?.primaryColor || "#2563eb";
-                  }}
+                  disabled={loading}
+                  className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl shadow-lg hover:bg-blue-700 transition disabled:opacity-50"
                 >
-                  Enviar Solicitud
+                  {loading ? "Enviando..." : "Solicitar Cotización"}
                 </button>
+
+                {error && (
+                  <p className="text-red-500 text-sm mt-2">
+                    Error: {error.message}
+                  </p>
+                )}
+                {data && (
+                  <p className="text-green-600 text-sm mt-2">
+                    ¡Cotización enviada con éxito!
+                  </p>
+                )}
               </form>
-
-              <p className="mt-4 text-xs text-gray-500 text-center">
-                * Campos obligatorios. Nos comprometemos a proteger tu
-                privacidad.
-              </p>
             </div>
-
-            {/* Contact Image */}
-            <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl">
+            <div className="relative aspect-[4/4] rounded-3xl overflow-hidden shadow-2xl">
               <Image
                 src={imageD}
                 alt="Equipo de atención al cliente especializado en dotaciones industriales"
