@@ -433,10 +433,7 @@ export default function ProductDetailPage() {
               >
                 {product.category}
               </p>
-              <h1
-                className="text-3xl font-bold mb-4"
-                style={{ color: store?.textColor || "#000000" }}
-              >
+              <h1 className="text-3xl font-bold mb-4 text-black">
                 {product.title}
               </h1>
 
@@ -463,10 +460,7 @@ export default function ProductDetailPage() {
 
               {/* Price */}
               <div className="flex items-center space-x-4 mb-6">
-                <span
-                  className="text-3xl font-bold"
-                  style={{ color: store?.textColor || "#000000" }}
-                >
+                <span className="text-3xl font-bold text-black">
                   ${currentPrice.toLocaleString("es-CO")}
                 </span>
                 {product.originalPrice && (
@@ -522,23 +516,16 @@ export default function ProductDetailPage() {
                           value={variant.id}
                           checked={selectedVariant?.id === variant.id}
                           onChange={() => setSelectedVariant(variant)}
-                          className="text-blue-600 focus:ring-blue-500"
+                          className="text-blue-600 focus:ring-blue-500 text-black"
                           style={{
                             accentColor: store?.primaryColor || "#2563eb",
-                            color: store?.primaryColor || "#2563eb",
                           }}
                         />
-                        <span
-                          className="ml-3"
-                          style={{ color: store?.textColor || "#000000" }}
-                        >
+                        <span className="ml-3 text-black font-medium">
                           {variant.value}
                         </span>
                       </div>
-                      <span
-                        className="font-medium"
-                        style={{ color: store?.textColor || "#000000" }}
-                      >
+                      <span className="font-medium text-black">
                         ${variant.price?.toLocaleString("es-CO")}
                       </span>
                     </label>
@@ -600,7 +587,7 @@ export default function ProductDetailPage() {
                       color:
                         selectedVariant?.size === size.size
                           ? store?.primaryColor || "#2563eb"
-                          : store?.textColor || "#374151",
+                          : "#000000",
                     }}
                     onClick={() =>
                       setSelectedVariant({
