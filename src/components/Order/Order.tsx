@@ -565,7 +565,11 @@ export default function Order() {
                         className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg"
                       >
                         <Image
-                          src={item.image}
+                          src={
+                            item.image?.startsWith("http")
+                              ? item.image
+                              : `https://emprendyup-images.s3.us-east-1.amazonaws.com/${item.image}`
+                          }
                           alt={item.name}
                           width={64}
                           height={64}

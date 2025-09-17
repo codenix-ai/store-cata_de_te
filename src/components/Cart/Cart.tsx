@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Minus, Plus, Trash2, ShoppingBag, Eye, X } from "lucide-react";
 import { cartService, Cart as CartType, CartItem } from "@/lib/cart";
 import { useStore } from "@/components/StoreProvider";
+import { signIn, useSession } from "next-auth/react";
 
 interface CartProps {
   className?: string;
@@ -148,6 +149,17 @@ function CartItemCard({
 }: CartItemCardProps) {
   const [showPreview, setShowPreview] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const { data: session } = useSession();
+
+  const handleCheckout = () => {
+    if (!session) {
+      signIn();
+      return;
+    }
+
+    // Si está logueado, lo mandamos a la página de orden
+    window.location.href = "/orden";
+  };
 
   return (
     <>
