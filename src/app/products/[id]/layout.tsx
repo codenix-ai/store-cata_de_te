@@ -1,6 +1,6 @@
-import { Metadata } from "next";
-import { gql } from "@apollo/client";
-import { apolloClient } from "@/lib/apollo";
+import { Metadata } from 'next';
+import { gql } from '@apollo/client';
+import { apolloClient } from '@/lib/apollo';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -55,46 +55,49 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     if (!product) {
       return {
-        title: "Producto no encontrado | Pawis Colombia",
-        description: "El producto que buscas no está disponible.",
+        title: 'Producto no encontrado | Pawis Colombia',
+        description: 'El producto que buscas no está disponible.',
       };
     }
 
     // Calculate average rating
-    const averageRating = product.comments?.length > 0
-      ? product.comments.reduce((sum: number, comment: any) => sum + comment.rating, 0) / product.comments.length
-      : 0;
+    const averageRating =
+      product.comments?.length > 0
+        ? product.comments.reduce((sum: number, comment: any) => sum + comment.rating, 0) / product.comments.length
+        : 0;
 
     // Generate keywords from product data
     const keywords = [
       product.title,
-      "tejidos de punto",
-      "confección colombia",
-      "uniformes",
-      "dotaciones",
-      "textiles",
+      'tejidos de punto',
+      'confección colombia',
+      'uniformes',
+      'dotaciones',
+      'textiles',
       ...(product.colors?.map((c: any) => `color ${c.color}`) || []),
       ...(product.sizes?.map((s: any) => `talla ${s.size}`) || []),
     ];
 
     // Image URL
-    const imageUrl = product.images?.[0]?.url 
+    const imageUrl = product.images?.[0]?.url
       ? `https://emprendyup-images.s3.us-east-1.amazonaws.com/${product.images[0].url}`
-      : product.imageUrl || "/assets/default-product.jpg";
+      : product.imageUrl || '/assets/default-product.jpg';
 
     const title = `${product.title} | Pawis Colombia`;
-    const description = product.description 
-      ? `${product.description.substring(0, 150)}... Precio: ${product.price} ${product.currency}. Confección de calidad en Colombia.`
+    const description = product.description
+      ? `${product.description.substring(0, 150)}... Precio: ${product.price} ${
+          product.currency
+        }. Confección de calidad en Colombia.`
       : `${product.title} - Producto de confección y tejido de punto. Precio: ${product.price} ${product.currency}. Calidad garantizada.`;
 
     return {
       title,
       description,
-      keywords: keywords.join(", "),
+      keywords: keywords.join(', '),
       openGraph: {
         title,
         description,
-        type: "website",
+        type: 'website',
         url: `https://pawis.com.co/products/${resolvedParams.id}`,
         images: [
           {
@@ -104,10 +107,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             alt: product.title,
           },
         ],
-        siteName: "Pawis Colombia",
+        siteName: 'Pawis Colombia',
       },
       twitter: {
-        card: "summary_large_image",
+        card: 'summary_large_image',
         title,
         description,
         images: [imageUrl],
@@ -120,31 +123,27 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         follow: true,
       },
       other: {
-        "product:price:amount": product.price?.toString() || "0",
-        "product:price:currency": product.currency || "COP",
-        "product:availability": product.available ? "in stock" : "out of stock",
-        "product:condition": "new",
-        "product:brand": "Pawis Colombia",
-        "product:category": "Textiles y Confección",
+        'product:price:amount': product.price?.toString() || '0',
+        'product:price:currency': product.currency || 'COP',
+        'product:availability': product.available ? 'in stock' : 'out of stock',
+        'product:condition': 'new',
+        'product:brand': 'Pawis Colombia',
+        'product:category': 'Textiles y Confección',
         ...(averageRating > 0 && {
-          "product:rating": averageRating.toFixed(1),
-          "product:rating:count": product.comments?.length?.toString() || "0",
+          'product:rating': averageRating.toFixed(1),
+          'product:rating:count': product.comments?.length?.toString() || '0',
         }),
       },
     };
   } catch (error) {
-    console.error("Error generating metadata:", error);
+    console.error('Error generating metadata:', error);
     return {
-      title: "Producto | Pawis Colombia",
-      description: "Productos de confección y tejido de punto de alta calidad en Colombia.",
+      title: 'Producto | Pawis Colombia',
+      description: 'Productos de confección y tejido de punto de alta calidad en Colombia.',
     };
   }
 }
 
-export default function ProductLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function ProductLayout({ children }: { children: React.ReactNode }) {
   return children;
 }
