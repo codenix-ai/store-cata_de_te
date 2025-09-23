@@ -264,3 +264,39 @@ export const UPDATE_PAYMENT_CONFIGURATION = gql`
     }
   }
 `;
+
+export const UPDATE_ORDER_STATUS = gql`
+  mutation UpdateOrderStatus($id: ID!, $input: UpdateOrderStatusInput!) {
+    updateOrderStatus(id: $id, input: $input) {
+      id
+      status
+      updatedAt
+    }
+  }
+`;
+
+export const ORDERS_BY_USER = gql`
+  query OrdersByUser($userId: String!) {
+    ordersByUser(userId: $userId) {
+      id
+      status
+      createdAt
+      updatedAt
+      subtotal
+      shipping
+      tax
+      total
+      store {
+        id
+        name
+        storeId
+      }
+      items {
+        productId
+        productName
+        quantity
+        unitPrice
+      }
+    }
+  }
+`;

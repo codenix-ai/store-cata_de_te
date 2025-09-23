@@ -1,11 +1,14 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { use, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@apollo/client';
 import { useStore } from '@/components/StoreProvider';
 import { CheckCircle, Package, Truck, CreditCard, MapPin, AlertCircle, XCircle, RefreshCw, Loader } from 'lucide-react';
-import { GET_PAYMENT } from '@/lib/graphql/queries';
+import { GET_PAYMENT, UPDATE_ORDER_STATUS } from '@/lib/graphql/queries';
 import { PaymentStatus } from '@/types/payment';
+import { WompiTransactionData, WompiTransactionResponse } from '@/types/wompi';
+import { usePayments } from '@/hooks/usePayments';
+import { useMutation, gql } from '@apollo/client';
 import Link from 'next/link';
 
 interface PaymentValidationProps {
@@ -14,17 +17,193 @@ interface PaymentValidationProps {
 
 export default function PaymentValidation({ paymentId }: PaymentValidationProps) {
   const { store } = useStore();
+  const searchParams = useSearchParams();
+  const transactionId = searchParams.get('id');
   const [polling, setPolling] = useState(true);
+  const [wompiTransaction, setWompiTransaction] = useState<WompiTransactionData | null>(null);
+  const [wompiLoading, setWompiLoading] = useState(false);
+  const [wompiError, setWompiError] = useState<string | null>(null);
+  const [updatingPayment, setUpdatingPayment] = useState(false);
+
+  // Use the payments hook for GraphQL operations
+  const { updatePayment: handleUpdatePaymentMutation } = usePayments();
+
+  // Order status update mutation
+  const [updateOrderStatusMutation] = useMutation(UPDATE_ORDER_STATUS, {
+    errorPolicy: 'all',
+  });
 
   const { data, loading, error, refetch } = useQuery(GET_PAYMENT, {
     variables: { id: paymentId },
     pollInterval: polling ? 3000 : 0, // Poll every 3 seconds while pending
     errorPolicy: 'all',
   });
+  console.log('🚀 ~ PaymentValidation ~ paymentId:', paymentId);
 
   const payment = data?.payment;
 
-  // Stop polling when payment is in a final state
+  // Function to update payment in database with Wompi data
+  const handleUpdatePayment = async (wompiData: WompiTransactionData) => {
+    try {
+      setUpdatingPayment(true);
+
+      // Map Wompi status to PaymentStatus enum
+      const mappedStatus = mapWompiStatus(wompiData.status);
+
+      // Prepare update input for GraphQL mutation
+      const updateInput = {
+        status: mappedStatus,
+        providerTransactionId: wompiData.id,
+        referenceNumber: wompiData.reference,
+        ...(mappedStatus === PaymentStatus.FAILED &&
+          wompiData.status_message && {
+            errorMessage: wompiData.status_message,
+          }),
+        notes: `Updated from Wompi transaction. Original status: ${wompiData.status}. Finalized at: ${
+          wompiData.finalized_at || 'N/A'
+        }`,
+        providerMetadata: wompiData,
+      };
+
+      // Use GraphQL mutation to update payment
+      await handleUpdatePaymentMutation(paymentId, updateInput);
+
+      console.log('Payment updated successfully via GraphQL');
+
+      // Update order status based on payment status
+      const resultUpdate = await updateOrderStatus(wompiData, mappedStatus);
+
+      console.log('Order status update result:', resultUpdate);
+
+      // Refetch GraphQL data to get updated payment info
+      if (refetch) {
+        await refetch();
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error updating payment via GraphQL:', error);
+      return false;
+    } finally {
+      setUpdatingPayment(false);
+    }
+  };
+
+  // Function to update order status based on payment result
+  const updateOrderStatus = async (wompiData: WompiTransactionData, paymentStatus: PaymentStatus) => {
+    try {
+      let orderStatus = 'PENDING';
+
+      // Map payment status to order status
+      switch (paymentStatus) {
+        case PaymentStatus.COMPLETED:
+          orderStatus = 'CONFIRMED';
+          break;
+        case PaymentStatus.FAILED:
+          orderStatus = 'PAYMENT_FAILED';
+          break;
+        case PaymentStatus.CANCELLED:
+          orderStatus = 'CANCELLED';
+          break;
+        default:
+          orderStatus = 'PENDING';
+      }
+
+      // Get order ID from payment or use reference
+      const orderId = payment?.order?.id || wompiData.reference;
+
+      if (!orderId) {
+        console.warn('No order ID found to update order status');
+        return false;
+      }
+
+      // Use GraphQL mutation to update order status
+      const { data } = await updateOrderStatusMutation({
+        variables: {
+          id: orderId,
+          input: {
+            status: orderStatus,
+          },
+        },
+      });
+
+      if (data?.updateOrderStatus) {
+        console.log(`Order status updated to: ${orderStatus}`, data.updateOrderStatus);
+        return true;
+      } else {
+        console.error('Failed to update order status via GraphQL');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error updating order status via GraphQL:', error);
+      return false;
+    }
+  };
+
+  // Function to fetch transaction from Wompi API
+  const fetchWompiTransaction = async (txId: string) => {
+    try {
+      setWompiLoading(true);
+      setWompiError(null);
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_WOMPI_API_URL}/v1/transactions/${txId}`, {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_WOMPI_PRIVATE_KEY || ''}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result: WompiTransactionResponse = await response.json();
+
+      if (result.data) {
+        setWompiTransaction(result.data);
+
+        // Update payment in database with Wompi data
+        await handleUpdatePayment(result.data);
+
+        // Stop polling if transaction is in final state
+        const finalStates = ['APPROVED', 'DECLINED', 'VOIDED', 'ERROR'];
+        if (finalStates.includes(result.data.status)) {
+          setPolling(false);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching Wompi transaction:', err);
+      setWompiError(err instanceof Error ? err.message : 'Error fetching transaction');
+    } finally {
+      setWompiLoading(false);
+    }
+  };
+
+  // Effect to poll Wompi transaction
+  useEffect(() => {
+    if (!transactionId) return;
+
+    // Initial fetch
+    fetchWompiTransaction(transactionId);
+
+    // Set up polling interval
+    let interval: NodeJS.Timeout;
+    if (polling) {
+      interval = setInterval(() => {
+        fetchWompiTransaction(transactionId);
+      }, 5000); // Poll every 5 seconds
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [transactionId, polling]);
+
+  // Stop polling when payment is in a final state or Wompi transaction is in final state
   useEffect(() => {
     if (
       payment?.status &&
@@ -32,7 +211,15 @@ export default function PaymentValidation({ paymentId }: PaymentValidationProps)
     ) {
       setPolling(false);
     }
-  }, [payment?.status]);
+
+    // Also stop polling based on Wompi transaction status
+    if (wompiTransaction?.status) {
+      const finalStates = ['APPROVED', 'DECLINED', 'VOIDED', 'ERROR'];
+      if (finalStates.includes(wompiTransaction.status)) {
+        setPolling(false);
+      }
+    }
+  }, [payment?.status, wompiTransaction?.status]);
 
   // Auto-stop polling after 5 minutes
   useEffect(() => {
@@ -43,28 +230,192 @@ export default function PaymentValidation({ paymentId }: PaymentValidationProps)
     return () => clearTimeout(timeout);
   }, []);
 
-  if (loading && !payment) {
+  // Helper function to map Wompi status to display status
+  const mapWompiStatus = (status: string) => {
+    switch (status) {
+      case 'APPROVED':
+        return PaymentStatus.COMPLETED;
+      case 'DECLINED':
+      case 'ERROR':
+        return PaymentStatus.FAILED;
+      case 'VOIDED':
+        return PaymentStatus.CANCELLED;
+      case 'PENDING':
+      default:
+        return PaymentStatus.PENDING;
+    }
+  };
+
+  // Helper function to get status icon and color
+  const getStatusDisplay = (status: string, isPayment: boolean = false) => {
+    const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
+    console.log('🚀 ~ getStatusDisplay ~ status:', status, 'isPayment:', isPayment);
+    if (isPayment) {
+      switch (status) {
+        case PaymentStatus.COMPLETED:
+          return {
+            icon: <CheckCircle className="w-3 h-3 mr-1" />,
+            className: `${baseClasses} bg-green-100 text-green-800`,
+            text: 'Completado',
+          };
+        case PaymentStatus.FAILED:
+          return {
+            icon: <XCircle className="w-3 h-3 mr-1" />,
+            className: `${baseClasses} bg-red-100 text-red-800`,
+            text: 'Fallido',
+          };
+        case PaymentStatus.PENDING:
+          return {
+            icon: <RefreshCw className="w-3 h-3 mr-1 animate-spin" />,
+            className: `${baseClasses} bg-yellow-100 text-yellow-800`,
+            text: 'Pendiente',
+          };
+        case PaymentStatus.CANCELLED:
+          return {
+            icon: <XCircle className="w-3 h-3 mr-1" />,
+            className: `${baseClasses} bg-gray-100 text-gray-800`,
+            text: 'Cancelado',
+          };
+        default:
+          return {
+            icon: <AlertCircle className="w-3 h-3 mr-1" />,
+            className: `${baseClasses} bg-gray-100 text-gray-800`,
+            text: status || 'Desconocido',
+          };
+      }
+    } else {
+      // Order status
+      switch (status?.toLowerCase()) {
+        case 'confirmed':
+          return {
+            icon: <Package className="w-3 h-3 mr-1" />,
+            className: `${baseClasses} bg-green-100 text-green-800`,
+            text: 'Confirmada',
+          };
+        case 'pending':
+          return {
+            icon: <RefreshCw className="w-3 h-3 mr-1 animate-spin" />,
+            className: `${baseClasses} bg-yellow-100 text-yellow-800`,
+            text: 'Pendiente',
+          };
+        case 'payment_failed':
+          return {
+            icon: <XCircle className="w-3 h-3 mr-1" />,
+            className: `${baseClasses} bg-red-100 text-red-800`,
+            text: 'Pago Fallido',
+          };
+        case 'cancelled':
+          return {
+            icon: <XCircle className="w-3 h-3 mr-1" />,
+            className: `${baseClasses} bg-gray-100 text-gray-800`,
+            text: 'Cancelada',
+          };
+        case 'shipped':
+          return {
+            icon: <Truck className="w-3 h-3 mr-1" />,
+            className: `${baseClasses} bg-blue-100 text-blue-800`,
+            text: 'Enviada',
+          };
+        default:
+          return {
+            icon: <AlertCircle className="w-3 h-3 mr-1" />,
+            className: `${baseClasses} bg-gray-100 text-gray-800`,
+            text: status || 'Desconocido',
+          };
+      }
+    }
+  };
+
+  // Use Wompi transaction data if available, otherwise fallback to GraphQL payment data
+  const currentPayment = wompiTransaction
+    ? {
+        id: wompiTransaction.id,
+        status: mapWompiStatus(wompiTransaction.status),
+        amount: wompiTransaction.amount_in_cents / 100,
+        currency: wompiTransaction.currency,
+        provider: 'Wompi',
+        paymentMethod: wompiTransaction.payment_method?.type || 'N/A',
+        createdAt: wompiTransaction.created_at,
+        providerTransactionId: wompiTransaction.id,
+        referenceNumber: wompiTransaction.reference,
+        errorMessage:
+          wompiTransaction.status === 'DECLINED' || wompiTransaction.status === 'ERROR'
+            ? wompiTransaction.status_message
+            : undefined,
+        order: payment?.order, // Keep order info from GraphQL if available
+      }
+    : payment;
+  console.log('🚀 ~ PaymentValidation ~ currentPayment:', currentPayment);
+
+  // Monitor order status updates when payment is completed
+  useEffect(() => {
+    if (
+      currentPayment?.status === PaymentStatus.COMPLETED &&
+      currentPayment?.order?.status?.toLowerCase() === 'pending'
+    ) {
+      // Check order status every 10 seconds for up to 2 minutes
+      const orderStatusInterval = setInterval(async () => {
+        if (refetch) {
+          await refetch();
+        }
+      }, 10000);
+
+      // Clear interval after 2 minutes
+      const orderTimeout = setTimeout(() => {
+        clearInterval(orderStatusInterval);
+      }, 2 * 60 * 1000);
+
+      return () => {
+        clearInterval(orderStatusInterval);
+        clearTimeout(orderTimeout);
+      };
+    }
+  }, [currentPayment?.status, currentPayment?.order?.status, refetch]);
+
+  if ((loading && !payment) || (wompiLoading && !wompiTransaction && transactionId)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Loader className="w-12 h-12 animate-spin mx-auto mb-4 text-blue-600" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Verificando tu pago...</h2>
-          <p className="text-gray-600">Esto puede tomar unos momentos</p>
+          <p className="text-gray-600">
+            {updatingPayment
+              ? 'Actualizando información del pago...'
+              : transactionId
+              ? 'Consultando estado en Wompi...'
+              : 'Esto puede tomar unos momentos'}
+          </p>
+          {polling && !updatingPayment && (
+            <p className="text-sm text-blue-600 mt-2">
+              {transactionId ? `Transacción: ${transactionId}` : 'Actualizando automáticamente...'}
+            </p>
+          )}
+          {updatingPayment && <p className="text-sm text-green-600 mt-2">Sincronizando con la base de datos...</p>}
         </div>
       </div>
     );
   }
 
-  if (error || !payment) {
+  if ((error && !payment) || (wompiError && !wompiTransaction && transactionId)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
           <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Error al verificar el pago</h2>
           <p className="text-gray-600 mb-4">
-            No pudimos encontrar la información de tu pago. Por favor, contacta con soporte.
+            {wompiError || 'No pudimos encontrar la información de tu pago. Por favor, contacta con soporte.'}
           </p>
-          <button onClick={() => refetch()} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mr-2">
+          {transactionId && <p className="text-sm text-gray-500 mb-4">ID de transacción: {transactionId}</p>}
+          <button
+            onClick={() => {
+              if (transactionId) {
+                fetchWompiTransaction(transactionId);
+              } else {
+                refetch();
+              }
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mr-2"
+          >
             Reintentar
           </button>
           <Link href="/support" className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
@@ -75,8 +426,26 @@ export default function PaymentValidation({ paymentId }: PaymentValidationProps)
     );
   }
 
+  // Show something if we have neither payment nor wompi transaction
+  if (!currentPayment && !wompiTransaction) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
+          <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Información de pago no disponible</h2>
+          <p className="text-gray-600 mb-4">No pudimos encontrar la información de este pago.</p>
+          <Link href="/support" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            Contactar Soporte
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const renderPaymentStatus = () => {
-    switch (payment.status) {
+    const paymentToShow = currentPayment || wompiTransaction;
+
+    switch (paymentToShow?.status) {
       case PaymentStatus.COMPLETED:
         return (
           <div className="text-center mb-8">
@@ -96,6 +465,7 @@ export default function PaymentValidation({ paymentId }: PaymentValidationProps)
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Procesando Pago...</h1>
             <p className="text-lg text-gray-600">Tu pago está siendo verificado. Por favor espera.</p>
             {polling && <p className="text-sm text-blue-600 mt-2">Actualizando automáticamente...</p>}
+            {transactionId && <p className="text-xs text-gray-500 mt-2">ID: {transactionId}</p>}
           </div>
         );
 
@@ -105,7 +475,9 @@ export default function PaymentValidation({ paymentId }: PaymentValidationProps)
             <XCircle className="w-20 h-20 text-red-500 mx-auto mb-4" />
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Pago Fallido</h1>
             <p className="text-lg text-gray-600">No pudimos procesar tu pago</p>
-            {payment.errorMessage && <p className="text-sm text-red-600 mt-2">Motivo: {payment.errorMessage}</p>}
+            {paymentToShow?.errorMessage && (
+              <p className="text-sm text-red-600 mt-2">Motivo: {paymentToShow.errorMessage}</p>
+            )}
           </div>
         );
 
@@ -134,7 +506,9 @@ export default function PaymentValidation({ paymentId }: PaymentValidationProps)
   };
 
   const renderActionButtons = () => {
-    switch (payment.status) {
+    const paymentToShow = currentPayment || wompiTransaction;
+
+    switch (paymentToShow?.status) {
       case PaymentStatus.COMPLETED:
         return (
           <div className="flex gap-4 justify-center">
@@ -155,7 +529,7 @@ export default function PaymentValidation({ paymentId }: PaymentValidationProps)
         return (
           <div className="flex gap-4 justify-center">
             <Link
-              href={`/checkout/retry/${payment.id}`}
+              href={`/checkout/retry/${paymentToShow?.id || paymentId}`}
               className="px-6 py-3 text-white rounded-lg hover:opacity-90 transition-colors"
               style={{ backgroundColor: store?.primaryColor || '#2563eb' }}
             >
@@ -191,7 +565,13 @@ export default function PaymentValidation({ paymentId }: PaymentValidationProps)
         return (
           <div className="flex gap-4 justify-center">
             <button
-              onClick={() => refetch()}
+              onClick={() => {
+                if (transactionId) {
+                  fetchWompiTransaction(transactionId);
+                } else {
+                  refetch();
+                }
+              }}
               className="px-6 py-3 text-white rounded-lg hover:opacity-90 transition-colors"
               style={{ backgroundColor: store?.primaryColor || '#2563eb' }}
             >
@@ -210,7 +590,13 @@ export default function PaymentValidation({ paymentId }: PaymentValidationProps)
         return (
           <div className="flex gap-4 justify-center">
             <button
-              onClick={() => refetch()}
+              onClick={() => {
+                if (transactionId) {
+                  fetchWompiTransaction(transactionId);
+                } else {
+                  refetch();
+                }
+              }}
               className="px-6 py-3 text-white rounded-lg hover:opacity-90 transition-colors"
               style={{ backgroundColor: store?.primaryColor || '#2563eb' }}
             >
@@ -234,80 +620,250 @@ export default function PaymentValidation({ paymentId }: PaymentValidationProps)
 
         {/* Payment Details */}
         <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Detalles del Pago</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">Detalles del Pago</h2>
+            {updatingPayment && (
+              <div className="flex items-center space-x-2">
+                <Loader className="w-4 h-4 animate-spin text-blue-600" />
+                <span className="text-sm text-blue-600">Actualizando...</span>
+              </div>
+            )}
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p className="text-sm text-gray-600">ID de Pago</p>
-              <p className="font-medium">{payment.id}</p>
+              <p className="font-medium">{currentPayment?.id || 'N/A'}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Estado</p>
               <p className="font-medium">
-                <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    payment.status === PaymentStatus.COMPLETED
-                      ? 'bg-green-100 text-green-800'
-                      : payment.status === PaymentStatus.FAILED
-                      ? 'bg-red-100 text-red-800'
-                      : payment.status === PaymentStatus.PENDING
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}
-                >
-                  {payment.status}
-                </span>
+                {(() => {
+                  const statusDisplay = getStatusDisplay(currentPayment?.status, true);
+                  return (
+                    <span className={statusDisplay.className}>
+                      {statusDisplay.icon}
+                      {statusDisplay.text}
+                    </span>
+                  );
+                })()}
               </p>
             </div>
+            {wompiTransaction && (
+              <div>
+                <p className="text-sm text-gray-600">Estado Wompi</p>
+                <p className="font-medium text-xs">{wompiTransaction.status}</p>
+                {wompiTransaction.status_message && (
+                  <p className="text-xs text-gray-500">{wompiTransaction.status_message}</p>
+                )}
+              </div>
+            )}
             <div>
               <p className="text-sm text-gray-600">Monto</p>
               <p className="font-medium">
-                ${payment.amount.toLocaleString('es-CO')} {payment.currency}
+                ${currentPayment?.amount?.toLocaleString('es-CO') || 'N/A'} {currentPayment?.currency || ''}
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Proveedor</p>
-              <p className="font-medium">{payment.provider}</p>
+              <p className="font-medium">{currentPayment?.provider || 'N/A'}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Método de Pago</p>
-              <p className="font-medium">{payment.paymentMethod}</p>
+              <p className="font-medium">{currentPayment?.paymentMethod || 'N/A'}</p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Fecha</p>
-              <p className="font-medium">{new Date(payment.createdAt).toLocaleString('es-CO')}</p>
+              <p className="font-medium">
+                {currentPayment?.createdAt ? new Date(currentPayment.createdAt).toLocaleString('es-CO') : 'N/A'}
+              </p>
             </div>
-            {payment.providerTransactionId && (
+            {(currentPayment?.providerTransactionId || transactionId) && (
               <div>
                 <p className="text-sm text-gray-600">ID de Transacción</p>
-                <p className="font-medium text-xs">{payment.providerTransactionId}</p>
+                <p className="font-medium text-xs">{currentPayment?.providerTransactionId || transactionId}</p>
               </div>
             )}
-            {payment.referenceNumber && (
+            {currentPayment?.referenceNumber && (
               <div>
                 <p className="text-sm text-gray-600">Referencia</p>
-                <p className="font-medium text-xs">{payment.referenceNumber}</p>
+                <p className="font-medium text-xs">{currentPayment.referenceNumber}</p>
               </div>
             )}
           </div>
         </div>
 
         {/* Order Information */}
-        {payment.order && (
+        {currentPayment?.order && (
           <div className="bg-white rounded-lg shadow p-6 mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Información de la Orden</h2>
+
+            {/* Payment and Order Status Sync Indicator */}
+            {currentPayment?.status === PaymentStatus.COMPLETED && (
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center space-x-2">
+                  {currentPayment.order.status?.toLowerCase() === 'confirmed' ? (
+                    <>
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      <span className="text-sm font-medium text-green-700">
+                        Pago y orden sincronizados correctamente
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-5 h-5 text-blue-500 animate-spin" />
+                      <span className="text-sm font-medium text-blue-700">Sincronizando estado de la orden...</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <p className="text-sm text-gray-600">Número de Orden</p>
-                <p className="font-medium">{payment.order.id}</p>
+                <p className="font-medium">{currentPayment.order.id}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Total</p>
-                <p className="font-medium">${payment.order.total.toLocaleString('es-CO')}</p>
+                <p className="font-medium">${currentPayment.order.total.toLocaleString('es-CO')}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Estado de la Orden</p>
-                <p className="font-medium">{payment.order.status}</p>
+                <div className="font-medium">
+                  {(() => {
+                    const statusDisplay = getStatusDisplay(currentPayment.order.status, false);
+                    return (
+                      <span className={statusDisplay.className}>
+                        {statusDisplay.icon}
+                        {statusDisplay.text}
+                      </span>
+                    );
+                  })()}
+                </div>
+                {PaymentStatus.COMPLETED}
+                {currentPayment?.status}
+                {currentPayment?.status === PaymentStatus.COMPLETED &&
+                  currentPayment.order.status?.toLowerCase() === 'confirmed' && (
+                    <p className="text-xs text-green-600 mt-1 flex items-center">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      La orden ha sido confirmada exitosamente
+                    </p>
+                  )}
+                {currentPayment.order.status?.toLowerCase() === 'pending' && (
+                  <p className="text-xs text-amber-600 mt-1 flex items-center">
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    El estado de la orden se actualizará automáticamente
+                  </p>
+                )}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Detailed Wompi Transaction Information */}
+        {wompiTransaction && (
+          <div className="bg-white rounded-lg shadow p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Información Detallada de la Transacción</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <p className="text-sm text-gray-600">Email del Cliente</p>
+                <p className="font-medium text-xs">{wompiTransaction.customer_email}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Tipo de Pago</p>
+                <p className="font-medium">{wompiTransaction.payment_method_type}</p>
+              </div>
+              {wompiTransaction.payment_method?.extra && (
+                <>
+                  <div>
+                    <p className="text-sm text-gray-600">Marca de Tarjeta</p>
+                    <p className="font-medium">
+                      {wompiTransaction.payment_method.extra.brand} - {wompiTransaction.payment_method.extra.name}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Últimos 4 Dígitos</p>
+                    <p className="font-medium">****{wompiTransaction.payment_method.extra.last_four}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Tipo de Tarjeta</p>
+                    <p className="font-medium">{wompiTransaction.payment_method.extra.card_type}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Titular</p>
+                    <p className="font-medium">{wompiTransaction.payment_method.extra.card_holder}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">3D Secure</p>
+                    <p className="font-medium">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          wompiTransaction.payment_method.extra.is_three_ds
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {wompiTransaction.payment_method.extra.is_three_ds ? 'Activado' : 'No activado'}
+                      </span>
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Cuotas</p>
+                    <p className="font-medium">{wompiTransaction.payment_method.installments}</p>
+                  </div>
+                </>
+              )}
+              {wompiTransaction.finalized_at && (
+                <div>
+                  <p className="text-sm text-gray-600">Finalizado</p>
+                  <p className="font-medium">{new Date(wompiTransaction.finalized_at).toLocaleString('es-CO')}</p>
+                </div>
+              )}
+              {wompiTransaction.customer_data && (
+                <>
+                  <div>
+                    <p className="text-sm text-gray-600">Nombre Completo</p>
+                    <p className="font-medium">{wompiTransaction.customer_data.full_name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Teléfono</p>
+                    <p className="font-medium">{wompiTransaction.customer_data.phone_number}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Documento</p>
+                    <p className="font-medium">
+                      {wompiTransaction.customer_data.legal_id_type}: {wompiTransaction.customer_data.legal_id}
+                    </p>
+                  </div>
+                </>
+              )}
+              {wompiTransaction.taxes && wompiTransaction.taxes.length > 0 && (
+                <div className="md:col-span-2">
+                  <p className="text-sm text-gray-600 mb-2">Impuestos</p>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    {wompiTransaction.taxes.map((tax, index) => (
+                      <div key={index} className="flex justify-between items-center">
+                        <span className="text-sm">{tax.type}:</span>
+                        <span className="font-medium">${(tax.amount_in_cents / 100).toLocaleString('es-CO')}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {wompiTransaction.shipping_address && (
+                <div className="md:col-span-2">
+                  <p className="text-sm text-gray-600 mb-2">Dirección de Envío</p>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="font-medium">{wompiTransaction.shipping_address.name}</p>
+                    <p>{wompiTransaction.shipping_address.address_line_1}</p>
+                    <p>
+                      {wompiTransaction.shipping_address.city}, {wompiTransaction.shipping_address.region}
+                    </p>
+                    <p>{wompiTransaction.shipping_address.country}</p>
+                    <p>Tel: {wompiTransaction.shipping_address.phone_number}</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

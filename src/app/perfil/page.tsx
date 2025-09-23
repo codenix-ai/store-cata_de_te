@@ -15,10 +15,18 @@ import {
   X,
   Camera,
   Settings,
+  Package,
+  ShoppingBag,
+  Clock,
+  CheckCircle,
+  Truck,
+  XCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { User as UserType, Address } from "@/types/user";
+import { Order } from "@/types/order";
 import Layout from "@/components/Layout/Layout";
+import { ORDERS_BY_USER } from "@/lib/graphql/queries";
 
 // GraphQL queries and mutations
 const GET_USER_PROFILE = gql`
@@ -93,6 +101,7 @@ function PerfilContent() {
   const { data: session, status } = useSession();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [activeTab, setActiveTab] = useState<'profile' | 'orders'>('profile');
 
   // Profile form state
   const [profileData, setProfileData] = useState({
@@ -124,6 +133,11 @@ function PerfilContent() {
     },
   });
 
+  const { data: ordersData, loading: ordersLoading, error: ordersError, refetch: refetchOrders } = useQuery(ORDERS_BY_USER, {
+    variables: { userId: session?.user?.id || "" },
+    skip: !session?.user?.id,
+  });
+
   const [updateProfile, { loading: updatingProfile }] =
     useMutation(UPDATE_USER_PROFILE);
   const [addAddress, { loading: addingAddress }] = useMutation(ADD_ADDRESS);
@@ -131,6 +145,7 @@ function PerfilContent() {
     useMutation(DELETE_ADDRESS);
 
   const user: UserType | null = data?.user || null;
+  const orders: Order[] = ordersData?.ordersByUser || [];
 
   const handleUpdateProfile = async () => {
     if (!user) return;
@@ -221,7 +236,45 @@ function PerfilContent() {
     });
   };
 
-  if (status === "loading" || loading) {
+  const getOrderStatusIcon = (status: string) => {
+    switch (status) {
+      case 'PENDING':
+        return <Clock className="w-4 h-4 text-yellow-500" />;
+      case 'CONFIRMED':
+      case 'PROCESSING':
+        return <Package className="w-4 h-4 text-blue-500" />;
+      case 'SHIPPED':
+        return <Truck className="w-4 h-4 text-purple-500" />;
+      case 'DELIVERED':
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'CANCELLED':
+        return <XCircle className="w-4 h-4 text-red-500" />;
+      default:
+        return <Clock className="w-4 h-4 text-gray-500" />;
+    }
+  };
+
+  const getOrderStatusBadge = (status: string) => {
+    const styles = {
+      PENDING: "bg-yellow-100 text-yellow-800",
+      CONFIRMED: "bg-blue-100 text-blue-800",
+      PROCESSING: "bg-blue-100 text-blue-800",
+      SHIPPED: "bg-purple-100 text-purple-800",
+      DELIVERED: "bg-green-100 text-green-800",
+      CANCELLED: "bg-red-100 text-red-800",
+    };
+    return styles[status as keyof typeof styles] || "bg-gray-100 text-gray-800";
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  if (status === "loading" || loading || ordersLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -303,9 +356,45 @@ function PerfilContent() {
             </div>
           </div>
 
+          {/* Tab Navigation */}
+          <div className="mb-8">
+            <div className="border-b border-gray-200">
+              <nav className="-mb-px flex space-x-8">
+                <button
+                  onClick={() => setActiveTab('profile')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'profile'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <User className="w-4 h-4" />
+                    <span>Perfil</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('orders')}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'orders'
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <ShoppingBag className="w-4 h-4" />
+                    <span>Mis Pedidos ({orders.length})</span>
+                  </div>
+                </button>
+              </nav>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Profile Information */}
-            <div className="lg:col-span-2 space-y-6">
+            {activeTab === 'profile' && (
+              <>
+                {/* Profile Information */}
+                <div className="lg:col-span-2 space-y-6">
               {/* Basic Information */}
               <div className="bg-white rounded-lg shadow p-6">
                 <div className="flex items-center justify-between mb-6">
@@ -651,6 +740,164 @@ function PerfilContent() {
                 </div>
               </div>
             </div>
+              </>
+            )}
+
+            {activeTab === 'orders' && (
+              <div className="lg:col-span-3">
+                {/* Orders Section */}
+                <div className="bg-white rounded-lg shadow">
+                  <div className="px-6 py-4 border-b border-gray-200">
+                    <h2 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                      <ShoppingBag className="w-5 h-5" />
+                      <span>Mis Pedidos</span>
+                    </h2>
+                  </div>
+
+                  <div className="p-6">
+                    {ordersError ? (
+                      <div className="text-center py-8">
+                        <XCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+                        <p className="text-gray-500 mb-2">Error al cargar los pedidos</p>
+                        <p className="text-gray-400 text-sm mb-4">{ordersError.message}</p>
+                        <button
+                          onClick={() => refetchOrders()}
+                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                        >
+                          Reintentar
+                        </button>
+                      </div>
+                    ) : orders.length === 0 ? (
+                      <div className="text-center py-12">
+                        <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          No tienes pedidos aún
+                        </h3>
+                        <p className="text-gray-500 mb-6">
+                          Cuando realices tu primera compra, aparecerá aquí
+                        </p>
+                        <a
+                          href="/products"
+                          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 inline-flex items-center space-x-2"
+                        >
+                          <ShoppingBag className="w-4 h-4" />
+                          <span>Explorar productos</span>
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {orders.map((order) => (
+                          <div
+                            key={order.id}
+                            className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+                          >
+                            {/* Order Header */}
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center space-x-3">
+                                {getOrderStatusIcon(order.status)}
+                                <div>
+                                  <h3 className="text-lg font-medium text-gray-900">
+                                    Pedido #{order.id.slice(-8)}
+                                  </h3>
+                                  <p className="text-sm text-gray-500">
+                                    {formatDate(order.createdAt)}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <span
+                                  className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getOrderStatusBadge(
+                                    order.status
+                                  )}`}
+                                >
+                                  {order.status}
+                                </span>
+                                <p className="text-lg font-bold text-gray-900 mt-1">
+                                  {formatCurrency(order.total)}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Store Info */}
+                            <div className="flex items-center space-x-2 mb-4 p-3 bg-gray-50 rounded-lg">
+                              <Store className="w-4 h-4 text-gray-500" />
+                              <span className="text-sm text-gray-600">Tienda:</span>
+                              <span className="text-sm font-medium text-gray-900">
+                                {order.store.name}
+                              </span>
+                            </div>
+
+                            {/* Order Items */}
+                            <div className="space-y-3 mb-4">
+                              <h4 className="text-sm font-medium text-gray-900">
+                                Productos ({order.items.length})
+                              </h4>
+                              {order.items.map((item, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                >
+                                  <div className="flex-1">
+                                    <p className="font-medium text-gray-900">
+                                      {item.productName}
+                                    </p>
+                                    <p className="text-sm text-gray-500">
+                                      Cantidad: {item.quantity}
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="font-medium text-gray-900">
+                                      {formatCurrency(item.unitPrice)}
+                                    </p>
+                                    <p className="text-sm text-gray-500">
+                                      c/u
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Order Summary */}
+                            <div className="border-t border-gray-200 pt-4">
+                              <div className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-gray-600">Subtotal:</span>
+                                  <span className="text-gray-900">
+                                    {formatCurrency(order.subtotal)}
+                                  </span>
+                                </div>
+                                {order.shipping > 0 && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Envío:</span>
+                                    <span className="text-gray-900">
+                                      {formatCurrency(order.shipping)}
+                                    </span>
+                                  </div>
+                                )}
+                                {order.tax > 0 && (
+                                  <div className="flex justify-between text-sm">
+                                    <span className="text-gray-600">Impuestos:</span>
+                                    <span className="text-gray-900">
+                                      {formatCurrency(order.tax)}
+                                    </span>
+                                  </div>
+                                )}
+                                <div className="flex justify-between text-lg font-bold border-t border-gray-200 pt-2">
+                                  <span className="text-gray-900">Total:</span>
+                                  <span className="text-gray-900">
+                                    {formatCurrency(order.total)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

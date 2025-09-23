@@ -22,10 +22,7 @@ interface PaymentFailureDetails {
 
 // This would be replaced with your actual database query
 // Example API endpoint to get order data by reference
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ reference: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ reference: string }> }) {
   try {
     const { reference } = await params;
 
