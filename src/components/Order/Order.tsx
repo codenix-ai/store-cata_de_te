@@ -131,6 +131,10 @@ interface OrderItemInput {
 interface CreateOrderInput {
   addressId: string;
   items: OrderItemInput[];
+  total: number;
+  subtotal: number;
+  tax: number;
+  shipping: number;
   storeId?: string; // Optional, some backends require this for product validation
 }
 interface AccordionStepProps {
@@ -503,6 +507,11 @@ export default function Order() {
       const orderInput: CreateOrderInput = {
         addressId: addressId, // Use selected or created address ID
         items: orderItems,
+        total: cart.total,
+        subtotal: cart.subtotal,
+        tax: cart.tax,
+        shipping: cart.shipping,
+        // Some backends require storeId for product validation
         // Include store ID if available
         ...(store?.id && { storeId: store.id }),
         ...(store?.storeId && !store?.id && { storeId: store.storeId }),

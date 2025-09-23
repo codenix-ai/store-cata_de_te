@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@apollo/client';
 import { useStore } from '@/components/StoreProvider';
 import { CheckCircle, Package, Truck, CreditCard, MapPin, AlertCircle, XCircle, RefreshCw, Loader } from 'lucide-react';
-import { GET_PAYMENT, UPDATE_ORDER_STATUS } from '@/lib/graphql/queries';
+import { GET_PAYMENT, UPDATE_ORDER } from '@/lib/graphql/queries';
 import { PaymentStatus } from '@/types/payment';
 import { WompiTransactionData, WompiTransactionResponse } from '@/types/wompi';
 import { usePayments } from '@/hooks/usePayments';
@@ -29,7 +29,7 @@ export default function PaymentValidation({ paymentId }: PaymentValidationProps)
   const { updatePayment: handleUpdatePaymentMutation } = usePayments();
 
   // Order status update mutation
-  const [updateOrderStatusMutation] = useMutation(UPDATE_ORDER_STATUS, {
+  const [updateOrderStatusMutation] = useMutation(UPDATE_ORDER, {
     errorPolicy: 'all',
   });
 
@@ -38,7 +38,6 @@ export default function PaymentValidation({ paymentId }: PaymentValidationProps)
     pollInterval: polling ? 3000 : 0, // Poll every 3 seconds while pending
     errorPolicy: 'all',
   });
-  console.log('🚀 ~ PaymentValidation ~ paymentId:', paymentId);
 
   const payment = data?.payment;
 
@@ -117,7 +116,7 @@ export default function PaymentValidation({ paymentId }: PaymentValidationProps)
         return false;
       }
 
-      // Use GraphQL mutation to update order status
+      // Use GraphQL mutation to update order status and financial details
       const { data } = await updateOrderStatusMutation({
         variables: {
           id: orderId,
@@ -128,14 +127,13 @@ export default function PaymentValidation({ paymentId }: PaymentValidationProps)
       });
 
       if (data?.updateOrderStatus) {
-        console.log(`Order status updated to: ${orderStatus}`, data.updateOrderStatus);
         return true;
       } else {
-        console.error('Failed to update order status via GraphQL');
+        console.error('Failed to update order via GraphQL');
         return false;
       }
     } catch (error) {
-      console.error('Error updating order status via GraphQL:', error);
+      console.error('Error updating order via GraphQL:', error);
       return false;
     }
   };
@@ -724,8 +722,8 @@ export default function PaymentValidation({ paymentId }: PaymentValidationProps)
                 <p className="font-medium">{currentPayment.order.id}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Total</p>
-                <p className="font-medium">${currentPayment.order.total.toLocaleString('es-CO')}</p>
+                <p className="text-sm text-gray-600">Total</p>$
+                {currentPayment?.amount?.toLocaleString('es-CO') || 'N/A'} {currentPayment?.currency || ''}
               </div>
               <div>
                 <p className="text-sm text-gray-600">Estado de la Orden</p>
@@ -740,8 +738,6 @@ export default function PaymentValidation({ paymentId }: PaymentValidationProps)
                     );
                   })()}
                 </div>
-                {PaymentStatus.COMPLETED}
-                {currentPayment?.status}
                 {currentPayment?.status === PaymentStatus.COMPLETED &&
                   currentPayment.order.status?.toLowerCase() === 'confirmed' && (
                     <p className="text-xs text-green-600 mt-1 flex items-center">

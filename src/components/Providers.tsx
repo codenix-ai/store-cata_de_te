@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { ApolloProvider } from "@apollo/client";
-import { SessionProvider } from "next-auth/react";
-import toast, { Toaster } from "react-hot-toast";
-import { apolloClient } from "@/lib/apollo";
-import { StoreProvider } from "@/components/StoreProvider";
-import { StoreConfig } from "@/lib/store-config";
-import { AppConfigLoader } from "./AppConfigLoader";
+import { ApolloProvider } from '@apollo/client';
+import { SessionProvider } from 'next-auth/react';
+import toast, { Toaster } from 'react-hot-toast';
+import { apolloClient } from '@/lib/apollo';
+import { StoreProvider } from '@/components/StoreProvider';
+import { StoreConfig } from '@/lib/store-config';
+import { AppConfigLoader } from './AppConfigLoader';
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -17,17 +17,17 @@ interface ProvidersProps {
 const toastconfig = {
   duration: 4000,
   style: {
-    background: "#363636",
-    color: "#fff",
+    background: '#363636',
+    color: '#fff',
   },
   success: {
     style: {
-      background: "#10B981",
+      background: '#10B981',
     },
   },
   error: {
     style: {
-      background: "#EF4444",
+      background: '#EF4444',
     },
   },
 };
@@ -38,7 +38,7 @@ export function Providers({ children, session, initialStore }: ProvidersProps) {
       <ApolloProvider client={apolloClient}>
         <AppConfigLoader>
           {children}
-          <Toaster position="top-right" toastOptions={toastconfig} />
+          <Toaster position="bottom-right" toastOptions={toastconfig} />
         </AppConfigLoader>
       </ApolloProvider>
     </SessionProvider>

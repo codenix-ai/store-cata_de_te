@@ -32,12 +32,13 @@ export interface WompiBillingData {
 }
 
 export interface WompiShippingAddress {
+  name: string;
   address_line_1: string;
   city: string;
-  country: string;
   region: string;
+  country: string;
   phone_number: string;
-  name: string;
+  shipping_fee?: number; // Add shipping_fee property
 }
 
 export interface WompiBrowserInfo {

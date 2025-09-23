@@ -265,12 +265,14 @@ export const UPDATE_PAYMENT_CONFIGURATION = gql`
   }
 `;
 
-export const UPDATE_ORDER_STATUS = gql`
-  mutation UpdateOrderStatus($id: ID!, $input: UpdateOrderStatusInput!) {
-    updateOrderStatus(id: $id, input: $input) {
+export const UPDATE_ORDER = gql`
+  mutation UpdateOrder($id: ID!, $input: UpdateOrderStatusInput!) {
+    updateOrder(id: $id, input: $input) {
       id
       status
       updatedAt
+      shipping
+      tax
     }
   }
 `;
