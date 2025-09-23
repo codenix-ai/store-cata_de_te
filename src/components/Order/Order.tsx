@@ -484,7 +484,7 @@ export default function Order() {
     }
 
     // Check if Wompi is enabled
-    if (!isWompiEnabled) {
+    if (!process.env.NEXT_PUBLIC_WOMPI_PUBLIC_KEY) {
       alert('El sistema de pagos no está configurado correctamente');
       return;
     }
