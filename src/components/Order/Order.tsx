@@ -692,7 +692,7 @@ export default function Order() {
             <p className="text-gray-600 mb-6">
               Necesitas iniciar sesión para guardar tu dirección y completar la orden.
             </p>
-            <a
+            <Link
               href="/auth/signin"
               className="inline-block px-6 py-3 text-white rounded-md hover:opacity-90 transition-colors"
               style={{
@@ -700,7 +700,7 @@ export default function Order() {
               }}
             >
               Iniciar Sesión
-            </a>
+            </Link>
           </div>
         </div>
       </div>

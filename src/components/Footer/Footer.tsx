@@ -1,53 +1,39 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import {
-  Facebook,
-  Instagram,
-  Twitter,
-  Youtube,
-  Music,
-  Phone,
-  Mail,
-  MapPin,
-} from "lucide-react";
-import { useStore } from "@/components/StoreProvider";
+import Link from 'next/link';
+import { Facebook, Instagram, Twitter, Youtube, Music, Phone, Mail, MapPin } from 'lucide-react';
+import { useStore } from '@/components/StoreProvider';
 
 export function Footer() {
   const { store } = useStore();
 
   const socialLinks = [
-    { name: "Facebook", icon: Facebook, url: store?.facebookUrl },
-    { name: "Instagram", icon: Instagram, url: store?.instagramUrl },
-    { name: "Twitter", icon: Twitter, url: store?.twitterUrl },
-    { name: "YouTube", icon: Youtube, url: store?.youtubeUrl },
-    { name: "TikTok", icon: Music, url: store?.tiktokUrl },
-  ].filter((link) => link.url);
+    { name: 'Facebook', icon: Facebook, url: store?.facebookUrl },
+    { name: 'Instagram', icon: Instagram, url: store?.instagramUrl },
+    { name: 'Twitter', icon: Twitter, url: store?.twitterUrl },
+    { name: 'YouTube', icon: Youtube, url: store?.youtubeUrl },
+    { name: 'TikTok', icon: Music, url: store?.tiktokUrl },
+  ].filter(link => link.url);
 
   return (
-    <footer
-      className="mt-auto text-white"
-      style={{ backgroundColor: store?.primaryColor || "#2563eb" }}
-    >
+    <footer className="mt-auto text-white" style={{ backgroundColor: store?.primaryColor || '#2563eb' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold">
-              {store?.name || "EmprendyUp Store"}
-            </h3>
+            <h3 className="text-lg font-semibold">{store?.name || 'EmprendyUp Store'}</h3>
             <p className="text-sm opacity-80">
               {store?.description ||
-                "Tu tienda de confianza para productos de calidad con el mejor servicio al cliente."}
+                'Tu tienda de confianza para productos de calidad con el mejor servicio al cliente.'}
             </p>
             {store?.logoUrl && (
               <img
                 src={
-                  store.logoUrl.startsWith("http")
+                  store.logoUrl.startsWith('http')
                     ? store.logoUrl
                     : `https://emprendyup-images.s3.us-east-1.amazonaws.com/${store.logoUrl}`
                 }
-                alt={store.name || "Logo"}
+                alt={store.name || 'Logo'}
                 className="h-8 w-auto"
               />
             )}
@@ -58,34 +44,22 @@ export function Footer() {
             <h3 className="text-lg font-semibold">Enlaces Rápidos</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link
-                  href="/products"
-                  className="hover:opacity-80 transition-opacity"
-                >
+                <Link href="/products" className="hover:opacity-80 transition-opacity">
                   Productos
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/favorites"
-                  className="hover:opacity-80 transition-opacity"
-                >
+                <Link href="/favorites" className="hover:opacity-80 transition-opacity">
                   Favoritos
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/cart"
-                  className="hover:opacity-80 transition-opacity"
-                >
+                <Link href="/cart" className="hover:opacity-80 transition-opacity">
                   Carrito
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/support"
-                  className="hover:opacity-80 transition-opacity"
-                >
+                <Link href="/support" className="hover:opacity-80 transition-opacity">
                   Soporte
                 </Link>
               </li>
@@ -116,7 +90,7 @@ export function Footer() {
                     {(store.city || store.department) && (
                       <div className="opacity-80">
                         {store.city}
-                        {store.city && store.department && ", "}
+                        {store.city && store.department && ', '}
                         {store.department}
                       </div>
                     )}
@@ -130,17 +104,17 @@ export function Footer() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Síguenos</h3>
             <div className="flex space-x-4">
-              {socialLinks.map((social) => (
-                <a
+              {socialLinks.map(social => (
+                <Link
                   key={social.name}
-                  href={social.url}
+                  href={social.url!}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
                   aria-label={social.name}
                 >
                   <social.icon className="w-5 h-5" />
-                </a>
+                </Link>
               ))}
             </div>
           </div>
@@ -150,27 +124,17 @@ export function Footer() {
         <div className="mt-8 pt-8 border-t border-white/20">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-sm opacity-80">
-              © {new Date().getFullYear()}{" "}
-              {store?.businessName || store?.name || "EmprendyUp Store"}. Todos
-              los derechos reservados.
+              © {new Date().getFullYear()} {store?.businessName || store?.name || 'EmprendyUp Store'}. Todos los
+              derechos reservados.
             </div>
             <div className="flex space-x-6 text-sm">
-              <Link
-                href="/privacidad"
-                className="hover:opacity-80 transition-opacity"
-              >
+              <Link href="/privacidad" className="hover:opacity-80 transition-opacity">
                 Política de Privacidad
               </Link>
-              <Link
-                href="/terms"
-                className="hover:opacity-80 transition-opacity"
-              >
+              <Link href="/terms" className="hover:opacity-80 transition-opacity">
                 Términos de Servicio
               </Link>
-              <Link
-                href="/politica-devoluciones"
-                className="hover:opacity-80 transition-opacity"
-              >
+              <Link href="/politica-devoluciones" className="hover:opacity-80 transition-opacity">
                 Política de Devoluciones
               </Link>
             </div>

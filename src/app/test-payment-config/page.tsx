@@ -2,6 +2,7 @@
 import React from 'react';
 import { useStorePaymentConfiguration } from '@/hooks/usePaymentConfiguration';
 import { useSession } from 'next-auth/react';
+import { Link } from 'lucide-react';
 
 export default function TestPaymentConfig() {
   const { data: session } = useSession();
@@ -13,9 +14,12 @@ export default function TestPaymentConfig() {
       <div className="p-8">
         <h1 className="text-2xl font-bold mb-4">Test Payment Configuration</h1>
         <p className="text-red-600">Please log in to view payment configuration.</p>
-        <a href="/auth/signin" className="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        <Link
+          href="/auth/signin"
+          className="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
           Sign In
-        </a>
+        </Link>
       </div>
     );
   }
@@ -87,18 +91,21 @@ export default function TestPaymentConfig() {
       <div className="mt-8 space-y-2">
         <h2 className="text-lg font-semibold mb-4">Quick Navigation</h2>
         <div className="space-x-4">
-          <a href="/admin/payments" className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+          <Link
+            href="/admin/payments"
+            className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
             Payment Dashboard
-          </a>
-          <a
+          </Link>
+          <Link
             href="/admin/payments/config"
             className="inline-block px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
           >
             Payment Configuration
-          </a>
-          <a href="/admin" className="inline-block px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+          </Link>
+          <Link href="/admin" className="inline-block px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
             Admin Dashboard
-          </a>
+          </Link>
         </div>
       </div>
     </div>
