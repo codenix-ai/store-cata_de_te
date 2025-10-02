@@ -14,16 +14,16 @@ const GET_POLICIES = gql`
   }
 `;
 
-export default function PrivacidadPage() {
+export default function PoliticaEnviosPage() {
   const { store } = useStore();
   const { data, loading, error } = useQuery(GET_POLICIES, {
     variables: { storeId: store?.id || "default-store" },
     skip: !store?.id,
   });
-  let privacyPolicy = null;
+  let shippingPolicy = null;
   if (data?.storePolicies) {
-    privacyPolicy = data.storePolicies.find(
-      (p: any) => p.type === "PRIVACY_POLICY"
+    shippingPolicy = data.storePolicies.find(
+      (p: any) => p.type === "SHIPPING_POLICY"
     );
   }
   return (
@@ -33,20 +33,20 @@ export default function PrivacidadPage() {
           <div className="text-center py-12">Cargando...</div>
         ) : error ? (
           <div className="text-center py-12 text-red-500">
-            Error al cargar la política de privacidad.
+            Error al cargar la política de envíos.
           </div>
-        ) : privacyPolicy ? (
+        ) : shippingPolicy ? (
           <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
             <h1
               className="text-3xl font-bold mb-8 text-center"
               style={{ color: store?.primaryColor }}
             >
-              {privacyPolicy.title}
+              {shippingPolicy.title}
             </h1>
             <div
               className="prose prose-lg max-w-none mx-auto"
               style={{ minHeight: 200 }}
-              dangerouslySetInnerHTML={{ __html: privacyPolicy.content }}
+              dangerouslySetInnerHTML={{ __html: shippingPolicy.content }}
             />
           </div>
         ) : (
@@ -55,10 +55,10 @@ export default function PrivacidadPage() {
               className="text-3xl font-bold mb-8 text-center"
               style={{ color: store?.primaryColor }}
             >
-              Política de Privacidad
+              Política de Envíos
             </h1>
             <div className="text-gray-600">
-              No se encontró la política de privacidad para esta tienda.
+              No se encontró la política de envíos para esta tienda.
             </div>
           </div>
         )}

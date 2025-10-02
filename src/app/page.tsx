@@ -19,6 +19,7 @@ import { useStore } from "@/components/StoreProvider";
 import Layout from "@/components/Layout/Layout";
 import { HeroBanner } from "@/components/HeroBanner";
 import toast from "react-hot-toast";
+import Head from "next/head";
 
 // GraphQL Query
 const GET_PRODUCTS_BY_STORE = gql`
@@ -74,6 +75,25 @@ const CREATE_CONTACT_LEAD = gql`
         name
         email
       }
+    }
+  }
+`;
+const GET_STORE_CONFIG = gql`
+  query GetStore($storeId: String!) {
+    store(storeId: $storeId) {
+      id
+      storeId
+      name
+      primaryColor
+      secondaryColor
+      accentColor
+      isActive
+      maintenanceMode
+      metaTitle
+      metaDescription
+      metaKeywords
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -153,6 +173,11 @@ export default function HomePage() {
     },
     skip: !store?.id,
   });
+  const { data: storeConfigData } = useQuery(GET_STORE_CONFIG, {
+    variables: { storeId: store?.id || "" },
+    skip: !store?.id,
+  });
+  const seo = storeConfigData?.store;
 
   const products = productsData?.productsByStore?.items || [];
 
@@ -258,8 +283,18 @@ export default function HomePage() {
   };
   return (
     <Layout>
+      <Head>
+        <title>{seo?.metaTitle || seo?.name || "EmprendyUp Store"}</title>
+        {seo?.metaDescription && (
+          <meta name="description" content={seo.metaDescription} />
+        )}
+        {seo?.metaKeywords && (
+          <meta name="keywords" content={seo.metaKeywords} />
+        )}
+      </Head>
+
       <div className="space-y-12">
-        {/* Hero Section - reusable component */}
+        {/* Hero Section */}
         <HeroBanner />
 
         {/* About Us Section - Image & Text Alternating */}
