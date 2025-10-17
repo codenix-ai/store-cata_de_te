@@ -1,18 +1,24 @@
-'use client';
-import React, { useState } from 'react';
-import Image from 'next/image';
-import { cartService, Cart as CartType, CartItem } from '@/lib/cart';
-import { useStore } from '@/components/StoreProvider';
-import { ChevronDown, ChevronRight, Link, Shield, ShieldCheck } from 'lucide-react';
-import { gql, useQuery, useMutation } from '@apollo/client';
-import { useSession } from 'next-auth/react';
-import toast from 'react-hot-toast';
-import { useRouter } from 'next/navigation';
-import crypto from 'crypto';
-import { useWompiPayment, usePayments } from '@/hooks/usePayments';
-import { useStorePaymentConfiguration } from '@/hooks/usePaymentConfiguration';
-import { PaymentProvider, PaymentMethod } from '@/types/payment';
-import { CREATE_PAYMENT } from '@/lib/graphql/queries';
+"use client";
+import React, { useState } from "react";
+import Image from "next/image";
+import { cartService, Cart as CartType, CartItem } from "@/lib/cart";
+import { useStore } from "@/components/StoreProvider";
+import {
+  ChevronDown,
+  ChevronRight,
+  Link,
+  Shield,
+  ShieldCheck,
+} from "lucide-react";
+import { gql, useQuery, useMutation } from "@apollo/client";
+import { useSession } from "next-auth/react";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import crypto from "crypto";
+import { useWompiPayment, usePayments } from "@/hooks/usePayments";
+import { useStorePaymentConfiguration } from "@/hooks/usePaymentConfiguration";
+import { PaymentProvider, PaymentMethod } from "@/types/payment";
+import { CREATE_PAYMENT } from "@/lib/graphql/queries";
 
 // Helper functions for Wompi integration
 const generatePaymentReference = () => {
@@ -34,7 +40,7 @@ const generateIntegritySignature = (
   // <Reference><Amount><Currency><ExpirationTime><IntegritySecret>
   const concatenatedString = `${reference}${amountInCents}${currency}${expirationTime}${integritySecret}`;
   // Create SHA256 hash
-  return crypto.createHash('sha256').update(concatenatedString).digest('hex');
+  return crypto.createHash("sha256").update(concatenatedString).digest("hex");
 };
 
 const formatAmountInCents = (amount: number) => {
@@ -159,31 +165,45 @@ const AccordionStep: React.FC<AccordionStepProps> = ({
   const { store } = useStore();
 
   return (
-    <div className={`border border-gray-200 rounded-lg mb-4 ${isDisabled ? 'opacity-50' : ''}`}>
+    <div
+      className={`border border-gray-200 rounded-lg mb-4 ${
+        isDisabled ? "opacity-50" : ""
+      }`}
+    >
       <button
         onClick={isDisabled ? undefined : onToggle}
         disabled={isDisabled}
-        title={isDisabled ? 'Completa el paso anterior para continuar' : ''}
+        title={isDisabled ? "Completa el paso anterior para continuar" : ""}
         className={`w-full px-6 py-4 flex items-center justify-between text-left transition-colors ${
-          isDisabled ? 'cursor-not-allowed' : 'hover:bg-gray-50'
+          isDisabled ? "cursor-not-allowed" : "hover:bg-gray-50"
         }`}
       >
         <div className="flex items-center space-x-4">
           <div
             className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold ${
               isCompleted
-                ? 'bg-green-500'
+                ? "bg-green-500"
                 : isOpen
-                ? store?.primaryColor || 'bg-blue-600'
+                ? store?.primaryColor || "bg-blue-600"
                 : isDisabled
-                ? 'bg-gray-300'
-                : 'bg-gray-400'
+                ? "bg-gray-300"
+                : "bg-gray-400"
             }`}
-            style={isOpen && !isCompleted && !isDisabled ? { backgroundColor: store?.primaryColor || '#2563eb' } : {}}
+            style={
+              isOpen && !isCompleted && !isDisabled
+                ? { backgroundColor: store?.primaryColor || "#2563eb" }
+                : {}
+            }
           >
-            {isCompleted ? '✓' : step}
+            {isCompleted ? "✓" : step}
           </div>
-          <h3 className={`text-lg font-semibold ${isDisabled ? 'text-gray-400' : 'text-gray-900'}`}>{title}</h3>
+          <h3
+            className={`text-lg font-semibold ${
+              isDisabled ? "text-gray-400" : "text-gray-900"
+            }`}
+          >
+            {title}
+          </h3>
         </div>
         {isDisabled ? (
           <span className="text-xs text-gray-400 italic"></span>
@@ -212,38 +232,58 @@ function OrderSummary({ cart, store }: OrderSummaryProps) {
       <div className="space-y-2">
         <div className="flex justify-between">
           <span className="text-gray-600">Subtotal:</span>
-          <span className="font-medium">${cart.subtotal.toLocaleString('es-CO')}</span>
+          <span className="font-medium">
+            ${cart.subtotal.toLocaleString("es-CO")}
+          </span>
         </div>
         <div className="flex justify-between">
           <span className="text-gray-600">IVA (19%):</span>
-          <span className="font-medium">${cart.tax.toLocaleString('es-CO')}</span>
+          <span className="font-medium">
+            ${cart.tax.toLocaleString("es-CO")}
+          </span>
         </div>
         <div className="flex justify-between">
           <span className="text-gray-600">Envío:</span>
           <span className="font-medium">
-            {cart.shipping === 0 ? 'Gratis' : `$${cart.shipping.toLocaleString('es-CO')}`}
+            {cart.shipping === 0
+              ? "Gratis"
+              : `$${cart.shipping.toLocaleString("es-CO")}`}
           </span>
         </div>
         {cart.shipping === 0 && cart.subtotal >= 150000 && (
-          <p className="text-sm text-green-600">¡Envío gratis por compras superiores a $150.000!</p>
+          <p className="text-sm text-green-600">
+            ¡Envío gratis por compras superiores a $150.000!
+          </p>
         )}
       </div>
 
       <div className="border-t pt-4">
         <div className="flex justify-between items-center">
           <span className="text-lg font-semibold text-black">Total:</span>
-          <span className="text-xl font-bold text-black">${cart.total.toLocaleString('es-CO')}</span>
+          <span className="text-xl font-bold text-black">
+            ${cart.total.toLocaleString("es-CO")}
+          </span>
         </div>
       </div>
 
       {/* Payment Methods */}
       <div className="mt-6 pt-6 border-t">
-        <h4 className="text-sm font-medium text-black mb-3">Métodos de Pago Aceptados:</h4>
+        <h4 className="text-sm font-medium text-black mb-3">
+          Métodos de Pago Aceptados:
+        </h4>
         <div className="grid grid-cols-2 gap-2">
-          <div className="bg-white p-2 rounded border text-center text-xs font-medium">MercadoPago</div>
-          <div className="bg-white p-2 rounded border text-center text-xs font-medium">Wompi</div>
-          <div className="bg-white p-2 rounded border text-center text-xs font-medium">ePayco</div>
-          <div className="bg-white p-2 rounded border text-center text-xs font-medium">Tarjeta</div>
+          <div className="bg-white p-2 rounded border text-center text-xs font-medium">
+            MercadoPago
+          </div>
+          <div className="bg-white p-2 rounded border text-center text-xs font-medium">
+            Wompi
+          </div>
+          <div className="bg-white p-2 rounded border text-center text-xs font-medium">
+            ePayco
+          </div>
+          <div className="bg-white p-2 rounded border text-center text-xs font-medium">
+            Tarjeta
+          </div>
         </div>
       </div>
     </div>
@@ -265,13 +305,21 @@ export default function Order() {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [isSubmittingAddress, setIsSubmittingAddress] = useState(false);
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
-  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
+  const [selectedAddressId, setSelectedAddressId] = useState<string>("");
 
   // Payment hooks
-  const { createWompiPayment, loading: paymentLoading, error: paymentError } = useWompiPayment();
-  const { configuration: paymentConfig, isWompiEnabled, getWompiPublicKey } = useStorePaymentConfiguration();
+  const {
+    createWompiPayment,
+    loading: paymentLoading,
+    error: paymentError,
+  } = useWompiPayment();
+  const {
+    configuration: paymentConfig,
+    isWompiEnabled,
+    getWompiPublicKey,
+  } = useStorePaymentConfiguration();
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
-  const [paymentReference, setPaymentReference] = useState<string>('');
+  const [paymentReference, setPaymentReference] = useState<string>("");
 
   // Generate payment reference on component mount
   React.useEffect(() => {
@@ -291,37 +339,37 @@ export default function Order() {
     refetch: refetchAddresses,
   } = useQuery(GET_ADDRESSES_BY_USER, {
     skip: !session, // Skip query if user is not authenticated
-    errorPolicy: 'all',
-    fetchPolicy: 'cache-and-network',
+    errorPolicy: "all",
+    fetchPolicy: "cache-and-network",
   });
 
   // Colombian departments and cities data
   const departments = [
-    'Amazonas',
-    'Cundinamarca',
-    'Antioquia',
-    'Arauca',
-    'Atlántico',
-    'Bolívar',
-    'Boyacá',
-    'Caldas',
-    'Caquetá',
-    'Casanare',
-    'Cauca',
+    "Amazonas",
+    "Cundinamarca",
+    "Antioquia",
+    "Arauca",
+    "Atlántico",
+    "Bolívar",
+    "Boyacá",
+    "Caldas",
+    "Caquetá",
+    "Casanare",
+    "Cauca",
   ];
 
   const cities = [
-    'Bogotá',
-    'Medellín',
-    'Cali',
-    'Barranquilla',
-    'Cúcuta',
-    'Bucaramanga',
-    'Pereira',
-    'Santa Marta',
-    'Ibagué',
-    'Manizales',
-    'Valledupar',
+    "Bogotá",
+    "Medellín",
+    "Cali",
+    "Barranquilla",
+    "Cúcuta",
+    "Bucaramanga",
+    "Pereira",
+    "Santa Marta",
+    "Ibagué",
+    "Manizales",
+    "Valledupar",
   ];
 
   // Load cart on component mount
@@ -330,24 +378,24 @@ export default function Order() {
   }, []);
 
   const [address, setAddress] = useState<Address>({
-    name: '',
-    street: '',
-    city: '',
-    department: '',
-    postalCode: '',
-    phone: '',
+    name: "",
+    street: "",
+    city: "",
+    department: "",
+    postalCode: "",
+    phone: "",
     isDefault: false,
   });
 
   const handleStepToggle = (step: number) => {
     // Prevent accessing steps that require previous completion
     if (step === 2 && cart.items.length === 0) {
-      alert('Agrega productos al carrito antes de continuar');
+      alert("Agrega productos al carrito antes de continuar");
       return;
     }
 
     if (step === 3 && !isAddressCompleted) {
-      alert('Completa la información de dirección antes de continuar');
+      alert("Completa la información de dirección antes de continuar");
       return;
     }
 
@@ -359,13 +407,15 @@ export default function Order() {
 
     // Check if user is authenticated
     if (!session) {
-      alert('Debes iniciar sesión para guardar la dirección');
+      alert("Debes iniciar sesión para guardar la dirección");
       return;
     }
 
     // If an existing address is selected, use it
     if (selectedAddressId && !showNewAddressForm) {
-      const selectedAddress = addressesData?.addressesByUser?.find((addr: Address) => addr.id === selectedAddressId);
+      const selectedAddress = addressesData?.addressesByUser?.find(
+        (addr: Address) => addr.id === selectedAddressId
+      );
       if (selectedAddress) {
         setAddress({
           ...selectedAddress,
@@ -373,17 +423,22 @@ export default function Order() {
         });
 
         // Mark step as completed and move to next step
-        setCompletedSteps([...completedSteps.filter(s => s !== 2), 2]);
+        setCompletedSteps([...completedSteps.filter((s) => s !== 2), 2]);
         setActiveStep(3);
         return;
       }
     }
 
     // Validate new address form
-    const isValid = address.name && address.street && address.city && address.department && address.phone;
+    const isValid =
+      address.name &&
+      address.street &&
+      address.city &&
+      address.department &&
+      address.phone;
 
     if (!isValid) {
-      alert('Por favor completa todos los campos requeridos');
+      alert("Por favor completa todos los campos requeridos");
       return;
     }
 
@@ -409,7 +464,7 @@ export default function Order() {
       });
 
       // Update the address state with the returned ID
-      setAddress(prev => ({
+      setAddress((prev) => ({
         ...prev,
         id: data.createAddress.id,
       }));
@@ -424,16 +479,16 @@ export default function Order() {
       await refetchAddresses();
 
       // Mark step as completed and move to next step
-      setCompletedSteps([...completedSteps.filter(s => s !== 2), 2]);
+      setCompletedSteps([...completedSteps.filter((s) => s !== 2), 2]);
       setActiveStep(3);
 
-      toast.success('Dirección guardada exitosamente');
+      toast.success("Dirección guardada exitosamente");
     } catch (error) {
-      console.error('Error creating address:', error);
+      console.error("Error creating address:", error);
 
       // More detailed error logging
       if (error instanceof Error) {
-        console.error('Error message:', error.message);
+        console.error("Error message:", error.message);
       }
 
       // Handle GraphQL errors
@@ -441,9 +496,9 @@ export default function Order() {
         const gqlError = (error as any).graphQLErrors[0];
         alert(`Error: ${gqlError.message}`);
       } else if ((error as any).networkError) {
-        alert('Error de conexión. Verifica tu conexión a internet.');
+        alert("Error de conexión. Verifica tu conexión a internet.");
       } else {
-        alert('Error al guardar la dirección. Por favor intenta nuevamente.');
+        alert("Error al guardar la dirección. Por favor intenta nuevamente.");
       }
     } finally {
       setIsSubmittingAddress(false);
@@ -456,19 +511,19 @@ export default function Order() {
 
     // Clear the new address form when selecting an existing address
     setAddress({
-      name: '',
-      street: '',
-      city: '',
-      department: '',
-      postalCode: '',
-      phone: '',
+      name: "",
+      street: "",
+      city: "",
+      department: "",
+      postalCode: "",
+      phone: "",
       isDefault: false,
     });
   };
 
   const handleNewAddressClick = () => {
     setShowNewAddressForm(true);
-    setSelectedAddressId('');
+    setSelectedAddressId("");
   };
 
   const handlePaymentSubmit = async (e: React.FormEvent) => {
@@ -476,20 +531,22 @@ export default function Order() {
 
     // Check if user is authenticated
     if (!session) {
-      alert('Debes iniciar sesión para completar la orden');
+      alert("Debes iniciar sesión para completar la orden");
       return;
     }
 
     // Check if address is saved or selected
     const addressId = address.id || selectedAddressId;
     if (!addressId) {
-      alert('Debes seleccionar o guardar una dirección antes de completar la orden');
+      alert(
+        "Debes seleccionar o guardar una dirección antes de completar la orden"
+      );
       return;
     }
 
     // Check if Wompi is enabled
     if (!process.env.NEXT_PUBLIC_WOMPI_PUBLIC_KEY) {
-      alert('El sistema de pagos no está configurado correctamente');
+      alert("El sistema de pagos no está configurado correctamente");
       return;
     }
 
@@ -528,17 +585,19 @@ export default function Order() {
 
       // Then create a payment record in the system using GraphQL
       const selectedAddress = selectedAddressId
-        ? addressesData?.addressesByUser?.find((addr: Address) => addr.id === selectedAddressId) || address
+        ? addressesData?.addressesByUser?.find(
+            (addr: Address) => addr.id === selectedAddressId
+          ) || address
         : address;
 
       const paymentInput = {
         amount: cart.total,
-        currency: 'COP',
+        currency: "COP",
         provider: PaymentProvider.WOMPI,
         paymentMethod: PaymentMethod.CREDIT_CARD,
         description: `Pago para orden ${createdOrder.id}`,
-        customerEmail: session.user?.email || '',
-        customerPhone: selectedAddress?.phone || '',
+        customerEmail: session.user?.email || "",
+        customerPhone: selectedAddress?.phone || "",
         orderId: createdOrder.id,
         externalReference: paymentReference,
         ...(store?.id && { storeId: store.id }),
@@ -556,15 +615,19 @@ export default function Order() {
       // Generate Wompi payment data
       const reference = paymentRecord.id; // Use payment ID as reference
       const amountInCents = formatAmountInCents(cart.total);
-      const currency = 'COP';
+      const currency = "COP";
       const expirationTime = getExpirationTime();
 
       // Get Wompi configuration
       const wompiPublicKey =
-        getWompiPublicKey() || process.env.NEXT_PUBLIC_WOMPI_PUBLIC_KEY || 'pub_test_G6jyWcpGlLJG8ATDRf9u6gLKy3MH8J';
+        getWompiPublicKey() ||
+        process.env.NEXT_PUBLIC_WOMPI_PUBLIC_KEY ||
+        "pub_test_G6jyWcpGlLJG8ATDRf9u6gLKy3MH8J";
 
       // IMPORTANT: In production, generate signature on backend
-      const integritySecret = process.env.NEXT_PUBLIC_WOMPI_INTEGRITY_SECRET || 'test_integrity_secret';
+      const integritySecret =
+        process.env.NEXT_PUBLIC_WOMPI_INTEGRITY_SECRET ||
+        "test_integrity_secret";
       const integritySignature = generateIntegritySignature(
         reference,
         amountInCents,
@@ -574,36 +637,38 @@ export default function Order() {
       );
 
       const wompiData = {
-        'public-key': wompiPublicKey,
+        "public-key": wompiPublicKey,
         currency: currency,
-        'amount-in-cents': amountInCents.toString(),
+        "amount-in-cents": amountInCents.toString(),
         reference: reference,
-        'signature:integrity': integritySignature,
-        'expiration-time': expirationTime,
-        'redirect-url': `${window.location.origin}/orden-exitosa?payment=${paymentRecord.id}`,
-        'customer-data:email': session.user?.email || '',
-        'customer-data:phone': selectedAddress?.phone || '',
-        'customer-data:full-name': session.user?.name || selectedAddress?.name || '',
-        'customer-data:legal-id': '',
-        'customer-data:legal-id-type': 'CC',
-        'shipping-address:address-line-1': selectedAddress?.street || '',
-        'shipping-address:city': selectedAddress?.city || '',
-        'shipping-address:country': 'CO',
-        'shipping-address:region': selectedAddress?.department || '',
-        'shipping-address:phone-number': selectedAddress?.phone || '',
-        'shipping-address:name': selectedAddress?.name || session.user?.name || '',
-        'tax-in-cents:vat': formatAmountInCents(cart.tax).toString(),
-        'tax-in-cents:consumption': formatAmountInCents(cart.tax).toString(),
-        'payment-methods': 'CARD,NEQUI,PSE',
+        "signature:integrity": integritySignature,
+        "expiration-time": expirationTime,
+        "redirect-url": `${window.location.origin}/orden-exitosa?payment=${paymentRecord.id}`,
+        "customer-data:email": session.user?.email || "",
+        "customer-data:phone": selectedAddress?.phone || "",
+        "customer-data:full-name":
+          session.user?.name || selectedAddress?.name || "",
+        "customer-data:legal-id": "",
+        "customer-data:legal-id-type": "CC",
+        "shipping-address:address-line-1": selectedAddress?.street || "",
+        "shipping-address:city": selectedAddress?.city || "",
+        "shipping-address:country": "CO",
+        "shipping-address:region": selectedAddress?.department || "",
+        "shipping-address:phone-number": selectedAddress?.phone || "",
+        "shipping-address:name":
+          selectedAddress?.name || session.user?.name || "",
+        "tax-in-cents:vat": formatAmountInCents(cart.tax).toString(),
+        "tax-in-cents:consumption": formatAmountInCents(cart.tax).toString(),
+        "payment-methods": "CARD,NEQUI,PSE",
       };
 
       // Instead of showing widget, redirect to Wompi checkout
       const redirectToWompiCheckout = (wompiData: any) => {
-        const baseUrl = 'https://checkout.wompi.co/p/';
+        const baseUrl = "https://checkout.wompi.co/p/";
         const params = new URLSearchParams();
 
         Object.entries(wompiData).forEach(([key, value]) => {
-          if (value && value !== 'undefined') {
+          if (value && value !== "undefined") {
             params.append(key, value.toString());
           }
         });
@@ -621,40 +686,46 @@ export default function Order() {
       redirectToWompiCheckout(wompiData);
 
       // Mark step as completed
-      setCompletedSteps([...completedSteps.filter(s => s !== 3), 3]);
+      setCompletedSteps([...completedSteps.filter((s) => s !== 3), 3]);
 
       // Note: Don't clear cart until payment is confirmed via webhook
     } catch (error) {
-      console.error('Error creating order and payment:', error);
+      console.error("Error creating order and payment:", error);
 
       // More detailed error logging
       if (error instanceof Error) {
-        console.error('Error message:', error.message);
+        console.error("Error message:", error.message);
         alert(`Error: ${error.message}`);
       } else {
-        alert('Error al crear la orden y procesar el pago. Por favor intenta nuevamente.');
+        alert(
+          "Error al crear la orden y procesar el pago. Por favor intenta nuevamente."
+        );
       }
     } finally {
       setIsSubmittingOrder(false);
     }
   };
 
-  const isAddressCompleted = completedSteps.includes(2) || (!!selectedAddressId && !showNewAddressForm);
+  const isAddressCompleted =
+    completedSteps.includes(2) || (!!selectedAddressId && !showNewAddressForm);
   const isPaymentCompleted = completedSteps.includes(3);
 
   // Prepare Wompi payment data
   const prepareWompiData = () => {
     const selectedAddress = selectedAddressId
-      ? addressesData?.addressesByUser?.find((addr: Address) => addr.id === selectedAddressId) || address
+      ? addressesData?.addressesByUser?.find(
+          (addr: Address) => addr.id === selectedAddressId
+        ) || address
       : address;
 
     const amountInCents = formatAmountInCents(cart.total);
-    const currency = 'COP';
+    const currency = "COP";
     const expirationTime = getExpirationTime();
 
     // Wompi integrity secret (should be in environment variables)
     const integritySecret =
-      process.env.NEXT_PUBLIC_WOMPI_INTEGRITY_SECRET || 'prod_integrity_Z5mMke9x0k8gpErbDqwrJXMqsI6SFli6';
+      process.env.NEXT_PUBLIC_WOMPI_INTEGRITY_SECRET ||
+      "prod_integrity_Z5mMke9x0k8gpErbDqwrJXMqsI6SFli6";
 
     // Generate integrity signature according to Wompi documentation
     const integritySignature = generateIntegritySignature(
@@ -667,7 +738,9 @@ export default function Order() {
 
     const wompiData = {
       publicKey:
-        store?.wompiPublicKey || process.env.NEXT_PUBLIC_WOMPI_PUBLIC_KEY || 'pub_test_G6jyWcpGlLJG8ATDRf9u6gLKy3MH8J',
+        store?.wompiPublicKey ||
+        process.env.NEXT_PUBLIC_WOMPI_PUBLIC_KEY ||
+        "pub_test_G6jyWcpGlLJG8ATDRf9u6gLKy3MH8J",
       currency,
       amountInCents,
       reference: paymentReference,
@@ -676,16 +749,16 @@ export default function Order() {
       expirationTime,
       taxVatInCents: formatAmountInCents(cart.tax),
       taxConsumptionInCents: 0, // Colombia doesn't typically use consumption tax for most products
-      customerEmail: session?.user?.email || '',
-      customerFullName: session?.user?.name || selectedAddress?.name || '',
-      customerPhoneNumber: selectedAddress?.phone || '',
-      customerLegalId: '', // This would need to be collected separately
-      customerLegalIdType: 'CC', // Default to Cédula de Ciudadanía
-      shippingAddressLine1: selectedAddress?.street || '',
-      shippingCountry: 'CO',
-      shippingPhoneNumber: selectedAddress?.phone || '',
-      shippingCity: selectedAddress?.city || '',
-      shippingRegion: selectedAddress?.department || '',
+      customerEmail: session?.user?.email || "",
+      customerFullName: session?.user?.name || selectedAddress?.name || "",
+      customerPhoneNumber: selectedAddress?.phone || "",
+      customerLegalId: "", // This would need to be collected separately
+      customerLegalIdType: "CC", // Default to Cédula de Ciudadanía
+      shippingAddressLine1: selectedAddress?.street || "",
+      shippingCountry: "CO",
+      shippingPhoneNumber: selectedAddress?.phone || "",
+      shippingCity: selectedAddress?.city || "",
+      shippingRegion: selectedAddress?.department || "",
     };
 
     return wompiData;
@@ -697,19 +770,25 @@ export default function Order() {
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-lg shadow p-8 text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Inicia sesión para continuar</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Inicia sesión para continuar
+            </h2>
             <p className="text-gray-600 mb-6">
-              Necesitas iniciar sesión para guardar tu dirección y completar la orden.
+              Necesitas iniciar sesión para guardar tu dirección y completar la
+              orden.
             </p>
-            <Link
-              href="/auth/signin"
-              className="inline-block px-6 py-3 text-white rounded-md hover:opacity-90 transition-colors"
+            <button
+              onClick={() => router.push("/auth/signin")}
+              className="px-6 py-3 rounded-lg font-semibold text-center hover:opacity-90 transition-all"
               style={{
-                backgroundColor: store?.primaryColor || '#2563eb',
+                backgroundColor: store?.primaryColor || "#2563eb",
+                color: "#ffffff",
+                minWidth: "180px",
+                display: "inline-block",
               }}
             >
               Iniciar Sesión
-            </Link>
+            </button>
           </div>
         </div>
       </div>
@@ -719,7 +798,9 @@ export default function Order() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-8">Finalizar Orden</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-8">
+          Finalizar Orden
+        </h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content - Left Column (2/3 width) */}
@@ -742,7 +823,7 @@ export default function Order() {
                       >
                         <Image
                           src={
-                            item.image?.startsWith('http')
+                            item.image?.startsWith("http")
                               ? item.image
                               : `https://emprendyup-images.s3.us-east-1.amazonaws.com/${item.image}`
                           }
@@ -752,12 +833,22 @@ export default function Order() {
                           className="w-16 h-16 object-cover rounded-md"
                         />
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-900">{item.name}</h4>
-                          {item.variant && <p className="text-sm text-gray-500">Variante: {item.variant}</p>}
-                          <p className="text-sm text-gray-500">Cantidad: {item.quantity}</p>
+                          <h4 className="font-medium text-gray-900">
+                            {item.name}
+                          </h4>
+                          {item.variant && (
+                            <p className="text-sm text-gray-500">
+                              Variante: {item.variant}
+                            </p>
+                          )}
+                          <p className="text-sm text-gray-500">
+                            Cantidad: {item.quantity}
+                          </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium text-gray-900">${(item.price * item.quantity).toLocaleString()}</p>
+                          <p className="font-medium text-gray-900">
+                            ${(item.price * item.quantity).toLocaleString()}
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -778,14 +869,18 @@ export default function Order() {
                     {addressesLoading && (
                       <div className="text-center py-4">
                         <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                        <span className="ml-2 text-gray-600">Cargando direcciones...</span>
+                        <span className="ml-2 text-gray-600">
+                          Cargando direcciones...
+                        </span>
                       </div>
                     )}
 
                     {/* Error state */}
                     {addressesError && (
                       <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                        <p className="text-red-600 text-sm">Error al cargar direcciones: {addressesError.message}</p>
+                        <p className="text-red-600 text-sm">
+                          Error al cargar direcciones: {addressesError.message}
+                        </p>
                         <button
                           onClick={() => refetchAddresses()}
                           className="mt-2 text-sm text-red-700 underline hover:no-underline"
@@ -796,199 +891,297 @@ export default function Order() {
                     )}
 
                     {/* Existing addresses */}
-                    {!addressesLoading && addressesData?.addressesByUser?.length > 0 && (
-                      <div>
-                        <h4 className="text-lg font-medium text-gray-900 mb-4">Direcciones Guardadas</h4>
-                        <div className="space-y-3">
-                          {addressesData.addressesByUser.map((savedAddress: Address) => (
-                            <div
-                              key={savedAddress.id}
-                              className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                                selectedAddressId === savedAddress.id
-                                  ? 'border-blue-500 bg-blue-50'
-                                  : 'border-gray-200 hover:border-gray-300'
-                              }`}
-                              onClick={() => handleAddressSelection(savedAddress.id!)}
-                            >
-                              <div className="flex items-start space-x-3">
-                                <input
-                                  type="radio"
-                                  name="selectedAddress"
-                                  value={savedAddress.id}
-                                  checked={selectedAddressId === savedAddress.id}
-                                  onChange={() => handleAddressSelection(savedAddress.id!)}
-                                  className="mt-1 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                />
-                                <div className="flex-1">
-                                  <div className="flex items-center space-x-2">
-                                    <h5 className="font-medium text-gray-900">{savedAddress.name}</h5>
-                                    {savedAddress.isDefault && (
-                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                        Predeterminada
-                                      </span>
-                                    )}
+                    {!addressesLoading &&
+                      addressesData?.addressesByUser?.length > 0 && (
+                        <div>
+                          <h4 className="text-lg font-medium text-gray-900 mb-4">
+                            Direcciones Guardadas
+                          </h4>
+                          <div className="space-y-3">
+                            {addressesData.addressesByUser.map(
+                              (savedAddress: Address) => (
+                                <div
+                                  key={savedAddress.id}
+                                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                                    selectedAddressId === savedAddress.id
+                                      ? "border-blue-500 bg-blue-50"
+                                      : "border-gray-200 hover:border-gray-300"
+                                  }`}
+                                  onClick={() =>
+                                    handleAddressSelection(savedAddress.id!)
+                                  }
+                                >
+                                  <div className="flex items-start space-x-3">
+                                    <input
+                                      type="radio"
+                                      name="selectedAddress"
+                                      value={savedAddress.id}
+                                      checked={
+                                        selectedAddressId === savedAddress.id
+                                      }
+                                      onChange={() =>
+                                        handleAddressSelection(savedAddress.id!)
+                                      }
+                                      className="mt-1 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                    />
+                                    <div className="flex-1">
+                                      <div className="flex items-center space-x-2">
+                                        <h5 className="font-medium text-gray-900">
+                                          {savedAddress.name}
+                                        </h5>
+                                        {savedAddress.isDefault && (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            Predeterminada
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="text-sm text-gray-600 mt-1">
+                                        {savedAddress.street}
+                                      </p>
+                                      <p className="text-sm text-gray-500">
+                                        {savedAddress.city},{" "}
+                                        {savedAddress.department}
+                                        {savedAddress.postalCode &&
+                                          ` - ${savedAddress.postalCode}`}
+                                      </p>
+                                      <p className="text-sm text-gray-500">
+                                        Tel: {savedAddress.phone}
+                                      </p>
+                                    </div>
                                   </div>
-                                  <p className="text-sm text-gray-600 mt-1">{savedAddress.street}</p>
-                                  <p className="text-sm text-gray-500">
-                                    {savedAddress.city}, {savedAddress.department}
-                                    {savedAddress.postalCode && ` - ${savedAddress.postalCode}`}
-                                  </p>
-                                  <p className="text-sm text-gray-500">Tel: {savedAddress.phone}</p>
+                                </div>
+                              )
+                            )}
+                          </div>
+
+                          <div className="mt-4">
+                            <button
+                              type="button"
+                              onClick={handleNewAddressClick}
+                              className="text-blue-600 hover:text-blue-700 font-medium text-sm"
+                            >
+                              + Agregar nueva dirección
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                    {/* New address form or when no addresses exist */}
+                    {(!addressesData?.addressesByUser?.length ||
+                      showNewAddressForm) &&
+                      !addressesLoading && (
+                        <div>
+                          {addressesData?.addressesByUser?.length > 0 && (
+                            <h4 className="text-lg font-medium text-gray-900 mb-4">
+                              Nueva Dirección
+                            </h4>
+                          )}
+
+                          <form
+                            onSubmit={handleAddressSubmit}
+                            className="space-y-4"
+                          >
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Dirección *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                value={address.street}
+                                onChange={(e) =>
+                                  setAddress({
+                                    ...address,
+                                    street: e.target.value,
+                                  })
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Descripción *
+                                </label>
+                                <input
+                                  type="text"
+                                  required
+                                  value={address.name}
+                                  onChange={(e) =>
+                                    setAddress({
+                                      ...address,
+                                      name: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Teléfono *
+                                </label>
+
+                                <div className="flex items-center border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-blue-500">
+                                  <span className="px-3 text-gray-700 select-none">
+                                    +57
+                                  </span>
+                                  <input
+                                    type="tel"
+                                    required
+                                    maxLength={10}
+                                    value={address.phone.replace(
+                                      /^(\+57)?/,
+                                      ""
+                                    )} // elimina +57 si está
+                                    onChange={(e) => {
+                                      const value = e.target.value.replace(
+                                        /\D/g,
+                                        ""
+                                      ); // solo números
+                                      setAddress({
+                                        ...address,
+                                        phone: value,
+                                      });
+                                    }}
+                                    onBlur={(e) => {
+                                      const cleanPhone = e.target.value.trim();
+                                      const isValidColombianPhone =
+                                        /^3\d{9}$/.test(cleanPhone);
+
+                                      if (!isValidColombianPhone) {
+                                        alert(
+                                          "Por favor ingresa un número de teléfono colombiano válido (por ejemplo: 3001234567)."
+                                        );
+                                        e.target.focus();
+                                      } else {
+                                        // guarda el formato final con +57
+                                        setAddress({
+                                          ...address,
+                                          phone: `+57${cleanPhone}`,
+                                        });
+                                      }
+                                    }}
+                                    placeholder="3001234567"
+                                    className="flex-1 px-3 py-2 rounded-r-md focus:outline-none"
+                                  />
                                 </div>
                               </div>
                             </div>
-                          ))}
-                        </div>
 
-                        <div className="mt-4">
-                          <button
-                            type="button"
-                            onClick={handleNewAddressClick}
-                            className="text-blue-600 hover:text-blue-700 font-medium text-sm"
-                          >
-                            + Agregar nueva dirección
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Ciudad *
+                                </label>
+                                <select
+                                  required
+                                  value={address.city}
+                                  onChange={(e) =>
+                                    setAddress({
+                                      ...address,
+                                      city: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                  <option value="">Selecciona </option>
+                                  {cities.map((city) => (
+                                    <option key={city} value={city}>
+                                      {city}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Departamento *
+                                </label>
+                                <select
+                                  required
+                                  value={address.department}
+                                  onChange={(e) =>
+                                    setAddress({
+                                      ...address,
+                                      department: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                  <option value="">Selecciona </option>
+                                  {departments.map((department) => (
+                                    <option key={department} value={department}>
+                                      {department}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Código Postal
+                                </label>
+                                <input
+                                  type="text"
+                                  value={address.postalCode}
+                                  onChange={(e) =>
+                                    setAddress({
+                                      ...address,
+                                      postalCode: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                              </div>
+                            </div>
 
-                    {/* New address form or when no addresses exist */}
-                    {(!addressesData?.addressesByUser?.length || showNewAddressForm) && !addressesLoading && (
-                      <div>
-                        {addressesData?.addressesByUser?.length > 0 && (
-                          <h4 className="text-lg font-medium text-gray-900 mb-4">Nueva Dirección</h4>
-                        )}
-
-                        <form onSubmit={handleAddressSubmit} className="space-y-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Dirección *</label>
-                            <input
-                              type="text"
-                              required
-                              value={address.street}
-                              onChange={e => setAddress({ ...address, street: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
+                            <div className="flex items-center">
                               <input
-                                type="text"
-                                required
-                                value={address.name}
-                                onChange={e => setAddress({ ...address, name: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono *</label>
-                              <input
-                                type="tel"
-                                required
-                                value={address.phone}
-                                onChange={e => setAddress({ ...address, phone: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad *</label>
-                              <select
-                                required
-                                value={address.city}
-                                onChange={e => setAddress({ ...address, city: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              >
-                                <option value="">Selecciona </option>
-                                {cities.map(city => (
-                                  <option key={city} value={city}>
-                                    {city}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Departamento *</label>
-                              <select
-                                required
-                                value={address.department}
-                                onChange={e =>
+                                type="checkbox"
+                                id="isDefault"
+                                checked={address.isDefault}
+                                onChange={(e) =>
                                   setAddress({
                                     ...address,
-                                    department: e.target.value,
+                                    isDefault: e.target.checked,
                                   })
                                 }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              >
-                                <option value="">Selecciona </option>
-                                {departments.map(department => (
-                                  <option key={department} value={department}>
-                                    {department}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Código Postal</label>
-                              <input
-                                type="text"
-                                value={address.postalCode}
-                                onChange={e =>
-                                  setAddress({
-                                    ...address,
-                                    postalCode: e.target.value,
-                                  })
-                                }
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
                               />
+                              <label
+                                htmlFor="isDefault"
+                                className="ml-2 text-sm text-gray-700"
+                              >
+                                Establecer como dirección predeterminada
+                              </label>
                             </div>
-                          </div>
 
-                          <div className="flex items-center">
-                            <input
-                              type="checkbox"
-                              id="isDefault"
-                              checked={address.isDefault}
-                              onChange={e =>
-                                setAddress({
-                                  ...address,
-                                  isDefault: e.target.checked,
-                                })
-                              }
-                              className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                            />
-                            <label htmlFor="isDefault" className="ml-2 text-sm text-gray-700">
-                              Establecer como dirección predeterminada
-                            </label>
-                          </div>
-
-                          <div className="flex justify-between">
-                            {addressesData?.addressesByUser?.length > 0 && showNewAddressForm && (
+                            <div className="flex justify-between">
+                              {addressesData?.addressesByUser?.length > 0 &&
+                                showNewAddressForm && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowNewAddressForm(false)}
+                                    className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                                  >
+                                    Cancelar
+                                  </button>
+                                )}
                               <button
-                                type="button"
-                                onClick={() => setShowNewAddressForm(false)}
-                                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                                type="submit"
+                                disabled={isSubmittingAddress}
+                                className="px-6 py-2 text-white rounded-md hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
+                                style={{
+                                  backgroundColor:
+                                    store?.primaryColor || "#2563eb",
+                                }}
                               >
-                                Cancelar
+                                {isSubmittingAddress
+                                  ? "Guardando..."
+                                  : "Continuar"}
                               </button>
-                            )}
-                            <button
-                              type="submit"
-                              disabled={isSubmittingAddress}
-                              className="px-6 py-2 text-white rounded-md hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
-                              style={{
-                                backgroundColor: store?.primaryColor || '#2563eb',
-                              }}
-                            >
-                              {isSubmittingAddress ? 'Guardando...' : 'Continuar'}
-                            </button>
-                          </div>
-                        </form>
-                      </div>
-                    )}
+                            </div>
+                          </form>
+                        </div>
+                      )}
 
                     {/* Continue button for selected address */}
                     {selectedAddressId && !showNewAddressForm && (
@@ -998,7 +1191,7 @@ export default function Order() {
                           disabled={isSubmittingAddress}
                           className="px-6 py-2 text-white rounded-md hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           style={{
-                            backgroundColor: store?.primaryColor || '#2563eb',
+                            backgroundColor: store?.primaryColor || "#2563eb",
                           }}
                         >
                           Continuar con dirección seleccionada
@@ -1024,15 +1217,21 @@ export default function Order() {
                       <div className="space-y-6">
                         {/* Payment summary */}
                         <div className="bg-blue-50 p-4 rounded-lg">
-                          <h4 className="font-medium text-blue-900 mb-2">Resumen de Pago</h4>
+                          <h4 className="font-medium text-blue-900 mb-2">
+                            Resumen de Pago
+                          </h4>
                           <div className="space-y-1 text-sm text-blue-800">
                             <div className="flex justify-between">
                               <span>Total a pagar:</span>
-                              <span className="font-medium">${cart.total.toLocaleString('es-CO')}</span>
+                              <span className="font-medium">
+                                ${cart.total.toLocaleString("es-CO")}
+                              </span>
                             </div>
                             <div className="flex justify-between">
                               <span>Referencia:</span>
-                              <span className="font-mono text-xs">{wompiData.reference}</span>
+                              <span className="font-mono text-xs">
+                                {wompiData.reference}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -1042,18 +1241,25 @@ export default function Order() {
                           <div className="flex items-start space-x-2">
                             <Shield className="w-5 h-5 text-yellow-600 mt-0.5" />
                             <div className="text-sm">
-                              <p className="font-medium text-yellow-800">Nota de Seguridad Importante</p>
+                              <p className="font-medium text-yellow-800">
+                                Nota de Seguridad Importante
+                              </p>
                               <div className="text-yellow-700 mt-1 space-y-1">
                                 <p>
-                                  ⚠️ <strong>Desarrollo:</strong> La firma de integridad se está calculando en el
-                                  frontend con fines de prueba.
+                                  ⚠️ <strong>Desarrollo:</strong> La firma de
+                                  integridad se está calculando en el frontend
+                                  con fines de prueba.
                                 </p>
                                 <p>
-                                  🔐 <strong>Producción:</strong> Mueve el cálculo de la firma al backend para proteger
+                                  🔐 <strong>Producción:</strong> Mueve el
+                                  cálculo de la firma al backend para proteger
                                   tu secreto de integridad.
                                 </p>
                                 <p className="text-xs mt-2">
-                                  Variables de entorno requeridas: <code>NEXT_PUBLIC_WOMPI_INTEGRITY_SECRET</code>
+                                  Variables de entorno requeridas:{" "}
+                                  <code>
+                                    NEXT_PUBLIC_WOMPI_INTEGRITY_SECRET
+                                  </code>
                                 </p>
                               </div>
                             </div>
@@ -1062,13 +1268,17 @@ export default function Order() {
 
                         {/* Wompi Checkout Integration */}
                         <div id="wompi-checkout-container">
-                          <form id="wompi-payment-form" onSubmit={handlePaymentSubmit}>
+                          <form
+                            id="wompi-payment-form"
+                            onSubmit={handlePaymentSubmit}
+                          >
                             <div className="flex flex-col space-y-3">
                               {/* Security notice */}
                               <div className="flex items-start space-x-2 text-xs text-gray-600 bg-gray-50 p-3 rounded">
                                 <Shield className="w-4 h-4 mt-0.5 text-green-600" />
                                 <span>
-                                  Tu pago será procesado de forma segura por Wompi. Serás redirigido a la plataforma de
+                                  Tu pago será procesado de forma segura por
+                                  Wompi. Serás redirigido a la plataforma de
                                   pago.
                                 </span>
                               </div>
@@ -1077,13 +1287,18 @@ export default function Order() {
                                 type="submit"
                                 disabled={isSubmittingOrder}
                                 className="w-full px-6 py-3 text-white rounded-md hover:opacity-90 transition-colors flex items-center justify-center space-x-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                                style={{ backgroundColor: store?.primaryColor || '#2563eb' }}
+                                style={{
+                                  backgroundColor:
+                                    store?.primaryColor || "#2563eb",
+                                }}
                               >
                                 <ShieldCheck className="w-5 h-5" />
                                 <span>
                                   {isSubmittingOrder
-                                    ? 'Creando orden y redirigiendo...'
-                                    : `Crear Orden y Pagar $${cart.total.toLocaleString('es-CO')}`}
+                                    ? "Creando orden y redirigiendo..."
+                                    : `Crear Orden y Pagar $${cart.total.toLocaleString(
+                                        "es-CO"
+                                      )}`}
                                 </span>
                               </button>
                             </div>
@@ -1091,14 +1306,18 @@ export default function Order() {
                         </div>
 
                         {/* Debug info in development */}
-                        {process.env.NODE_ENV === 'development' && (
+                        {process.env.NODE_ENV === "development" && (
                           <details className="mt-4">
-                            <summary className="text-xs text-gray-500 cursor-pointer">Ver datos de depuración</summary>
+                            <summary className="text-xs text-gray-500 cursor-pointer">
+                              Ver datos de depuración
+                            </summary>
                             <div className="text-xs bg-gray-100 p-3 rounded mt-2 space-y-2">
                               <div>
-                                <p className="font-medium text-gray-700 mb-1">Cálculo de Firma de Integridad:</p>
+                                <p className="font-medium text-gray-700 mb-1">
+                                  Cálculo de Firma de Integridad:
+                                </p>
                                 <p className="text-gray-600">
-                                  Concatenación:{' '}
+                                  Concatenación:{" "}
                                   <code className="bg-white px-1 rounded">
                                     {wompiData.reference}
                                     {wompiData.amountInCents}
@@ -1107,12 +1326,16 @@ export default function Order() {
                                   </code>
                                 </p>
                                 <p className="text-gray-600">
-                                  Firma SHA256:{' '}
-                                  <code className="bg-white px-1 rounded text-xs">{wompiData.integritySignature}</code>
+                                  Firma SHA256:{" "}
+                                  <code className="bg-white px-1 rounded text-xs">
+                                    {wompiData.integritySignature}
+                                  </code>
                                 </p>
                               </div>
                               <hr className="border-gray-300" />
-                              <pre className="overflow-auto">{JSON.stringify(wompiData, null, 2)}</pre>
+                              <pre className="overflow-auto">
+                                {JSON.stringify(wompiData, null, 2)}
+                              </pre>
                             </div>
                           </details>
                         )}
