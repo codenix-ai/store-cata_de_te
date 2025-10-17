@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
-import Head from "next/head";
+import { useState, useEffect } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import {
   Star,
   Heart,
@@ -157,7 +156,7 @@ export default function ProductDetailPage() {
         productId: product.id,
         name: product.title,
         price: currentPrice,
-        image: product.images?.[0]?.url ?? "/assets/default-product.jpg", // ✅ fix
+        image: product.images[0],
         variant: selectedVariant?.value,
         quantity,
       });
@@ -187,207 +186,8 @@ export default function ProductDetailPage() {
     product.images?.[0]?.url || product.image
   }`;
 
-  // Generate structured data for SEO
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: product.title,
-    description:
-      product.description ||
-      `${product.title} - Producto de confección y tejido de punto`,
-    image: product.images?.map(
-      (img: any) =>
-        `https://emprendyup-images.s3.us-east-1.amazonaws.com/${img.url}`
-    ) || [imageSrc],
-    brand: {
-      "@type": "Brand",
-      name: "Tejidos de Punto Colombia",
-    },
-    manufacturer: {
-      "@type": "Organization",
-      name: "Tejidos de Punto Colombia",
-    },
-    category: "Textiles y Confección",
-    sku: product.id,
-    mpn: product.externalId || product.id,
-    offers: {
-      "@type": "Offer",
-      price: currentPrice || product.price,
-      priceCurrency: product.currency || "COP",
-      availability:
-        product.available && product.inStock
-          ? "https://schema.org/InStock"
-          : "https://schema.org/OutOfStock",
-      seller: {
-        "@type": "Organization",
-        name: "Tejidos de Punto Colombia",
-      },
-      url: `https://tejidosdepunto.com/products/${product.id}`,
-      priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .split("T")[0], // 30 days from now
-    },
-    ...(averageRating > 0 && {
-      aggregateRating: {
-        "@type": "AggregateRating",
-        ratingValue: averageRating.toFixed(1),
-        reviewCount: reviewCount,
-        bestRating: 5,
-        worstRating: 1,
-      },
-    }),
-    ...(product.comments?.length > 0 && {
-      review: product.comments.map((comment: any) => ({
-        "@type": "Review",
-        reviewRating: {
-          "@type": "Rating",
-          ratingValue: comment.rating,
-          bestRating: 5,
-          worstRating: 1,
-        },
-        reviewBody: comment.comment,
-        datePublished: comment.createdAt,
-      })),
-    }),
-    ...(product.colors?.length > 0 && {
-      color: product.colors.map((c: any) => c.color),
-    }),
-    ...(product.sizes?.length > 0 && {
-      size: product.sizes.map((s: any) => s.size),
-    }),
-    additionalProperty: [
-      {
-        "@type": "PropertyValue",
-        name: "Material",
-        value: "Tejido de Punto",
-      },
-      {
-        "@type": "PropertyValue",
-        name: "Origen",
-        value: "Colombia",
-      },
-      {
-        "@type": "PropertyValue",
-        name: "Tipo",
-        value: "Confección Textil",
-      },
-    ],
-  };
-
   return (
     <Layout>
-      {/* Dynamic Head tags for enhanced SEO */}
-      <Head>
-        <title>{product.title} | Tejidos de Punto Colombia</title>
-        <meta
-          name="description"
-          content={
-            product.description
-              ? `${product.description.substring(0, 160)} - Precio: ${
-                  currentPrice || product.price
-                } ${product.currency}`
-              : `${product.title} - Confección y tejido de punto. Precio: ${
-                  currentPrice || product.price
-                } ${product.currency}`
-          }
-        />
-        <meta
-          name="keywords"
-          content={[
-            product.title,
-            "tejidos de punto",
-            "confección colombia",
-            "uniformes",
-            "dotaciones",
-            ...(product.colors?.map((c: any) => c.color) || []),
-            ...(product.sizes?.map((s: any) => s.size) || []),
-          ].join(", ")}
-        />
-
-        {/* Open Graph */}
-        <meta
-          property="og:title"
-          content={`${product.title} | Tejidos de Punto Colombia`}
-        />
-        <meta
-          property="og:description"
-          content={
-            product.description ||
-            `${product.title} - Confección textil de calidad`
-          }
-        />
-        <meta property="og:image" content={imageSrc} />
-        <meta
-          property="og:url"
-          content={`https://tejidosdepunto.com/products/${product.id}`}
-        />
-        <meta property="og:type" content="product" />
-        <meta property="og:site_name" content="Tejidos de Punto Colombia" />
-
-        {/* Product specific meta tags */}
-        <meta
-          property="product:price:amount"
-          content={String(currentPrice || product.price)}
-        />
-        <meta
-          property="product:price:currency"
-          content={product.currency || "COP"}
-        />
-        <meta
-          property="product:availability"
-          content={
-            product.available && product.inStock ? "in stock" : "out of stock"
-          }
-        />
-        <meta property="product:condition" content="new" />
-        <meta property="product:brand" content="Tejidos de Punto Colombia" />
-
-        {/* Twitter Card */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta
-          name="twitter:title"
-          content={`${product.title} | Tejidos de Punto Colombia`}
-        />
-        <meta
-          name="twitter:description"
-          content={
-            product.description || `${product.title} - Confección textil`
-          }
-        />
-        <meta name="twitter:image" content={imageSrc} />
-
-        {/* Additional SEO tags */}
-        <meta
-          name="robots"
-          content={`${product.available ? "index" : "noindex"}, follow`}
-        />
-        <link
-          rel="canonical"
-          href={`https://tejidosdepunto.com/products/${product.id}`}
-        />
-
-        {/* Rating meta tags if available */}
-        {averageRating > 0 && (
-          <>
-            <meta
-              property="product:rating"
-              content={averageRating.toFixed(1)}
-            />
-            <meta
-              property="product:rating:count"
-              content={String(reviewCount)}
-            />
-          </>
-        )}
-      </Head>
-
-      {/* Structured Data for SEO */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(structuredData),
-        }}
-      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Breadcrumb */}
         <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-6">
@@ -433,7 +233,10 @@ export default function ProductDetailPage() {
               >
                 {product.category}
               </p>
-              <h1 className="text-3xl font-bold mb-4 text-black">
+              <h1
+                className="text-3xl font-bold mb-4"
+                style={{ color: store?.textColor || "#000000" }}
+              >
                 {product.title}
               </h1>
 
@@ -460,7 +263,10 @@ export default function ProductDetailPage() {
 
               {/* Price */}
               <div className="flex items-center space-x-4 mb-6">
-                <span className="text-3xl font-bold text-black">
+                <span
+                  className="text-3xl font-bold"
+                  style={{ color: store?.textColor || "#000000" }}
+                >
                   ${currentPrice.toLocaleString("es-CO")}
                 </span>
                 {product.originalPrice && (
@@ -516,16 +322,23 @@ export default function ProductDetailPage() {
                           value={variant.id}
                           checked={selectedVariant?.id === variant.id}
                           onChange={() => setSelectedVariant(variant)}
-                          className="text-blue-600 focus:ring-blue-500 text-black"
+                          className="text-blue-600 focus:ring-blue-500"
                           style={{
                             accentColor: store?.primaryColor || "#2563eb",
+                            color: store?.primaryColor || "#2563eb",
                           }}
                         />
-                        <span className="ml-3 text-black font-medium">
+                        <span
+                          className="ml-3"
+                          style={{ color: store?.textColor || "#000000" }}
+                        >
                           {variant.value}
                         </span>
                       </div>
-                      <span className="font-medium text-black">
+                      <span
+                        className="font-medium"
+                        style={{ color: store?.textColor || "#000000" }}
+                      >
                         ${variant.price?.toLocaleString("es-CO")}
                       </span>
                     </label>
@@ -587,7 +400,7 @@ export default function ProductDetailPage() {
                       color:
                         selectedVariant?.size === size.size
                           ? store?.primaryColor || "#2563eb"
-                          : "#000000",
+                          : store?.textColor || "#374151",
                     }}
                     onClick={() =>
                       setSelectedVariant({

@@ -6,7 +6,31 @@ import Link from "next/link";
 import { Minus, Plus, Trash2, ShoppingBag, Eye, X } from "lucide-react";
 import { cartService, Cart as CartType, CartItem } from "@/lib/cart";
 import { useStore } from "@/components/StoreProvider";
-import { signIn, useSession } from "next-auth/react";
+
+// Helper to safely resolve various image shapes to a string URL
+function resolveImageUrl(img: any): string {
+  const defaultPlaceholder = "/file.svg";
+  if (!img) return defaultPlaceholder;
+
+  // If it's already a string, use it (or prefix S3 if it's a key)
+  if (typeof img === "string") {
+    return img.startsWith("http")
+      ? img
+      : `https://emprendyup-images.s3.us-east-1.amazonaws.com/${img}`;
+  }
+
+  // If it's an object, try common fields
+  if (typeof img === "object") {
+    const candidate = img.url || img.src || img.image || img.path || img.file;
+    if (typeof candidate === "string") {
+      return candidate.startsWith("http")
+        ? candidate
+        : `https://emprendyup-images.s3.us-east-1.amazonaws.com/${candidate}`;
+    }
+  }
+
+  return defaultPlaceholder;
+}
 
 interface CartProps {
   className?: string;
@@ -149,18 +173,9 @@ function CartItemCard({
 }: CartItemCardProps) {
   const [showPreview, setShowPreview] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const { data: session } = useSession();
 
-  const handleCheckout = () => {
-    if (!session) {
-      signIn();
-      return;
-    }
-
-    // Si está logueado, lo mandamos a la página de orden
-    window.location.href = "/orden";
-  };
-
+  // Checkout is handled via links in the summary; session checks done on server when needed
+  const imageUrl = resolveImageUrl(item.image);
   return (
     <>
       <div
@@ -172,11 +187,7 @@ function CartItemCard({
           {/* Product Image with Preview */}
           <div className="relative w-20 h-20 bg-gray-100 rounded-md overflow-hidden flex-shrink-0 group">
             <Image
-              src={
-                item.image?.startsWith("http")
-                  ? item.image
-                  : `https://emprendyup-images.s3.us-east-1.amazonaws.com/${item.image}`
-              }
+              src={imageUrl}
               alt={item.name}
               fill
               className="object-cover transition-transform group-hover:scale-105"
@@ -310,11 +321,7 @@ function CartItemCard({
             <div className="p-6">
               <div className="relative w-full h-80 mb-4">
                 <Image
-                  src={
-                    item.image?.startsWith("http")
-                      ? item.image
-                      : `https://emprendyup-images.s3.us-east-1.amazonaws.com/${item.image}`
-                  }
+                  src={resolveImageUrl(item.image)}
                   alt={item.name}
                   fill
                   className="object-contain rounded-lg"

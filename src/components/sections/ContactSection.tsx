@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, gql } from "@apollo/client";
+import { useState } from "react";
 import Image from "next/image";
 import toast from "react-hot-toast";
 import { useStore } from "@/components/StoreProvider";
@@ -34,18 +35,48 @@ export function ContactSection({ imageD }: ContactSectionProps) {
   const { store } = useStore();
   const [createContactLead, { loading, error, data }] =
     useMutation(CREATE_CONTACT_LEAD);
+  const [phone, setPhone] = useState<string>("");
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [phoneTouched, setPhoneTouched] = useState<boolean>(false);
+
+  const validatePhoneNumber = (value: string) => {
+    if (!value) return false;
+    const str = String(value).trim();
+    // Allowed characters: digits, spaces, +, parentheses, hyphens, dots
+    const allowedChars = /^[+\d\s().-]+$/;
+    if (!allowedChars.test(str)) return false; // reject letters or unexpected chars
+    const digits = str.replace(/\D/g, "");
+    // Accept between 10 and 15 digits (local or international)
+    return digits.length === 10;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    setPhone(v);
+    if (phoneTouched) {
+      setPhoneError(validatePhoneNumber(v) ? null : "Número inválido");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const formData = new FormData(form);
 
+    // Validate phone before submit
+    const phoneValue = phone || String(formData.get("phoneNumber") || "");
+    setPhoneTouched(true);
+    if (!validatePhoneNumber(phoneValue)) {
+      setPhoneError("Por favor ingresa un número de teléfono válido");
+      return;
+    }
+
     const input = {
       firstName: formData.get("firstName"),
       lastName: formData.get("lastName"),
       companyName: formData.get("companyName"),
       email: formData.get("email"),
-      phoneNumber: formData.get("phoneNumber"),
+      phoneNumber: phoneValue,
       message: formData.get("message"),
       storeId: store?.id || "default-store",
     };
@@ -152,9 +183,24 @@ export function ContactSection({ imageD }: ContactSectionProps) {
                 id="phoneNumber"
                 name="phoneNumber"
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                value={phone}
+                onChange={handlePhoneChange}
+                onBlur={() => {
+                  setPhoneTouched(true);
+                  setPhoneError(
+                    validatePhoneNumber(phone) ? null : "Número inválido"
+                  );
+                }}
+                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 transition-all ${
+                  phoneTouched && phoneError
+                    ? "border-red-500 focus:ring-red-200"
+                    : "border-gray-300 focus:ring-blue-500"
+                }`}
                 placeholder="+57 300 123 4567"
               />
+              {phoneTouched && phoneError && (
+                <p className="text-red-500 text-sm mt-2">{phoneError}</p>
+              )}
             </div>
 
             <div>
@@ -175,7 +221,7 @@ export function ContactSection({ imageD }: ContactSectionProps) {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (phoneTouched && !!phoneError)}
               className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl shadow-lg hover:bg-blue-700 transition disabled:opacity-50"
             >
               {loading ? "Enviando..." : "Solicitar Cotización"}
