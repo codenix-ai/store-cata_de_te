@@ -160,6 +160,10 @@ export default function HomePage() {
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [createContactLead, { loading, error, data }] =
     useMutation(CREATE_CONTACT_LEAD);
+  // Contact form validation state
+  const [emailError, setEmailError] = useState<string>("");
+  const [phoneError, setPhoneError] = useState<string>("");
+  const [formError, setFormError] = useState<string>("");
   // Fetch products from GraphQL
   const {
     data: productsData,
@@ -186,6 +190,25 @@ export default function HomePage() {
     return `${color}${Math.round(opacity * 255)
       .toString(16)
       .padStart(2, "0")}`;
+  };
+
+  // Simple validation helpers
+  const validateEmail = (email?: string | null) => {
+    if (!email) return false;
+    // Basic RFC 5322-ish regex (not exhaustive but practical)
+    const re =
+      /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(".+"))@(([^<>()[\]\\.,;:\s@\"]+\.)+[^<>()[\]\\.,;:\s@\"]{2,})$/i;
+    return re.test(email.toString().trim());
+  };
+
+  const validatePhone = (phone?: string | null) => {
+    if (!phone) return false;
+    const digits = phone.replace(/[^0-9]/g, "");
+    // Colombia: national numbers are 10 digits (e.g. 3001234567).
+    // Accept either 10-digit national numbers or numbers prefixed with country code 57 (=> 12 digits total).
+    if (digits.length === 10) return true;
+    if (digits.length === 12 && digits.startsWith("57")) return true;
+    return false;
   };
 
   // Carousel functionality
@@ -222,6 +245,31 @@ export default function HomePage() {
     e.preventDefault();
     const form = e.currentTarget;
     const formData = new FormData(form);
+
+    // Clear previous errors
+    setEmailError("");
+    setPhoneError("");
+    setFormError("");
+
+    const emailValue = formData.get("email") as string | null;
+    const phoneValue = formData.get("phoneNumber") as string | null;
+
+    // Validate email and phone before sending
+    let hasError = false;
+    if (!validateEmail(emailValue)) {
+      setEmailError("Por favor ingresa un correo electrónico válido.");
+      hasError = true;
+    }
+    if (!validatePhone(phoneValue)) {
+      setPhoneError(
+        "Por favor ingresa un teléfono válido de Colombia (+57), ejemplo: 3001234567 o +57 3001234567."
+      );
+      hasError = true;
+    }
+    if (hasError) {
+      setFormError("Corrige los errores del formulario antes de enviar.");
+      return;
+    }
 
     const input = {
       firstName: formData.get("firstName"),
@@ -841,9 +889,21 @@ export default function HomePage() {
                     id="email"
                     name="email"
                     required
+                    onBlur={(e) => {
+                      const val = e.currentTarget.value;
+                      if (!validateEmail(val))
+                        setEmailError("Por favor ingresa un correo válido.");
+                      else setEmailError("");
+                    }}
+                    onChange={() => {
+                      if (emailError) setEmailError("");
+                    }}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="ejemplo@correo.com"
                   />
+                  {emailError && (
+                    <p className="text-red-500 text-sm mt-2">{emailError}</p>
+                  )}
                 </div>
 
                 <div>
@@ -858,9 +918,23 @@ export default function HomePage() {
                     id="phoneNumber"
                     name="phoneNumber"
                     required
+                    onBlur={(e) => {
+                      const val = e.currentTarget.value;
+                      if (!validatePhone(val))
+                        setPhoneError(
+                          "Por favor ingresa un teléfono válido (7-15 dígitos)."
+                        );
+                      else setPhoneError("");
+                    }}
+                    onChange={() => {
+                      if (phoneError) setPhoneError("");
+                    }}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="+57 300 123 4567"
                   />
+                  {phoneError && (
+                    <p className="text-red-500 text-sm mt-2">{phoneError}</p>
+                  )}
                 </div>
 
                 <div>
@@ -878,6 +952,10 @@ export default function HomePage() {
                     placeholder="Cuéntanos qué necesitas..."
                   ></textarea>
                 </div>
+
+                {formError && (
+                  <p className="text-red-600 text-sm mb-2">{formError}</p>
+                )}
 
                 <button
                   type="submit"
