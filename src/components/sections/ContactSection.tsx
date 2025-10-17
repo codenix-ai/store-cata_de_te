@@ -1,0 +1,207 @@
+"use client";
+
+import { useMutation, gql } from "@apollo/client";
+import Image from "next/image";
+import toast from "react-hot-toast";
+import { useStore } from "@/components/StoreProvider";
+
+const CREATE_CONTACT_LEAD = gql`
+  mutation CreateContactLead($input: CreateContactLeadInput!) {
+    createContactLead(input: $input) {
+      id
+      firstName
+      lastName
+      companyName
+      email
+      phoneNumber
+      message
+      storeId
+      createdAt
+      store {
+        id
+        name
+        email
+      }
+    }
+  }
+`;
+
+interface ContactSectionProps {
+  imageD: string;
+}
+
+export function ContactSection({ imageD }: ContactSectionProps) {
+  const { store } = useStore();
+  const [createContactLead, { loading, error, data }] =
+    useMutation(CREATE_CONTACT_LEAD);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    const input = {
+      firstName: formData.get("firstName"),
+      lastName: formData.get("lastName"),
+      companyName: formData.get("companyName"),
+      email: formData.get("email"),
+      phoneNumber: formData.get("phoneNumber"),
+      message: formData.get("message"),
+      storeId: store?.id || "default-store",
+    };
+    try {
+      await createContactLead({ variables: { input } });
+
+      toast.success("Cotización enviada con éxito 🚀", {});
+
+      form.reset();
+    } catch (error) {
+      console.error("Error al enviar la cotización:", error);
+
+      toast.error("Hubo un error al enviar la cotización ❌", {});
+    }
+  };
+
+  return (
+    <section id="contact-form" className="py-16 bg-gray-100">
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        {/* Contact Form */}
+        <div className="bg-white p-6 sm:p-10 rounded-3xl shadow-xl border border-gray-100">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">
+            Solicita tu Cotización
+          </h2>
+
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="firstName"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Nombre *
+                </label>
+                <input
+                  type="text"
+                  id="firstName"
+                  name="firstName"
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="Tu nombre"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="lastName"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Apellido *
+                </label>
+                <input
+                  type="text"
+                  id="lastName"
+                  name="lastName"
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="Tu apellido"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="companyName"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Empresa
+              </label>
+              <input
+                type="text"
+                id="companyName"
+                name="companyName"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="Nombre de tu empresa"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Correo electrónico *
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="ejemplo@correo.com"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="phoneNumber"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Teléfono *
+              </label>
+              <input
+                type="tel"
+                id="phoneNumber"
+                name="phoneNumber"
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="+57 300 123 4567"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="message"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
+                Mensaje
+              </label>
+              <textarea
+                id="message"
+                name="message"
+                rows={4}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="Cuéntanos qué necesitas..."
+              ></textarea>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl shadow-lg hover:bg-blue-700 transition disabled:opacity-50"
+            >
+              {loading ? "Enviando..." : "Solicitar Cotización"}
+            </button>
+
+            {error && (
+              <p className="text-red-500 text-sm mt-2">
+                Error: {error.message}
+              </p>
+            )}
+            {data && (
+              <p className="text-green-600 text-sm mt-2">
+                ¡Cotización enviada con éxito!
+              </p>
+            )}
+          </form>
+        </div>
+        <div className="relative aspect-[4/4] rounded-3xl overflow-hidden shadow-2xl">
+          <Image
+            src={imageD}
+            alt="Equipo de atención al cliente especializado en dotaciones industriales"
+            fill
+            className="object-cover object-bottom"
+          />
+        </div>
+      </div>
+    </section>
+  );
+}

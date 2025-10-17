@@ -1,8 +1,9 @@
 "use client";
+
 import { ProductCard } from "@/components/ProductCard/ProductCard";
 import { useStore } from "@/components/StoreProvider";
 import { Search, Filter, SlidersHorizontal } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery, gql } from "@apollo/client";
 import Layout from "@/components/Layout/Layout";
 
@@ -80,7 +81,7 @@ export default function ProductsPage() {
     },
     skip: !store?.id,
   });
-  
+
   const products = data?.productsByStore.items || [];
   const totalProducts = data?.productsByStore.total || 0;
   // Calcula el total de páginas manualmente ya que el backend no retorna totalPages
@@ -139,6 +140,7 @@ export default function ProductsPage() {
 
     return pages;
   };
+
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
