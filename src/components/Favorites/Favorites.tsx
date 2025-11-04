@@ -7,6 +7,8 @@ import { Heart, ShoppingCart, Eye, Trash2, Bookmark } from "lucide-react";
 import { ProductCard, Product } from "@/components/ProductCard/ProductCard";
 import { useStore } from "../StoreProvider";
 import { gql, useQuery } from "@apollo/client";
+import { cartService } from "@/lib/cart";
+import toast from "react-hot-toast";
 
 // GraphQL query to fetch products by IDs
 const GET_PRODUCTS_BY_STORE = gql`
@@ -118,6 +120,28 @@ export function Favorites({ className = "" }: FavoritesProps) {
     setFavoriteIds([]);
     localStorage.removeItem("emprendyup_favorites");
     window.dispatchEvent(new Event("storage"));
+  };
+
+  const handleAddToCart = (product: any) => {
+    try {
+      const cartItem = {
+        id: product.id,
+        productId: product.id,
+        name: product.title || product.name,
+        price: Number(product.price),
+        quantity: 1,
+        image: product.images?.[0]?.url || product.image,
+        currency: product.currency || "COP",
+        maxStock: product.stock || 999,
+        variant: undefined,
+      };
+
+      cartService.addItem(cartItem);
+      toast.success(`${product.title || product.name} añadido al carrito`);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      toast.error("Error al añadir al carrito");
+    }
   };
 
   if (loading) {
@@ -275,6 +299,7 @@ export function Favorites({ className = "" }: FavoritesProps) {
                   </p>
                   <div className="mt-4 flex gap-2 justify-center">
                     <button
+                      onClick={() => handleAddToCart(product)}
                       className="py-2 px-4 inline-block font-semibold tracking-wide align-middle duration-500 text-sm text-center text-white rounded-md shadow hover:opacity-90"
                       style={{
                         backgroundColor: store?.primaryColor || "#1f2937",

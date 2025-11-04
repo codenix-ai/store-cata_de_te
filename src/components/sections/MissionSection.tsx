@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useStore } from "@/components/StoreProvider";
 
 interface MissionSectionProps {
@@ -50,12 +51,13 @@ export function MissionSection({ imageC }: MissionSectionProps) {
             <li>Control de calidad riguroso para ambientes extremos</li>
             <li>Compromiso con la seguridad laboral</li>
           </ul>
-          <button
-            className="px-6 py-3 bg-white font-semibold rounded-full shadow-lg hover:bg-gray-100 transition"
+          <Link
+            href="/products"
+            className="inline-block px-6 py-3 bg-white font-semibold rounded-full shadow-lg hover:bg-gray-100 transition"
             style={{ color: store?.primaryColor || "#2563eb" }}
           >
             Conoce más
-          </button>
+          </Link>
         </div>
       </div>
     </section>

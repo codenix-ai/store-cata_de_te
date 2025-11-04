@@ -12,6 +12,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useStore } from "@/components/StoreProvider";
+import { favoritesService } from "@/components/Favorites/Favorites";
+import toast from "react-hot-toast";
 
 const GET_PRODUCTS_BY_STORE = gql`
   query GetProductsByStore($storeId: String!, $page: Int, $pageSize: Int) {
@@ -54,6 +56,7 @@ export function FeaturedProductsSection() {
   const { store } = useStore();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
 
   // Fetch products from GraphQL
   const {
@@ -70,6 +73,68 @@ export function FeaturedProductsSection() {
   });
 
   const products = productsData?.productsByStore?.items || [];
+
+  // Load favorite IDs from localStorage
+  useEffect(() => {
+    const loadFavorites = () => {
+      try {
+        const stored = localStorage.getItem("emprendyup_favorites");
+        if (stored) {
+          const ids = JSON.parse(stored);
+          setFavoriteIds(Array.isArray(ids) ? ids : []);
+        }
+      } catch (error) {
+        console.error("Error loading favorites:", error);
+        setFavoriteIds([]);
+      }
+    };
+
+    loadFavorites();
+
+    // Listen for storage changes to update favorites in real-time
+    const handleStorageChange = () => {
+      loadFavorites();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
+  const handleToggleFavorite = (product: any, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      const productData = {
+        id: product.id,
+        name: product.title || product.name,
+        price: product.price,
+        currency: product.currency || "COP",
+        image: product.images?.[0]?.url || "",
+        available: product.available,
+        inStock: product.inStock,
+      };
+
+      const isCurrentlyFavorite = favoriteIds.includes(product.id);
+      
+      if (isCurrentlyFavorite) {
+        const updatedIds = favoriteIds.filter((id) => id !== product.id);
+        setFavoriteIds(updatedIds);
+        localStorage.setItem("emprendyup_favorites", JSON.stringify(updatedIds));
+        toast.success("Producto removido de favoritos");
+      } else {
+        const updatedIds = [...favoriteIds, product.id];
+        setFavoriteIds(updatedIds);
+        localStorage.setItem("emprendyup_favorites", JSON.stringify(updatedIds));
+        toast.success("Producto añadido a favoritos");
+      }
+      
+      window.dispatchEvent(new Event("storage"));
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      toast.error("Error al actualizar favoritos");
+    }
+  };
 
   const getColorWithOpacity = (color: string, opacity: number) => {
     if (!color) return `rgba(37, 99, 235, ${opacity})`;
@@ -204,7 +269,8 @@ export function FeaturedProductsSection() {
                       key={product.id}
                       className="w-full sm:w-1/2 lg:w-1/3 flex-shrink-0 px-2 sm:px-3"
                     >
-                      <div className="group relative bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 h-full">
+                      <Link href={`/products/${product.id}`}>
+                        <div className="group relative bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 h-full cursor-pointer">
                         {/* Badge */}
                         <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-10">
                           <span
@@ -271,20 +337,30 @@ export function FeaturedProductsSection() {
                               )}
                             </div>
                             <button
+                              onClick={(e) => handleToggleFavorite(product, e)}
                               className="p-1.5 sm:p-2 rounded-full transition-colors hover:scale-110 transform"
                               style={{
-                                backgroundColor: getColorWithOpacity(
-                                  store?.primaryColor || "#2563eb",
-                                  0.1
-                                ),
-                                color: store?.primaryColor || "#2563eb",
+                                backgroundColor: favoriteIds.includes(product.id)
+                                  ? store?.primaryColor || "#2563eb"
+                                  : getColorWithOpacity(
+                                      store?.primaryColor || "#2563eb",
+                                      0.1
+                                    ),
+                                color: favoriteIds.includes(product.id)
+                                  ? "white"
+                                  : store?.primaryColor || "#2563eb",
                               }}
                             >
-                              <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
+                              <Heart
+                                className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                                  favoriteIds.includes(product.id) ? "fill-current" : ""
+                                }`}
+                              />
                             </button>
                           </div>
                         </div>
-                      </div>
+                        </div>
+                      </Link>
                     </div>
                   ))}
                 </div>

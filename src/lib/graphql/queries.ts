@@ -409,3 +409,51 @@ export const ORDERS_BY_USER = gql`
     }
   }
 `;
+
+// Categories Queries
+export const GET_CATEGORIES_BY_STORE = gql`
+  query GetCategoriesByStore($storeId: ID!) {
+    categoriesByStore(storeId: $storeId) {
+      id
+      name
+      slug
+      description
+      isActive
+      order
+      parentId
+      parent {
+        id
+        name
+        slug
+      }
+      children {
+        id
+        name
+        slug
+      }
+    }
+  }
+`;
+
+// Product Reviews/Comments Queries
+export const GET_PRODUCT_COMMENTS = gql`
+  query GetProductComments($productId: String!) {
+    productComments(productId: $productId) {
+      id
+      rating
+      comment
+      createdAt
+    }
+  }
+`;
+
+export const ADD_PRODUCT_COMMENT = gql`
+  mutation AddProductComment($input: CreateProductCommentDto!) {
+    addProductComment(input: $input) {
+      id
+      rating
+      comment
+      createdAt
+    }
+  }
+`;

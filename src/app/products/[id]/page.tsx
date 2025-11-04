@@ -14,7 +14,7 @@ import Link from "next/link";
 import { ProductGallery } from "@/components/ProductGallery/ProductGallery";
 import { cartService } from "@/lib/cart";
 import { useStore } from "@/components/StoreProvider";
-import { gql, useQuery } from "@apollo/client";
+import { gql, useQuery, useMutation } from "@apollo/client";
 import toast from "react-hot-toast";
 import Layout from "@/components/Layout/Layout";
 
@@ -86,6 +86,28 @@ const GET_PRODUCT_QUERY = gql`
   }
 `;
 
+const GET_PRODUCT_COMMENTS = gql`
+  query GetProductComments($productId: String!) {
+    productComments(productId: $productId) {
+      id
+      rating
+      comment
+      createdAt
+    }
+  }
+`;
+
+const ADD_PRODUCT_COMMENT = gql`
+  mutation AddProductComment($input: CreateProductCommentDto!) {
+    addProductComment(input: $input) {
+      id
+      rating
+      comment
+      createdAt
+    }
+  }
+`;
+
 export default function ProductDetailPage() {
   const params = useParams();
   const id = params.id as string;
@@ -94,6 +116,34 @@ export default function ProductDetailPage() {
     skip: !id, // Skip the query if id is not available
   });
 
+  // Comments query
+  const {
+    data: commentsData,
+    loading: commentsLoading,
+    refetch: refetchComments,
+  } = useQuery(GET_PRODUCT_COMMENTS, {
+    variables: { productId: id },
+    skip: !id,
+  });
+
+  // Create comment mutation
+  const [addComment, { loading: creatingComment }] = useMutation(
+    ADD_PRODUCT_COMMENT,
+    {
+      onCompleted: () => {
+        toast.success("Comentario enviado correctamente");
+        setCommentForm({
+          rating: 0,
+          comment: "",
+        });
+        refetchComments();
+      },
+      onError: (error) => {
+        toast.error("Error al enviar el comentario: " + error.message);
+      },
+    }
+  );
+
   const [selectedVariant, setSelectedVariant] = useState(
     data?.product?.variants?.[0]
   );
@@ -101,6 +151,13 @@ export default function ProductDetailPage() {
   const [activeTab, setActiveTab] = useState("description");
   const [isFavorite, setIsFavorite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Comment form state
+  const [commentForm, setCommentForm] = useState({
+    rating: 0,
+    comment: "",
+  });
+
   const { store } = useStore();
 
   if (!id) {
@@ -180,6 +237,43 @@ export default function ProductDetailPage() {
       toast.success("Producto agregado a favoritos");
     } else {
       toast.success("Producto removido de favoritos");
+    }
+  };
+
+  // Comment functions
+  const handleRatingClick = (rating: number) => {
+    setCommentForm((prev) => ({ ...prev, rating }));
+  };
+
+  const handleCommentInputChange = (field: string, value: string) => {
+    setCommentForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!commentForm.rating || !commentForm.comment.trim()) {
+      toast.error("Por favor completa todos los campos");
+      return;
+    }
+
+    if (commentForm.rating < 1 || commentForm.rating > 5) {
+      toast.error("Por favor selecciona una calificación");
+      return;
+    }
+
+    try {
+      await addComment({
+        variables: {
+          input: {
+            productId: id,
+            rating: commentForm.rating,
+            comment: commentForm.comment.trim(),
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Error submitting comment:", error);
     }
   };
   const imageSrc = `https://emprendyup-images.s3.us-east-1.amazonaws.com/${
@@ -679,18 +773,29 @@ export default function ProductDetailPage() {
                 {/* Header de comentarios */}
                 <div className="flex items-center gap-3">
                   <h5 className="text-lg font-medium text-black mb-4">
-                    Comentarios
+                    Reseñas y Comentarios
                   </h5>
                   <div className="flex-1 h-px bg-gradient-to-r from-indigo-200 to-transparent"></div>
                   <span className="text-sm text-slate-500 px-3 py-1 rounded-full">
-                    {product.comments.length} reseñas
+                    {commentsLoading
+                      ? "..."
+                      : commentsData?.productComments?.length || 0}{" "}
+                    comentarios
                   </span>
                 </div>
 
                 {/* Lista de comentarios */}
                 <div className="space-y-6">
-                  {product.comments.length > 0 ? (
-                    product.comments.map(
+                  {commentsLoading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+                      <p className="text-slate-600 mt-2">
+                        Cargando comentarios...
+                      </p>
+                    </div>
+                  ) : commentsData?.productComments &&
+                    commentsData.productComments.length > 0 ? (
+                    commentsData.productComments.map(
                       (comment: {
                         id: string;
                         rating: number;
@@ -730,7 +835,7 @@ export default function ProductDetailPage() {
                                       className="w-4 h-4 fill-slate-200 text-slate-200 dark:fill-slate-700 dark:text-slate-700"
                                     />
                                   ))}
-                                  <span className="text-sm font-medium text-black">
+                                  <span className="text-sm font-medium text-black ml-2">
                                     {comment.rating}/5
                                   </span>
                                 </div>
@@ -783,10 +888,10 @@ export default function ProductDetailPage() {
                     </h5>
                   </div>
 
-                  <form className="space-y-6">
+                  <form onSubmit={handleSubmitComment} className="space-y-6">
                     {/* Rating selector */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-600">
+                      <label className="block text-sm font-semibold text-gray-600 mb-2">
                         Tu calificación:
                       </label>
                       <div className="flex items-center gap-2">
@@ -794,44 +899,23 @@ export default function ProductDetailPage() {
                           <button
                             key={rating}
                             type="button"
+                            onClick={() => handleRatingClick(rating)}
                             className="hover:scale-110 transition-transform duration-200"
                           >
-                            <Star className="w-6 h-6 text-slate-300 hover:text-amber-400 hover:fill-amber-400 transition-colors duration-200" />
+                            <Star
+                              className={`w-6 h-6 transition-colors duration-200 ${
+                                rating <= commentForm.rating
+                                  ? "fill-amber-400 text-amber-400"
+                                  : "text-slate-300 hover:text-amber-400 hover:fill-amber-400"
+                              }`}
+                            />
                           </button>
                         ))}
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div>
-                        <label
-                          htmlFor="name"
-                          className="block text-sm font-semibold text-slate-700  mb-2"
-                        >
-                          Nombre
-                        </label>
-                        <input
-                          name="name"
-                          id="name"
-                          type="text"
-                          className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:border-transparent transition-all duration-200 text-black"
-                          placeholder="Tu nombre"
-                        />
-                      </div>
-                      <div>
-                        <label
-                          htmlFor="email"
-                          className="block text-sm font-semibold text-slate-700 mb-2"
-                        >
-                          Correo Electrónico
-                        </label>
-                        <input
-                          name="email"
-                          id="email"
-                          type="email"
-                          className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:border-transparent transition-all duration-200 text-slate-900"
-                          placeholder="tu@email.com"
-                        />
+                        {commentForm.rating > 0 && (
+                          <span className="ml-2 text-sm text-slate-600">
+                            ({commentForm.rating}/5)
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -840,24 +924,39 @@ export default function ProductDetailPage() {
                         htmlFor="comments"
                         className="block text-sm font-semibold text-slate-700  mb-2"
                       >
-                        Tu reseña
+                        Tu comentario
                       </label>
                       <textarea
                         name="comments"
                         id="comments"
                         rows={4}
+                        value={commentForm.comment}
+                        onChange={(e) =>
+                          handleCommentInputChange("comment", e.target.value)
+                        }
                         className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:border-transparent transition-all duration-200 text-slate-900 resize-none"
                         placeholder="Comparte tu experiencia con este producto..."
+                        required
                       ></textarea>
                     </div>
 
                     <button
                       type="submit"
-                      className="w-full 600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2"
+                      disabled={creatingComment}
+                      className="w-full text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                       style={{ background: store?.primaryColor || "#2563eb" }}
                     >
-                      <Star className="w-4 h-4" />
-                      Publicar Reseña
+                      {creatingComment ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <Star className="w-4 h-4" />
+                          Publicar Comentario
+                        </>
+                      )}
                     </button>
                   </form>
                 </div>
