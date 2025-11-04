@@ -1302,7 +1302,7 @@ export default function Order() {
                           </div>
                         </div>
 
-                        {/* Payment Provider Selection */}
+                        {/* Payment Provider Selection m*/}
                         <div className="space-y-4">
                           <h4 className="font-medium text-gray-900">
                             Selecciona tu método de pago:
