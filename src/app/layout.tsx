@@ -7,6 +7,7 @@ import { Footer } from "@/components/Footer/Footer";
 import { Toaster } from "react-hot-toast";
 import CookieWrapper from "@/components/CookieWrapper";
 import { WhatsAppWrapper } from "@/components/WhatsAppWrapper";
+import Script from "next/script";
 
 const roboto = Roboto({
   variable: "--font-roboto",
@@ -19,6 +20,74 @@ const montserrat = Montserrat({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
 });
+
+export const metadata: Metadata = {
+  title:
+    "Pawis Colombia Tejidos de punto | Confección Mayor y Detal | Uniformes y Dotaciones - Pawis S.A.S",
+  description:
+    "Empresa líder en tejido de punto en Colombia. Confección de uniformes, dotaciones, guantes, gorros, medias y productos textiles al mayor y al detal. Calidad garantizada para empresas y particulares.",
+  keywords: [
+    "tejidos de punto",
+    "textiles colombia",
+    "Dotaciones para empresas cuarto frio",
+    "confección colombia",
+    "uniformes empresariales",
+    "dotaciones laborales",
+    "textiles al mayor",
+    "confección al detal",
+    "manufactura textil",
+    "tejido punto colombia",
+    "ropa empresarial",
+    "uniformes industriales",
+    "dotación personal",
+  ],
+  authors: [{ name: "Pawis Colombia Tejidos de punto" }],
+  creator: "Pawis Colombia Tejidos de punto",
+  publisher: "Pawis Colombia Tejidos de punto",
+  category: "Textiles y Confección",
+  classification: "Business",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    type: "website",
+    locale: "es_CO",
+    url: "https://pawis.com.co",
+    title: "Pawis Colombia Tejidos de punto - Confección Mayor y Detal",
+    description:
+      "Empresa líder en tejido de punto. Uniformes, dotaciones y confección textil de alta calidad para empresas y particulares en Colombia.",
+    siteName: "Pawis Colombia Tejidos de punto",
+    images: [
+      {
+        url: "/assets/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Pawis Colombia Tejidos de punto - Confección textil",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Pawis Colombia Tejidos de punto - Confección Mayor y Detal",
+    description:
+      "Empresa líder en tejido de punto. Uniformes, dotaciones y confección textil de alta calidad.",
+    images: ["/assets/og-image.png"],
+  },
+  verification: {
+    google: "your-google-verification-code",
+  },
+  alternates: {
+    canonical: "https://pawis.com.co",
+  },
+};
 
 export default function RootLayout({
   children,
@@ -252,6 +321,11 @@ export default function RootLayout({
         <meta name="ICBM" content="4.7110, -74.0721" />
         <meta name="business.contact_data.country" content="Colombia" />
         <meta name="business.contact_data.region" content="Cundinamarca" />
+        {/* ePayco Standard Checkout Script */}
+        <Script
+          src="https://checkout.epayco.co/checkout.js"
+          strategy="beforeInteractive"
+        />
       </head>
       <body
         className={`${roboto.variable} ${montserrat.variable} font-roboto antialiased min-h-screen flex flex-col text-gray-900 bg-white dark:text-gray-100 dark:bg-slate-900`}

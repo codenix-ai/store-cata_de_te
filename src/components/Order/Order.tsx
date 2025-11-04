@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import crypto from "crypto";
 import { useWompiPayment, usePayments } from "@/hooks/usePayments";
 import { useStorePaymentConfiguration } from "@/hooks/usePaymentConfiguration";
+import { useEpaycoStandardCheckout } from "@/hooks/useEpaycoStandardCheckout";
 import { PaymentProvider, PaymentMethod } from "@/types/payment";
 import { CREATE_PAYMENT } from "@/lib/graphql/queries";
 
@@ -318,8 +319,16 @@ export default function Order() {
     isWompiEnabled,
     getWompiPublicKey,
   } = useStorePaymentConfiguration();
+  const {
+    createOrderCheckout: createEpaycoCheckout,
+    isLoading: epaycoLoading,
+    error: epaycoError,
+  } = useEpaycoStandardCheckout();
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
   const [paymentReference, setPaymentReference] = useState<string>("");
+  const [selectedPaymentProvider, setSelectedPaymentProvider] = useState<
+    "wompi" | "epayco"
+  >("wompi");
 
   // Generate payment reference on component mount
   React.useEffect(() => {
@@ -706,6 +715,96 @@ export default function Order() {
     }
   };
 
+  const handleEpaycoCheckout = async () => {
+    // Check if user is authenticated
+    if (!session) {
+      alert("Debes iniciar sesión para completar la orden");
+      return;
+    }
+
+    // Check if address is saved or selected
+    const addressId = address.id || selectedAddressId;
+    if (!addressId) {
+      alert(
+        "Debes seleccionar o guardar una dirección antes de completar la orden"
+      );
+      return;
+    }
+
+    setIsSubmittingOrder(true);
+
+    try {
+      const selectedAddress = selectedAddressId
+        ? addressesData?.addressesByUser?.find(
+            (addr: Address) => addr.id === selectedAddressId
+          ) || address
+        : address;
+
+      // Create the order first (similar to Wompi flow but without payment record)
+      const orderItems: OrderItemInput[] = cart.items.map((item: CartItem) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice: item.price,
+      }));
+
+      const orderInput: CreateOrderInput = {
+        addressId: addressId,
+        items: orderItems,
+        total: cart.total,
+        subtotal: cart.subtotal,
+        tax: cart.tax,
+        shipping: cart.shipping,
+        ...(store?.id && { storeId: store.id }),
+        ...(store?.storeId && !store?.id && { storeId: store.storeId }),
+      };
+
+      console.log("Creating order:", orderInput);
+
+      const { data: orderData } = await createOrder({
+        variables: {
+          input: orderInput,
+        },
+      });
+
+      const newOrder = orderData.createOrder;
+      console.log("Order created:", newOrder);
+
+      // Clear cart before opening checkout
+      cartService.clearCart();
+
+      // Open ePayco Standard Checkout
+      await createEpaycoCheckout({
+        orderId: newOrder.id,
+        amount: cart.total,
+        tax: cart.tax,
+        taxBase: cart.subtotal,
+        description: `Orden #${newOrder.id} - ${cart.items.length} productos`,
+        customerName: selectedAddress?.name || session.user?.name || "",
+        customerEmail: session.user?.email || "",
+        customerPhone: selectedAddress?.phone || "",
+        customerDocType: "cc",
+        customerDocument: "1234567890", // TODO: Get from user profile
+        customerAddress: selectedAddress?.street || "",
+      });
+
+      // Mark step as completed
+      setCompletedSteps([...completedSteps.filter((s) => s !== 3), 3]);
+    } catch (error) {
+      console.error("Error opening ePayco checkout:", error);
+
+      if (error instanceof Error) {
+        console.error("Error message:", error.message);
+        alert(`Error: ${error.message}`);
+      } else {
+        alert(
+          "Error al abrir el checkout de ePayco. Por favor intenta nuevamente."
+        );
+      }
+    } finally {
+      setIsSubmittingOrder(false);
+    }
+  };
+
   const isAddressCompleted =
     completedSteps.includes(2) || (!!selectedAddressId && !showNewAddressForm);
   const isPaymentCompleted = completedSteps.includes(3);
@@ -1020,51 +1119,18 @@ export default function Order() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                   Teléfono *
                                 </label>
-
-                                <div className="flex items-center border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-blue-500">
-                                  <span className="px-3 text-gray-700 select-none">
-                                    +57
-                                  </span>
-                                  <input
-                                    type="tel"
-                                    required
-                                    maxLength={10}
-                                    value={address.phone.replace(
-                                      /^(\+57)?/,
-                                      ""
-                                    )} // elimina +57 si está
-                                    onChange={(e) => {
-                                      const value = e.target.value.replace(
-                                        /\D/g,
-                                        ""
-                                      ); // solo números
-                                      setAddress({
-                                        ...address,
-                                        phone: value,
-                                      });
-                                    }}
-                                    onBlur={(e) => {
-                                      const cleanPhone = e.target.value.trim();
-                                      const isValidColombianPhone =
-                                        /^3\d{9}$/.test(cleanPhone);
-
-                                      if (!isValidColombianPhone) {
-                                        alert(
-                                          "Por favor ingresa un número de teléfono colombiano válido (por ejemplo: 3001234567)."
-                                        );
-                                        e.target.focus();
-                                      } else {
-                                        // guarda el formato final con +57
-                                        setAddress({
-                                          ...address,
-                                          phone: `+57${cleanPhone}`,
-                                        });
-                                      }
-                                    }}
-                                    placeholder="3001234567"
-                                    className="flex-1 px-3 py-2 rounded-r-md focus:outline-none"
-                                  />
-                                </div>
+                                <input
+                                  type="tel"
+                                  required
+                                  value={address.phone}
+                                  onChange={(e) =>
+                                    setAddress({
+                                      ...address,
+                                      phone: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
                               </div>
                             </div>
 
@@ -1236,74 +1302,158 @@ export default function Order() {
                           </div>
                         </div>
 
-                        {/* Security notice */}
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                          <div className="flex items-start space-x-2">
-                            <Shield className="w-5 h-5 text-yellow-600 mt-0.5" />
-                            <div className="text-sm">
-                              <p className="font-medium text-yellow-800">
-                                Nota de Seguridad Importante
-                              </p>
-                              <div className="text-yellow-700 mt-1 space-y-1">
-                                <p>
-                                  ⚠️ <strong>Desarrollo:</strong> La firma de
-                                  integridad se está calculando en el frontend
-                                  con fines de prueba.
-                                </p>
-                                <p>
-                                  🔐 <strong>Producción:</strong> Mueve el
-                                  cálculo de la firma al backend para proteger
-                                  tu secreto de integridad.
-                                </p>
-                                <p className="text-xs mt-2">
-                                  Variables de entorno requeridas:{" "}
-                                  <code>
-                                    NEXT_PUBLIC_WOMPI_INTEGRITY_SECRET
-                                  </code>
-                                </p>
+                        {/* Payment Provider Selection */}
+                        <div className="space-y-4">
+                          <h4 className="font-medium text-gray-900">
+                            Selecciona tu método de pago:
+                          </h4>
+                          <div className="grid grid-cols-2 gap-4">
+                            <button
+                              onClick={() =>
+                                setSelectedPaymentProvider("wompi")
+                              }
+                              className={`p-4 border-2 rounded-lg transition-all ${
+                                selectedPaymentProvider === "wompi"
+                                  ? "border-blue-500 bg-blue-50"
+                                  : "border-gray-200 hover:border-gray-300"
+                              }`}
+                            >
+                              <div className="text-center">
+                                <div className="font-medium text-gray-900 mb-1">
+                                  Wompi
+                                </div>
+                                <div className="text-xs text-gray-600">
+                                  Tarjetas y PSE
+                                </div>
                               </div>
-                            </div>
+                            </button>
+
+                            <button
+                              onClick={() =>
+                                setSelectedPaymentProvider("epayco")
+                              }
+                              className={`p-4 border-2 rounded-lg transition-all ${
+                                selectedPaymentProvider === "epayco"
+                                  ? "border-green-500 bg-green-50"
+                                  : "border-gray-200 hover:border-gray-300"
+                              }`}
+                            >
+                              <div className="text-center">
+                                <div className="font-medium text-gray-900 mb-1">
+                                  ePayco
+                                </div>
+                                <div className="text-xs text-gray-600">
+                                  Todos los métodos
+                                </div>
+                              </div>
+                            </button>
                           </div>
                         </div>
 
-                        {/* Wompi Checkout Integration */}
-                        <div id="wompi-checkout-container">
-                          <form
-                            id="wompi-payment-form"
-                            onSubmit={handlePaymentSubmit}
-                          >
-                            <div className="flex flex-col space-y-3">
-                              {/* Security notice */}
-                              <div className="flex items-start space-x-2 text-xs text-gray-600 bg-gray-50 p-3 rounded">
-                                <Shield className="w-4 h-4 mt-0.5 text-green-600" />
-                                <span>
-                                  Tu pago será procesado de forma segura por
-                                  Wompi. Serás redirigido a la plataforma de
-                                  pago.
-                                </span>
+                        {/* Wompi Integration */}
+                        {selectedPaymentProvider === "wompi" && (
+                          <div className="space-y-4">
+                            {/* Security notice for Wompi */}
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                              <div className="flex items-start space-x-2">
+                                <Shield className="w-5 h-5 text-yellow-600 mt-0.5" />
+                                <div className="text-sm">
+                                  <p className="font-medium text-yellow-800">
+                                    Nota de Seguridad
+                                  </p>
+                                  <div className="text-yellow-700 mt-1 space-y-1">
+                                    <p>
+                                      ⚠️ <strong>Desarrollo:</strong> La firma
+                                      de integridad se calcula en el frontend.
+                                    </p>
+                                    <p>
+                                      🔐 <strong>Producción:</strong> Mueve el
+                                      cálculo al backend.
+                                    </p>
+                                  </div>
+                                </div>
                               </div>
-
-                              <button
-                                type="submit"
-                                disabled={isSubmittingOrder}
-                                className="w-full px-6 py-3 text-white rounded-md hover:opacity-90 transition-colors flex items-center justify-center space-x-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                                style={{
-                                  backgroundColor:
-                                    store?.primaryColor || "#2563eb",
-                                }}
-                              >
-                                <ShieldCheck className="w-5 h-5" />
-                                <span>
-                                  {isSubmittingOrder
-                                    ? "Creando orden y redirigiendo..."
-                                    : `Crear Orden y Pagar $${cart.total.toLocaleString(
-                                        "es-CO"
-                                      )}`}
-                                </span>
-                              </button>
                             </div>
-                          </form>
-                        </div>
+
+                            <form
+                              id="wompi-payment-form"
+                              onSubmit={handlePaymentSubmit}
+                            >
+                              <div className="flex flex-col space-y-3">
+                                <div className="flex items-start space-x-2 text-xs text-gray-600 bg-gray-50 p-3 rounded">
+                                  <Shield className="w-4 h-4 mt-0.5 text-green-600" />
+                                  <span>
+                                    Tu pago será procesado de forma segura por
+                                    Wompi. Serás redirigido a la plataforma de
+                                    pago.
+                                  </span>
+                                </div>
+
+                                <button
+                                  type="submit"
+                                  disabled={isSubmittingOrder}
+                                  className="w-full px-6 py-3 text-white rounded-md hover:opacity-90 transition-colors flex items-center justify-center space-x-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                  style={{
+                                    backgroundColor:
+                                      store?.primaryColor || "#2563eb",
+                                  }}
+                                >
+                                  <ShieldCheck className="w-5 h-5" />
+                                  <span>
+                                    {isSubmittingOrder
+                                      ? "Creando orden y redirigiendo..."
+                                      : `Pagar con Wompi $${cart.total.toLocaleString(
+                                          "es-CO"
+                                        )}`}
+                                  </span>
+                                </button>
+                              </div>
+                            </form>
+                          </div>
+                        )}
+
+                        {/* ePayco Standard Checkout */}
+                        {selectedPaymentProvider === "epayco" && (
+                          <div className="space-y-4">
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                              <div className="flex items-start space-x-2">
+                                <ShieldCheck className="w-5 h-5 text-green-600 mt-0.5" />
+                                <div className="text-sm">
+                                  <p className="font-medium text-green-800">
+                                    ePayco Standard Checkout
+                                  </p>
+                                  <p className="text-green-700 mt-1">
+                                    Paga con tarjetas de crédito, débito, PSE,
+                                    Efecty, Baloto y más métodos de pago.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={handleEpaycoCheckout}
+                              disabled={isSubmittingOrder || epaycoLoading}
+                              className="w-full px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <ShieldCheck className="w-5 h-5" />
+                              <span>
+                                {isSubmittingOrder || epaycoLoading
+                                  ? "Abriendo checkout..."
+                                  : `Pagar con ePayco $${cart.total.toLocaleString(
+                                      "es-CO"
+                                    )}`}
+                              </span>
+                            </button>
+
+                            {epaycoError && (
+                              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                <p className="text-red-800 text-sm">
+                                  {epaycoError}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
 
                         {/* Debug info in development */}
                         {process.env.NODE_ENV === "development" && (

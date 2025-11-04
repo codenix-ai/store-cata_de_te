@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 // Payment Mutations
 export const CREATE_PAYMENT = gql`
@@ -71,7 +71,10 @@ export const REFUND_PAYMENT = gql`
 
 // Payment Queries
 export const GET_PAYMENTS = gql`
-  query GetPayments($filter: PaymentFilterInput, $pagination: PaymentPaginationInput) {
+  query GetPayments(
+    $filter: PaymentFilterInput
+    $pagination: PaymentPaginationInput
+  ) {
     payments(filter: $filter, pagination: $pagination) {
       id
       amount
@@ -147,6 +150,91 @@ export const GET_PAYMENT = gql`
   }
 `;
 
+// Additional queries requested for ePayco integration
+export const GET_PAYMENT_BY_REFERENCE = gql`
+  query GetPaymentByReference($reference: String!, $userId: String) {
+    paymentByReference(reference: $reference, userId: $userId) {
+      id
+      status
+      amount
+      currency
+      referenceNumber
+      providerTransactionId
+      completedAt
+      failedAt
+      errorCode
+      errorMessage
+      customerEmail
+      paymentMethod
+      createdAt
+      updatedAt
+      orderId
+      user {
+        id
+      }
+    }
+  }
+`;
+
+export const GET_ORDER_PAYMENT_STATUS = gql`
+  query GetOrderPaymentStatus($orderId: ID!) {
+    orderPaymentStatus(orderId: $orderId)
+  }
+`;
+
+export const GET_ORDER_PAYMENTS = gql`
+  query GetOrderPayments($orderId: ID!) {
+    payments(
+      filter: { orderId: $orderId }
+      pagination: { take: 10, orderBy: "createdAt_desc" }
+    ) {
+      id
+      status
+      amount
+      currency
+      referenceNumber
+      providerTransactionId
+      paymentMethod
+      completedAt
+      failedAt
+      errorCode
+      errorMessage
+      createdAt
+      providerMetadata
+    }
+  }
+`;
+
+export const GET_PAYMENT_BY_ID = gql`
+  query GetPayment($id: ID!) {
+    payment(id: $id) {
+      id
+      status
+      amount
+      currency
+      referenceNumber
+      providerTransactionId
+      paymentMethod
+      completedAt
+      failedAt
+      expiredAt
+      errorCode
+      errorMessage
+      customerEmail
+      customerPhone
+      providerMetadata
+      createdAt
+      updatedAt
+      orderId
+      order {
+        id
+        status
+        total
+      }
+    }
+  }
+`;
+
 export const GET_PAYMENT_LOGS = gql`
   query GetPaymentLogs($paymentId: ID!) {
     paymentLogs(paymentId: $paymentId) {
@@ -158,6 +246,20 @@ export const GET_PAYMENT_LOGS = gql`
       changedBy
       notes
       createdAt
+    }
+  }
+`;
+
+export const UPSERT_PAYMENT_FROM_EPAYCO = gql`
+  mutation ProcessEpaycoWebhook($payload: String!) {
+    upsertPaymentFromEpayco(payload: $payload) {
+      id
+      status
+      referenceNumber
+      providerTransactionId
+      amount
+      completedAt
+      providerMetadata
     }
   }
 `;
@@ -220,7 +322,9 @@ export const GET_PAYMENT_CONFIGURATIONS = gql`
 `;
 
 export const CREATE_PAYMENT_CONFIGURATION = gql`
-  mutation CreatePaymentConfiguration($input: CreatePaymentConfigurationInput!) {
+  mutation CreatePaymentConfiguration(
+    $input: CreatePaymentConfigurationInput!
+  ) {
     createPaymentConfiguration(input: $input) {
       id
       wompiEnabled
@@ -243,7 +347,10 @@ export const CREATE_PAYMENT_CONFIGURATION = gql`
 `;
 
 export const UPDATE_PAYMENT_CONFIGURATION = gql`
-  mutation UpdatePaymentConfiguration($id: ID!, $input: UpdatePaymentConfigurationInput!) {
+  mutation UpdatePaymentConfiguration(
+    $id: ID!
+    $input: UpdatePaymentConfigurationInput!
+  ) {
     updatePaymentConfiguration(id: $id, input: $input) {
       id
       wompiEnabled

@@ -1,7 +1,7 @@
-'use client';
-import { useState } from 'react';
-import { useMutation, useQuery } from '@apollo/client';
-import { ApolloError } from '@apollo/client';
+"use client";
+import { useState } from "react";
+import { useMutation, useQuery, useLazyQuery } from "@apollo/client";
+import { ApolloError } from "@apollo/client";
 import {
   CREATE_PAYMENT,
   UPDATE_PAYMENT,
@@ -11,7 +11,10 @@ import {
   GET_PAYMENT,
   GET_PAYMENT_LOGS,
   GET_PAYMENT_SUMMARY,
-} from '@/lib/graphql/queries';
+  GET_PAYMENT_BY_REFERENCE,
+  GET_ORDER_PAYMENT_STATUS,
+  UPSERT_PAYMENT_FROM_EPAYCO,
+} from "@/lib/graphql/queries";
 import {
   Payment,
   CreatePaymentInput,
@@ -20,7 +23,7 @@ import {
   PaymentFilter,
   PaymentPagination,
   PaymentSummary,
-} from '@/types/payment';
+} from "@/types/payment";
 
 // Error handling utility
 export const getPaymentErrorMessage = (error: ApolloError): string => {
@@ -28,26 +31,26 @@ export const getPaymentErrorMessage = (error: ApolloError): string => {
     const graphQLError = error.graphQLErrors[0];
 
     switch (graphQLError.message) {
-      case 'Payment not found':
-        return 'The payment you are looking for does not exist.';
-      case 'Store not found':
-        return 'Store configuration is missing.';
-      case 'Only completed payments can be refunded':
-        return 'This payment cannot be refunded in its current state.';
-      case 'Insufficient permissions':
-        return 'You do not have permission to perform this action.';
-      case 'Payment provider configuration missing':
-        return 'Payment provider is not properly configured.';
+      case "Payment not found":
+        return "The payment you are looking for does not exist.";
+      case "Store not found":
+        return "Store configuration is missing.";
+      case "Only completed payments can be refunded":
+        return "This payment cannot be refunded in its current state.";
+      case "Insufficient permissions":
+        return "You do not have permission to perform this action.";
+      case "Payment provider configuration missing":
+        return "Payment provider is not properly configured.";
       default:
         return graphQLError.message;
     }
   }
 
   if (error.networkError) {
-    return 'Network error. Please check your connection.';
+    return "Network error. Please check your connection.";
   }
 
-  return 'An unexpected error occurred.';
+  return "An unexpected error occurred.";
 };
 
 // Custom hook for managing payments list
@@ -56,32 +59,62 @@ export const usePayments = () => {
   const [pagination, setPagination] = useState<PaymentPagination>({
     skip: 0,
     take: 20,
-    orderBy: 'createdAt_desc',
+    orderBy: "createdAt_desc",
   });
 
   const { data, loading, error, refetch } = useQuery(GET_PAYMENTS, {
     variables: { filter: filters, pagination },
-    errorPolicy: 'all',
+    errorPolicy: "all",
   });
 
-  const [createPayment, { loading: creating, error: createError }] = useMutation(CREATE_PAYMENT, {
-    refetchQueries: [{ query: GET_PAYMENTS, variables: { filter: filters, pagination } }],
-    errorPolicy: 'all',
-  });
+  // Lazy queries and mutation for reference/status lookups and webhook upsert
+  const [fetchPaymentByReferenceQuery, { data: paymentByReferenceData }] =
+    useLazyQuery(GET_PAYMENT_BY_REFERENCE, {
+      fetchPolicy: "network-only",
+      errorPolicy: "all",
+    });
 
-  const [updatePayment, { loading: updating, error: updateError }] = useMutation(UPDATE_PAYMENT, {
-    errorPolicy: 'all',
-  });
+  const [fetchOrderPaymentStatusQuery, { data: orderPaymentStatusData }] =
+    useLazyQuery(GET_ORDER_PAYMENT_STATUS, {
+      fetchPolicy: "network-only",
+      errorPolicy: "all",
+    });
 
-  const [refundPayment, { loading: refunding, error: refundError }] = useMutation(REFUND_PAYMENT, {
-    refetchQueries: [{ query: GET_PAYMENTS, variables: { filter: filters, pagination } }],
-    errorPolicy: 'all',
-  });
+  const [upsertPaymentFromEpaycoMutation] = useMutation(
+    UPSERT_PAYMENT_FROM_EPAYCO,
+    {
+      errorPolicy: "all",
+    }
+  );
 
-  const [processPayment, { loading: processing, error: processError }] = useMutation(PROCESS_PAYMENT, {
-    refetchQueries: [{ query: GET_PAYMENTS, variables: { filter: filters, pagination } }],
-    errorPolicy: 'all',
-  });
+  const [createPayment, { loading: creating, error: createError }] =
+    useMutation(CREATE_PAYMENT, {
+      refetchQueries: [
+        { query: GET_PAYMENTS, variables: { filter: filters, pagination } },
+      ],
+      errorPolicy: "all",
+    });
+
+  const [updatePayment, { loading: updating, error: updateError }] =
+    useMutation(UPDATE_PAYMENT, {
+      errorPolicy: "all",
+    });
+
+  const [refundPayment, { loading: refunding, error: refundError }] =
+    useMutation(REFUND_PAYMENT, {
+      refetchQueries: [
+        { query: GET_PAYMENTS, variables: { filter: filters, pagination } },
+      ],
+      errorPolicy: "all",
+    });
+
+  const [processPayment, { loading: processing, error: processError }] =
+    useMutation(PROCESS_PAYMENT, {
+      refetchQueries: [
+        { query: GET_PAYMENTS, variables: { filter: filters, pagination } },
+      ],
+      errorPolicy: "all",
+    });
 
   const handleCreatePayment = async (input: CreatePaymentInput) => {
     try {
@@ -89,6 +122,42 @@ export const usePayments = () => {
       return data?.createPayment;
     } catch (err) {
       throw new Error(getPaymentErrorMessage(err as ApolloError));
+    }
+  };
+
+  const fetchPaymentByReference = async (
+    reference: string,
+    userId?: string
+  ) => {
+    try {
+      const { data } = await fetchPaymentByReferenceQuery({
+        variables: { reference, userId },
+      });
+      return data?.paymentByReference;
+    } catch (err) {
+      throw new Error("Error fetching payment by reference");
+    }
+  };
+
+  const fetchOrderPaymentStatus = async (orderId: string) => {
+    try {
+      const { data } = await fetchOrderPaymentStatusQuery({
+        variables: { orderId },
+      });
+      return data?.orderPaymentStatus;
+    } catch (err) {
+      throw new Error("Error fetching order payment status");
+    }
+  };
+
+  const upsertPaymentFromEpayco = async (payload: string) => {
+    try {
+      const { data } = await upsertPaymentFromEpaycoMutation({
+        variables: { payload },
+      });
+      return data?.upsertPaymentFromEpayco;
+    } catch (err) {
+      throw new Error("Error upserting payment from ePayco");
     }
   };
 
@@ -136,6 +205,9 @@ export const usePayments = () => {
     updatePayment: handleUpdatePayment,
     refundPayment: handleRefundPayment,
     processPayment: handleProcessPayment,
+    fetchPaymentByReference,
+    fetchOrderPaymentStatus,
+    upsertPaymentFromEpayco,
     refetch,
   };
 };
@@ -145,13 +217,13 @@ export const usePayment = (id: string) => {
   const { data, loading, error, refetch } = useQuery(GET_PAYMENT, {
     variables: { id },
     skip: !id,
-    errorPolicy: 'all',
+    errorPolicy: "all",
   });
 
   const { data: logsData, loading: logsLoading } = useQuery(GET_PAYMENT_LOGS, {
     variables: { paymentId: id },
     skip: !id,
-    errorPolicy: 'all',
+    errorPolicy: "all",
   });
 
   return {
@@ -170,7 +242,7 @@ export const usePaymentSummary = (dateRange?: { from: string; to: string }) => {
       dateFrom: dateRange?.from,
       dateTo: dateRange?.to,
     },
-    errorPolicy: 'all',
+    errorPolicy: "all",
   });
 
   return {
@@ -194,10 +266,10 @@ export const useWompiPayment = () => {
   }) => {
     return createPayment({
       amount: orderData.amount,
-      currency: 'COP',
-      provider: 'WOMPI' as any,
-      paymentMethod: 'CREDIT_CARD' as any,
-      description: orderData.description || 'Order payment',
+      currency: "COP",
+      provider: "WOMPI" as any,
+      paymentMethod: "CREDIT_CARD" as any,
+      description: orderData.description || "Order payment",
       customerEmail: orderData.customerEmail,
       customerPhone: orderData.customerPhone,
       orderId: orderData.orderId,
