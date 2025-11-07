@@ -365,10 +365,7 @@ export default function ProductDetailPage() {
               >
                 {product.category}
               </p>
-              <h1
-                className="text-3xl font-bold mb-4"
-                style={{ color: store?.textColor || "#000000" }}
-              >
+              <h1 className="text-3xl font-bold mb-4 text-black">
                 {product.title}
               </h1>
 
@@ -395,10 +392,7 @@ export default function ProductDetailPage() {
 
               {/* Price */}
               <div className="flex items-center space-x-4 mb-6">
-                <span
-                  className="text-3xl font-bold"
-                  style={{ color: store?.textColor || "#000000" }}
-                >
+                <span className="text-3xl font-bold text-black">
                   ${currentPrice.toLocaleString("es-CO")}
                 </span>
                 {product.originalPrice && (
@@ -537,7 +531,7 @@ export default function ProductDetailPage() {
                       color:
                         selectedSizeId === size.id
                           ? store?.primaryColor || "#2563eb"
-                          : store?.textColor || "#374151",
+                          : "#000000",
                     }}
                     onClick={() => setSelectedSizeId(size.id)}
                   >
