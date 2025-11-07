@@ -67,10 +67,12 @@ const GET_PRODUCT_QUERY = gql`
       stock
       inStock
       colors {
+        id
         colorHex
         color
       }
       sizes {
+        id
         size
       }
       images {
@@ -151,6 +153,8 @@ export default function ProductDetailPage() {
   const [activeTab, setActiveTab] = useState("description");
   const [isFavorite, setIsFavorite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedSizeId, setSelectedSizeId] = useState<string | null>(null);
+  const [selectedColorId, setSelectedColorId] = useState<string | null>(null);
 
   // Comment form state
   const [commentForm, setCommentForm] = useState({
@@ -206,22 +210,56 @@ export default function ProductDetailPage() {
     : 0;
 
   const handleAddToCart = async () => {
+    // Validar que se haya seleccionado talla si el producto tiene tallas
+    if (product.sizes && product.sizes.length > 0 && !selectedSizeId) {
+      toast.error("Por favor selecciona una talla");
+      return;
+    }
+
+    // Validar que se haya seleccionado color si el producto tiene colores
+    if (product.colors && product.colors.length > 0 && !selectedColorId) {
+      toast.error("Por favor selecciona un color");
+      return;
+    }
+
     setIsLoading(true);
     try {
+      // Obtener los objetos completos de color y tamaño seleccionados
+      const selectedColorObj = product.colors?.find(
+        (c: any) => c.id === selectedColorId
+      );
+      const selectedSizeObj = product.sizes?.find(
+        (s: any) => s.id === selectedSizeId
+      );
+
+      // Crear el nombre de la variante con talla y color seleccionados
+      const variantDetails = [];
+      if (selectedSizeObj) variantDetails.push(selectedSizeObj.size);
+      if (selectedColorObj) variantDetails.push(selectedColorObj.color);
+      const variantString =
+        variantDetails.length > 0 ? variantDetails.join(" - ") : undefined;
+
       cartService.addItem({
-        id: `${product.id}-${selectedVariant?.id || "default"}-${Date.now()}`,
+        id: `${product.id}-${selectedSizeId || "default"}-${
+          selectedColorId || "default"
+        }-${Date.now()}`,
         productId: product.id,
         name: product.title,
         price: currentPrice,
         image: product.images[0],
-        variant: selectedVariant?.value,
+        variant: variantString,
+        productColorId: selectedColorId || "",
+        productSizeId: selectedSizeId || "",
         quantity,
       });
+
+      toast.success("Producto agregado al carrito");
 
       // Trigger storage event to update cart count
       window.dispatchEvent(new Event("storage"));
     } catch (error) {
       console.error("Error adding to cart:", error);
+      toast.error("Error al agregar el producto al carrito");
     } finally {
       setIsLoading(false);
     }
@@ -472,36 +510,36 @@ export default function ProductDetailPage() {
 
             {/* Sizes */}
             <div>
-              <h3 className="text-lg font-medium text-black mb-3">Tamaño:</h3>
+              <h3 className="text-lg font-medium text-black mb-3">
+                Tamaño:{" "}
+                {product.sizes && product.sizes.length > 0 && (
+                  <span className="text-red-500">*</span>
+                )}
+              </h3>
               <div className="flex flex-wrap gap-2">
                 {product.sizes?.map((size: any, index: number) => (
                   <button
                     key={size.id || `size-${index}`}
                     className={`px-4 py-2 rounded-lg border transition-colors ${
-                      selectedVariant?.size === size.size
+                      selectedSizeId === size.id
                         ? "bg-opacity-10"
                         : "border-gray-300 hover:border-opacity-60"
                     }`}
                     style={{
                       borderColor:
-                        selectedVariant?.size === size.size
+                        selectedSizeId === size.id
                           ? store?.primaryColor || "#2563eb"
                           : undefined,
                       backgroundColor:
-                        selectedVariant?.size === size.size
+                        selectedSizeId === size.id
                           ? `${store?.primaryColor || "#2563eb"}20`
                           : undefined,
                       color:
-                        selectedVariant?.size === size.size
+                        selectedSizeId === size.id
                           ? store?.primaryColor || "#2563eb"
                           : store?.textColor || "#374151",
                     }}
-                    onClick={() =>
-                      setSelectedVariant({
-                        ...selectedVariant,
-                        size: size.size,
-                      })
-                    }
+                    onClick={() => setSelectedSizeId(size.id)}
                   >
                     {size.size}
                   </button>
@@ -512,7 +550,9 @@ export default function ProductDetailPage() {
             {/* Colors */}
             {product.colors && product.colors.length > 0 && (
               <div>
-                <h3 className="text-lg font-medium text-black mb-3">Color:</h3>
+                <h3 className="text-lg font-medium text-black mb-3">
+                  Color: <span className="text-red-500">*</span>
+                </h3>
                 <div className="flex flex-wrap gap-2">
                   {product.colors.map((color: any, index: number) => (
                     <button
@@ -521,24 +561,19 @@ export default function ProductDetailPage() {
                       style={{
                         backgroundColor: color.colorHex,
                         borderColor:
-                          selectedVariant?.color === color.colorHex
+                          selectedColorId === color.id
                             ? store?.primaryColor || "#2563eb"
                             : "#d1d5db",
                         boxShadow:
-                          selectedVariant?.color === color.colorHex
+                          selectedColorId === color.id
                             ? `0 0 0 2px ${store?.primaryColor || "#2563eb"}40`
                             : color.colorHex === "#ffffff" ||
                               color.colorHex === "white"
                             ? "inset 0 0 0 1px rgba(0,0,0,0.1)"
                             : "none",
                       }}
-                      title={color.colorHex}
-                      onClick={() =>
-                        setSelectedVariant({
-                          ...selectedVariant,
-                          color: color.colorHex,
-                        })
-                      }
+                      title={color.color || color.colorHex}
+                      onClick={() => setSelectedColorId(color.id)}
                     />
                   ))}
                 </div>

@@ -130,6 +130,8 @@ export function Favorites({ className = "" }: FavoritesProps) {
         name: product.title || product.name,
         price: Number(product.price),
         quantity: 1,
+        productColorId: "",
+        productSizeId: "",
         image: product.images?.[0]?.url || product.image,
         currency: product.currency || "COP",
         maxStock: product.stock || 999,

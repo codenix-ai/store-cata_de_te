@@ -1,26 +1,26 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Heart, ShoppingCart, Star } from 'lucide-react';
-import { cartService } from '@/lib/cart';
-import { useStore } from '@/components/StoreProvider';
-import toast from 'react-hot-toast';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Pagination, Navigation } from 'swiper/modules';
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Heart, ShoppingCart, Star } from "lucide-react";
+import { cartService } from "@/lib/cart";
+import { useStore } from "@/components/StoreProvider";
+import toast from "react-hot-toast";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Pagination, Navigation } from "swiper/modules";
 
 // Import Swiper styles
-import 'swiper/css';
-import 'swiper/css/pagination';
-import 'swiper/css/navigation';
+import "swiper/css";
+import "swiper/css/pagination";
+import "swiper/css/navigation";
 
 // Simple favorites service
 const favoritesService = {
   getFavorites(): string[] {
-    if (typeof window === 'undefined') return [];
+    if (typeof window === "undefined") return [];
     try {
-      const favorites = localStorage.getItem('emprendyup_favorites');
+      const favorites = localStorage.getItem("emprendyup_favorites");
       return favorites ? JSON.parse(favorites) : [];
     } catch {
       return [];
@@ -37,13 +37,13 @@ const favoritesService = {
 
     if (index > -1) {
       favorites.splice(index, 1);
-      localStorage.setItem('emprendyup_favorites', JSON.stringify(favorites));
-      window.dispatchEvent(new Event('storage'));
+      localStorage.setItem("emprendyup_favorites", JSON.stringify(favorites));
+      window.dispatchEvent(new Event("storage"));
       return false;
     } else {
       favorites.push(productId);
-      localStorage.setItem('emprendyup_favorites', JSON.stringify(favorites));
-      window.dispatchEvent(new Event('storage'));
+      localStorage.setItem("emprendyup_favorites", JSON.stringify(favorites));
+      window.dispatchEvent(new Event("storage"));
       return true;
     }
   },
@@ -68,6 +68,8 @@ export interface Product {
   description: string;
   inStock: boolean;
   variants?: ProductVariant[];
+  sizes?: Array<{ size: string; id?: string }>;
+  colors?: Array<{ colorHex: string; color?: string; id?: string }>;
 }
 
 export interface ProductVariant {
@@ -82,7 +84,7 @@ interface ProductCardProps {
   className?: string;
 }
 
-export function ProductCard({ product, className = '' }: ProductCardProps) {
+export function ProductCard({ product, className = "" }: ProductCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { store } = useStore();
@@ -92,8 +94,27 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
     setIsFavorite(favoritesService.isFavorite(product.id));
   }, [product.id]);
 
+  // Check if product has sizes or colors that need to be selected
+  const needsVariantSelection = (product: any) => {
+    // You might need to add these fields to the Product interface
+    return (
+      (product.sizes && product.sizes.length > 0) ||
+      (product.colors && product.colors.length > 0)
+    );
+  };
+
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
+
+    // If product needs variant selection, redirect to product detail page
+    if (needsVariantSelection(product)) {
+      toast("Selecciona talla y color en la página del producto", {
+        icon: "ℹ️",
+      });
+      // The Link component will handle the navigation
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -102,17 +123,20 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
         productId: product.id,
         name: product.name,
         price: product.price,
-        image: product.images?.[0]?.url ?? '/assets/default-product.jpg',
+        productColorId: "",
+        productSizeId: "",
+        quantity: 1,
+        image: product.images?.[0]?.url ?? "/assets/default-product.jpg",
       });
 
       // Trigger storage event to update cart count
-      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new Event("storage"));
 
       // Show toast notification
       toast.success(`${product.name} ha sido agregado al carrito.`);
     } catch (error) {
-      console.error('Error adding to cart:', error);
-      toast.error('Hubo un problema al agregar el producto al carrito.');
+      console.error("Error adding to cart:", error);
+      toast.error("Hubo un problema al agregar el producto al carrito.");
     } finally {
       setIsLoading(false);
     }
@@ -128,27 +152,31 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
       // Show toast notification
       if (newFavoriteState) {
         toast.success(`${product.name} agregado a favoritos`, {
-          icon: '❤️',
+          icon: "❤️",
         });
       } else {
         toast.success(`${product.name} eliminado de favoritos`, {
-          icon: '💔',
+          icon: "💔",
         });
       }
     } catch (error) {
-      console.error('Error toggling favorite:', error);
-      toast.error('Hubo un problema al gestionar favoritos.');
+      console.error("Error toggling favorite:", error);
+      toast.error("Hubo un problema al gestionar favoritos.");
     }
   };
 
   const discountPercentage = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    ? Math.round(
+        ((product.originalPrice - product.price) / product.originalPrice) * 100
+      )
     : 0;
 
   // Get all product images
   const allImages =
     product.images && product.images.length > 0
-      ? product.images.map(img => `${process.env.NEXT_PUBLIC_AWS_BUCKET_NAME}/${img.url}`)
+      ? product.images.map(
+          (img) => `${process.env.NEXT_PUBLIC_AWS_BUCKET_NAME}/${img.url}`
+        )
       : [`${process.env.NEXT_PUBLIC_AWS_BUCKET_NAME}/${product.image}`];
 
   return (
@@ -172,7 +200,7 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
                 nextEl: `.product-card-nav-next-${product.id}`,
               }}
               className="h-full w-full"
-              onSlideChange={swiper => {
+              onSlideChange={(swiper) => {
                 // Optional: track which image is being viewed
               }}
             >
@@ -206,19 +234,39 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
               <button
                 className={`product-card-nav-prev-${product.id} absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full p-1 shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100`}
                 aria-label="Imagen anterior"
-                onClick={e => e.preventDefault()}
+                onClick={(e) => e.preventDefault()}
               >
-                <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <svg
+                  className="w-4 h-4 text-gray-700"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
                 </svg>
               </button>
               <button
                 className={`product-card-nav-next-${product.id} absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-full p-1 shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100`}
                 aria-label="Imagen siguiente"
-                onClick={e => e.preventDefault()}
+                onClick={(e) => e.preventDefault()}
               >
-                <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <svg
+                  className="w-4 h-4 text-gray-700"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
                 </svg>
               </button>
             </>
@@ -243,7 +291,11 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
             onClick={handleToggleFavorite}
             className="absolute top-2 right-2 p-2 rounded-full bg-white shadow-md hover:bg-gray-50 transition-colors"
           >
-            <Heart className={`w-5 h-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+            <Heart
+              className={`w-5 h-5 ${
+                isFavorite ? "fill-red-500 text-red-500" : "text-gray-600"
+              }`}
+            />
           </button>
         </div>
 
@@ -256,14 +308,14 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
             className="font-medium text-black mb-2 line-clamp-2 group-hover:transition-colors"
             style={
               {
-                '--hover-color': store?.primaryColor || '#2563eb',
+                "--hover-color": store?.primaryColor || "#2563eb",
               } as React.CSSProperties
             }
-            onMouseEnter={e => {
-              e.currentTarget.style.color = store?.primaryColor || '#2563eb';
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = store?.primaryColor || "#2563eb";
             }}
-            onMouseLeave={e => {
-              e.currentTarget.style.color = '#111827';
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = "#111827";
             }}
           >
             {product.name}
@@ -277,12 +329,18 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
                   <Star
                     key={i}
                     className={`w-4 h-4 ${
-                      i < Math.floor(product.rating!) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                      i < Math.floor(product.rating!)
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-gray-300"
                     }`}
                   />
                 ))}
               </div>
-              {product.reviews && <span className="text-sm text-gray-700 ml-1">({product.reviews})</span>}
+              {product.reviews && (
+                <span className="text-sm text-gray-700 ml-1">
+                  ({product.reviews})
+                </span>
+              )}
             </div>
           )}
 
@@ -290,11 +348,11 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-2">
               <span className="text-lg font-bold text-black">
-                ${Number(product?.price ?? 0).toLocaleString('es-CO')}
+                ${Number(product?.price ?? 0).toLocaleString("es-CO")}
               </span>
               {product.originalPrice && (
                 <span className="text-sm text-gray-600 line-through">
-                  ${product.originalPrice.toLocaleString('es-CO')}
+                  ${product.originalPrice.toLocaleString("es-CO")}
                 </span>
               )}
             </div>
@@ -304,31 +362,62 @@ export function ProductCard({ product, className = '' }: ProductCardProps) {
 
       {/* Add to Cart Button */}
       <div className="px-4 pb-4">
-        <button
-          onClick={handleAddToCart}
-          disabled={!product.inStock || isLoading}
-          className="w-full text-white py-2 px-4 rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-300 flex items-center justify-center"
-          style={{
-            backgroundColor: product.inStock && !isLoading ? store?.primaryColor || '#2563eb' : undefined,
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.backgroundColor = store?.primaryColor ? `${store.primaryColor}CC` : '#d3d3d3';
-          }}
-          onMouseLeave={e => {
-            if (product.inStock && !isLoading) {
-              e.currentTarget.style.backgroundColor = store?.primaryColor || '#2563eb';
-            }
-          }}
-        >
-          {isLoading ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <>
+        {needsVariantSelection(product) ? (
+          <Link href={`/products/${product.id}`}>
+            <button
+              className="w-full text-white py-2 px-4 rounded-md transition-colors duration-300 flex items-center justify-center"
+              style={{
+                backgroundColor: store?.primaryColor || "#2563eb",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = store?.primaryColor
+                  ? `${store.primaryColor}CC`
+                  : "#1e40af";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor =
+                  store?.primaryColor || "#2563eb";
+              }}
+            >
               <ShoppingCart className="w-4 h-4 mr-2" />
-              {product.inStock ? 'Agregar al Carrito' : 'Agotado'}
-            </>
-          )}
-        </button>
+              Ver opciones
+            </button>
+          </Link>
+        ) : (
+          <button
+            onClick={handleAddToCart}
+            disabled={!product.inStock || isLoading}
+            className="w-full text-white py-2 px-4 rounded-md disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors duration-300 flex items-center justify-center"
+            style={{
+              backgroundColor:
+                product.inStock && !isLoading
+                  ? store?.primaryColor || "#2563eb"
+                  : undefined,
+            }}
+            onMouseEnter={(e) => {
+              if (product.inStock && !isLoading) {
+                e.currentTarget.style.backgroundColor = store?.primaryColor
+                  ? `${store.primaryColor}CC`
+                  : "#1e40af";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (product.inStock && !isLoading) {
+                e.currentTarget.style.backgroundColor =
+                  store?.primaryColor || "#2563eb";
+              }
+            }}
+          >
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <>
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                {product.inStock ? "Agregar al Carrito" : "Agotado"}
+              </>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );

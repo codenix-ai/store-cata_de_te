@@ -6,31 +6,9 @@ import Link from "next/link";
 import { Minus, Plus, Trash2, ShoppingBag, Eye, X } from "lucide-react";
 import { cartService, Cart as CartType, CartItem } from "@/lib/cart";
 import { useStore } from "@/components/StoreProvider";
+import { resolveImageUrl } from "@/lib/image";
 
-// Helper to safely resolve various image shapes to a string URL
-function resolveImageUrl(img: any): string {
-  const defaultPlaceholder = "/file.svg";
-  if (!img) return defaultPlaceholder;
-
-  // If it's already a string, use it (or prefix S3 if it's a key)
-  if (typeof img === "string") {
-    return img.startsWith("http")
-      ? img
-      : `https://emprendyup-images.s3.us-east-1.amazonaws.com/${img}`;
-  }
-
-  // If it's an object, try common fields
-  if (typeof img === "object") {
-    const candidate = img.url || img.src || img.image || img.path || img.file;
-    if (typeof candidate === "string") {
-      return candidate.startsWith("http")
-        ? candidate
-        : `https://emprendyup-images.s3.us-east-1.amazonaws.com/${candidate}`;
-    }
-  }
-
-  return defaultPlaceholder;
-}
+// Uses shared resolveImageUrl from src/lib/image.ts
 
 interface CartProps {
   className?: string;

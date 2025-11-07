@@ -1,11 +1,21 @@
-'use client';
-import React, { useEffect, useState } from 'react';
-import Image from 'next/image';
-import { useStore } from '@/components/StoreProvider';
-import { CheckCircle, Package, Truck, CreditCard, MapPin, AlertCircle, XCircle, RefreshCw } from 'lucide-react';
-import { useSearchParams } from 'next/navigation';
-import { useQuery } from '@apollo/client';
-import { GET_PAYMENT } from '@/lib/graphql/queries';
+"use client";
+import React, { useEffect, useState } from "react";
+import Image from "next/image";
+import { useStore } from "@/components/StoreProvider";
+import {
+  CheckCircle,
+  Package,
+  Truck,
+  CreditCard,
+  MapPin,
+  AlertCircle,
+  XCircle,
+  RefreshCw,
+} from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useQuery } from "@apollo/client";
+import { GET_PAYMENT_BY_ID } from "@/lib/graphql/queries";
+import { resolveImageUrl } from "@/lib/image";
 
 // Interface for Wompi response parameters from URL
 interface WompiUrlParams {
@@ -26,7 +36,7 @@ interface PaymentData {
   id: string;
   amount: number;
   currency: string;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  status: "PENDING" | "COMPLETED" | "FAILED" | "CANCELLED";
   provider: string;
   paymentMethod: string;
   description?: string;
@@ -70,28 +80,30 @@ export default function OrderSuccess() {
   const searchParams = useSearchParams();
   const [wompiParams, setWompiParams] = useState<WompiUrlParams | null>(null);
   const [paymentId, setPaymentId] = useState<string | null>(null);
-  const [validationState, setValidationState] = useState<'validating' | 'valid' | 'invalid' | 'mismatch'>('validating');
+  const [validationState, setValidationState] = useState<
+    "validating" | "valid" | "invalid" | "mismatch"
+  >("validating");
 
   // Extract parameters from URL
   useEffect(() => {
     const extractParams = () => {
       // First, try to get payment ID from URL params
-      const paymentParam = searchParams.get('payment');
+      const paymentParam = searchParams.get("payment");
       if (paymentParam) {
         setPaymentId(paymentParam);
       }
 
       // Extract Wompi parameters from URL (when redirected from Wompi)
       const params: WompiUrlParams = {};
-      
-      const id = searchParams.get('id');
-      const status = searchParams.get('status');
-      const reference = searchParams.get('reference');
-      const paymentMethodType = searchParams.get('payment_method_type');
-      const amountInCents = searchParams.get('amount_in_cents');
-      const currency = searchParams.get('currency');
-      const customerEmail = searchParams.get('customer_email');
-      const statusMessage = searchParams.get('status_message');
+
+      const id = searchParams.get("id");
+      const status = searchParams.get("status");
+      const reference = searchParams.get("reference");
+      const paymentMethodType = searchParams.get("payment_method_type");
+      const amountInCents = searchParams.get("amount_in_cents");
+      const currency = searchParams.get("currency");
+      const customerEmail = searchParams.get("customer_email");
+      const statusMessage = searchParams.get("status_message");
 
       if (id) params.id = id;
       if (status) params.status = status;
@@ -114,12 +126,17 @@ export default function OrderSuccess() {
   }, [searchParams]);
 
   // Query payment data from our database
-  const { data: paymentData, loading, error, refetch } = useQuery(GET_PAYMENT, {
+  const {
+    data: paymentData,
+    loading,
+    error,
+    refetch,
+  } = useQuery(GET_PAYMENT_BY_ID, {
     variables: { id: paymentId },
     skip: !paymentId,
-    fetchPolicy: 'cache-and-network',
-    pollInterval: paymentId && validationState === 'validating' ? 3000 : 0, // Poll every 3 seconds while validating
-    errorPolicy: 'all'
+    fetchPolicy: "cache-and-network",
+    pollInterval: paymentId && validationState === "validating" ? 3000 : 0, // Poll every 3 seconds while validating
+    errorPolicy: "all",
   });
 
   // Validate Wompi parameters against our payment data
@@ -129,36 +146,39 @@ export default function OrderSuccess() {
     }
 
     const payment: PaymentData = paymentData.payment;
-    
+
     // Validate that Wompi parameters match our payment record
     const isValid = validateWompiResponse(payment, wompiParams);
-    
+
     if (isValid) {
-      setValidationState('valid');
-      
+      setValidationState("valid");
+
       // If Wompi status indicates completion but our DB doesn't reflect it yet,
       // the webhook might still be processing - keep polling
-      if (wompiParams.status === 'APPROVED' && payment.status === 'PENDING') {
+      if (wompiParams.status === "APPROVED" && payment.status === "PENDING") {
         // Continue polling for a bit longer
         setTimeout(() => {
-          if (paymentData?.payment?.status === 'PENDING') {
-            setValidationState('mismatch');
+          if (paymentData?.payment?.status === "PENDING") {
+            setValidationState("mismatch");
           }
         }, 30000); // Wait 30 seconds for webhook processing
       }
     } else {
-      setValidationState('invalid');
+      setValidationState("invalid");
     }
   }, [paymentData, wompiParams]);
 
   // Validate Wompi response against payment data
-  const validateWompiResponse = (payment: PaymentData, wompiParams: WompiUrlParams): boolean => {
+  const validateWompiResponse = (
+    payment: PaymentData,
+    wompiParams: WompiUrlParams
+  ): boolean => {
     try {
       // Check if payment reference matches
       if (wompiParams.reference && wompiParams.reference !== payment.id) {
-        console.error('Payment reference mismatch:', {
+        console.error("Payment reference mismatch:", {
           wompi: wompiParams.reference,
-          payment: payment.id
+          payment: payment.id,
         });
         return false;
       }
@@ -167,9 +187,9 @@ export default function OrderSuccess() {
       if (wompiParams.amount_in_cents) {
         const expectedAmountInCents = Math.round(payment.amount * 100);
         if (wompiParams.amount_in_cents !== expectedAmountInCents) {
-          console.error('Amount mismatch:', {
+          console.error("Amount mismatch:", {
             wompi: wompiParams.amount_in_cents,
-            expected: expectedAmountInCents
+            expected: expectedAmountInCents,
           });
           return false;
         }
@@ -177,25 +197,28 @@ export default function OrderSuccess() {
 
       // Check currency
       if (wompiParams.currency && wompiParams.currency !== payment.currency) {
-        console.error('Currency mismatch:', {
+        console.error("Currency mismatch:", {
           wompi: wompiParams.currency,
-          payment: payment.currency
+          payment: payment.currency,
         });
         return false;
       }
 
       // Check customer email
-      if (wompiParams.customer_email && wompiParams.customer_email !== payment.customerEmail) {
-        console.error('Customer email mismatch:', {
+      if (
+        wompiParams.customer_email &&
+        wompiParams.customer_email !== payment.customerEmail
+      ) {
+        console.error("Customer email mismatch:", {
           wompi: wompiParams.customer_email,
-          payment: payment.customerEmail
+          payment: payment.customerEmail,
         });
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error('Error validating Wompi response:', error);
+      console.error("Error validating Wompi response:", error);
       return false;
     }
   };
@@ -203,41 +226,45 @@ export default function OrderSuccess() {
   // Get payment status for display
   const getPaymentStatusInfo = () => {
     if (!paymentData?.payment) {
-      return { status: 'UNKNOWN', message: 'Pago no encontrado', color: 'text-gray-500' };
+      return {
+        status: "UNKNOWN",
+        message: "Pago no encontrado",
+        color: "text-gray-500",
+      };
     }
 
     const payment: PaymentData = paymentData.payment;
 
     // Use our database status as the source of truth
     switch (payment.status) {
-      case 'COMPLETED':
-        return { 
-          status: 'COMPLETED', 
-          message: 'Pago confirmado', 
-          color: 'text-green-600',
-          icon: CheckCircle 
+      case "COMPLETED":
+        return {
+          status: "COMPLETED",
+          message: "Pago confirmado",
+          color: "text-green-600",
+          icon: CheckCircle,
         };
-      case 'FAILED':
-        return { 
-          status: 'FAILED', 
-          message: payment.errorMessage || 'Pago rechazado', 
-          color: 'text-red-600',
-          icon: XCircle 
+      case "FAILED":
+        return {
+          status: "FAILED",
+          message: payment.errorMessage || "Pago rechazado",
+          color: "text-red-600",
+          icon: XCircle,
         };
-      case 'CANCELLED':
-        return { 
-          status: 'CANCELLED', 
-          message: 'Pago cancelado', 
-          color: 'text-gray-600',
-          icon: XCircle 
+      case "CANCELLED":
+        return {
+          status: "CANCELLED",
+          message: "Pago cancelado",
+          color: "text-gray-600",
+          icon: XCircle,
         };
-      case 'PENDING':
+      case "PENDING":
       default:
-        return { 
-          status: 'PENDING', 
-          message: 'Procesando pago...', 
-          color: 'text-yellow-600',
-          icon: RefreshCw 
+        return {
+          status: "PENDING",
+          message: "Procesando pago...",
+          color: "text-yellow-600",
+          icon: RefreshCw,
         };
     }
   };
@@ -249,8 +276,12 @@ export default function OrderSuccess() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-lg shadow p-8 text-center">
             <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Verificando el estado del pago...</h2>
-            <p className="text-gray-600">Por favor espera mientras confirmamos tu transacción.</p>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Verificando el estado del pago...
+            </h2>
+            <p className="text-gray-600">
+              Por favor espera mientras confirmamos tu transacción.
+            </p>
           </div>
         </div>
       </div>
@@ -264,14 +295,18 @@ export default function OrderSuccess() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-lg shadow p-8 text-center">
             <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Error al verificar el pago</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Error al verificar el pago
+            </h2>
             <p className="text-gray-600 mb-4">
-              {!paymentId ? 'ID de pago no encontrado en la URL.' : 'No se pudo cargar la información del pago.'}
+              {!paymentId
+                ? "ID de pago no encontrado en la URL."
+                : "No se pudo cargar la información del pago."}
             </p>
-            <button 
-              onClick={() => window.location.href = '/'}
+            <button
+              onClick={() => (window.location.href = "/")}
               className="px-6 py-2 text-white rounded-md hover:opacity-90 transition-colors"
-              style={{ backgroundColor: store?.primaryColor || '#2563eb' }}
+              style={{ backgroundColor: store?.primaryColor || "#2563eb" }}
             >
               Volver al inicio
             </button>
@@ -289,24 +324,36 @@ export default function OrderSuccess() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Payment Status Header */}
         <div className="bg-white rounded-lg shadow mb-8 p-8 text-center">
-          {statusInfo.icon && React.createElement(statusInfo.icon, {
-            className: `w-16 h-16 mx-auto mb-4 ${statusInfo.color} ${payment.status === 'PENDING' ? 'animate-spin' : ''}`
-          })}
+          {statusInfo.icon &&
+            React.createElement(statusInfo.icon, {
+              className: `w-16 h-16 mx-auto mb-4 ${statusInfo.color} ${
+                payment.status === "PENDING" ? "animate-spin" : ""
+              }`,
+            })}
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {payment.status === 'COMPLETED' ? '¡Pago Exitoso!' : 
-             payment.status === 'FAILED' ? 'Pago Rechazado' :
-             payment.status === 'CANCELLED' ? 'Pago Cancelado' : 'Procesando Pago'}
+            {payment.status === "COMPLETED"
+              ? "¡Pago Exitoso!"
+              : payment.status === "FAILED"
+              ? "Pago Rechazado"
+              : payment.status === "CANCELLED"
+              ? "Pago Cancelado"
+              : "Procesando Pago"}
           </h1>
-          <p className={`text-lg ${statusInfo.color} mb-4`}>{statusInfo.message}</p>
-          
+          <p className={`text-lg ${statusInfo.color} mb-4`}>
+            {statusInfo.message}
+          </p>
+
           {/* Wompi Transaction Info */}
           {wompiParams && (
             <div className="bg-gray-50 rounded-lg p-4 mt-4">
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Información de la Transacción</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">
+                Información de la Transacción
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600">
                 {wompiParams.id && (
                   <div>
-                    <span className="font-medium">ID Transacción Wompi:</span> {wompiParams.id}
+                    <span className="font-medium">ID Transacción Wompi:</span>{" "}
+                    {wompiParams.id}
                   </div>
                 )}
                 <div>
@@ -314,37 +361,41 @@ export default function OrderSuccess() {
                 </div>
                 {wompiParams.payment_method_type && (
                   <div>
-                    <span className="font-medium">Método de Pago:</span> {wompiParams.payment_method_type}
+                    <span className="font-medium">Método de Pago:</span>{" "}
+                    {wompiParams.payment_method_type}
                   </div>
                 )}
                 <div>
-                  <span className="font-medium">Monto:</span> ${payment.amount.toLocaleString('es-CO')} {payment.currency}
+                  <span className="font-medium">Monto:</span> $
+                  {payment.amount.toLocaleString("es-CO")} {payment.currency}
                 </div>
               </div>
             </div>
           )}
 
           {/* Validation Status */}
-          {validationState === 'invalid' && (
+          {validationState === "invalid" && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mt-4">
               <div className="flex items-center">
                 <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
                 <span className="text-red-700 font-medium">
-                  Error: Los datos de Wompi no coinciden con nuestro registro del pago.
+                  Error: Los datos de Wompi no coinciden con nuestro registro
+                  del pago.
                 </span>
               </div>
             </div>
           )}
 
-          {validationState === 'mismatch' && (
+          {validationState === "mismatch" && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
               <div className="flex items-center">
                 <AlertCircle className="w-5 h-5 text-yellow-500 mr-2" />
                 <span className="text-yellow-700 font-medium">
-                  Wompi reporta el pago como aprobado, pero aún estamos procesando la confirmación.
+                  Wompi reporta el pago como aprobado, pero aún estamos
+                  procesando la confirmación.
                 </span>
               </div>
-              <button 
+              <button
                 onClick={() => refetch()}
                 className="mt-2 text-sm text-yellow-700 underline hover:no-underline"
               >
@@ -357,17 +408,20 @@ export default function OrderSuccess() {
         {/* Order Details */}
         {payment.order && (
           <div className="bg-white rounded-lg shadow mb-8 p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Detalles de la Orden</h2>
-            
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+              Detalles de la Orden
+            </h2>
+
             {/* Order Items */}
             <div className="space-y-4 mb-6">
               {payment.order.items.map((item) => (
-                <div key={item.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
+                <div
+                  key={item.id}
+                  className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg"
+                >
                   {item.product.images?.[0] && (
                     <Image
-                      src={item.product.images[0].startsWith('http') ? 
-                            item.product.images[0] : 
-                            `https://emprendyup-images.s3.us-east-1.amazonaws.com/${item.product.images[0]}`}
+                      src={resolveImageUrl(item.product.images[0])}
                       alt={item.product.name}
                       width={64}
                       height={64}
@@ -375,12 +429,16 @@ export default function OrderSuccess() {
                     />
                   )}
                   <div className="flex-1">
-                    <h4 className="font-medium text-gray-900">{item.product.name}</h4>
-                    <p className="text-sm text-gray-500">Cantidad: {item.quantity}</p>
+                    <h4 className="font-medium text-gray-900">
+                      {item.product.name}
+                    </h4>
+                    <p className="text-sm text-gray-500">
+                      Cantidad: {item.quantity}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="font-medium text-gray-900">
-                      ${(item.price * item.quantity).toLocaleString('es-CO')}
+                      ${(item.price * item.quantity).toLocaleString("es-CO")}
                     </p>
                   </div>
                 </div>
@@ -391,7 +449,7 @@ export default function OrderSuccess() {
             <div className="border-t pt-4">
               <div className="flex justify-between text-lg font-semibold">
                 <span>Total:</span>
-                <span>${payment.order.total.toLocaleString('es-CO')} COP</span>
+                <span>${payment.order.total.toLocaleString("es-CO")} COP</span>
               </div>
             </div>
 
@@ -405,7 +463,10 @@ export default function OrderSuccess() {
                 <div className="text-sm text-gray-600">
                   <p className="font-medium">{payment.order.address.name}</p>
                   <p>{payment.order.address.street}</p>
-                  <p>{payment.order.address.city}, {payment.order.address.department}</p>
+                  <p>
+                    {payment.order.address.city},{" "}
+                    {payment.order.address.department}
+                  </p>
                   <p>Tel: {payment.order.address.phone}</p>
                 </div>
               </div>
@@ -415,17 +476,17 @@ export default function OrderSuccess() {
 
         {/* Actions */}
         <div className="text-center">
-          {payment.status === 'COMPLETED' && (
+          {payment.status === "COMPLETED" && (
             <div className="space-x-4">
-              <button 
-                onClick={() => window.location.href = '/perfil'}
+              <button
+                onClick={() => (window.location.href = "/perfil")}
                 className="px-6 py-2 text-white rounded-md hover:opacity-90 transition-colors"
-                style={{ backgroundColor: store?.primaryColor || '#2563eb' }}
+                style={{ backgroundColor: store?.primaryColor || "#2563eb" }}
               >
                 Ver mis pedidos
               </button>
-              <button 
-                onClick={() => window.location.href = '/'}
+              <button
+                onClick={() => (window.location.href = "/")}
                 className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
               >
                 Seguir comprando
@@ -433,17 +494,17 @@ export default function OrderSuccess() {
             </div>
           )}
 
-          {payment.status === 'FAILED' && (
+          {payment.status === "FAILED" && (
             <div className="space-x-4">
-              <button 
-                onClick={() => window.location.href = '/cart'}
+              <button
+                onClick={() => (window.location.href = "/cart")}
                 className="px-6 py-2 text-white rounded-md hover:opacity-90 transition-colors"
-                style={{ backgroundColor: store?.primaryColor || '#2563eb' }}
+                style={{ backgroundColor: store?.primaryColor || "#2563eb" }}
               >
                 Reintentar pago
               </button>
-              <button 
-                onClick={() => window.location.href = '/support'}
+              <button
+                onClick={() => (window.location.href = "/support")}
                 className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
               >
                 Contactar soporte
@@ -451,12 +512,12 @@ export default function OrderSuccess() {
             </div>
           )}
 
-          {payment.status === 'PENDING' && (
+          {payment.status === "PENDING" && (
             <div className="space-x-4">
-              <button 
+              <button
                 onClick={() => refetch()}
                 className="px-6 py-2 text-white rounded-md hover:opacity-90 transition-colors"
-                style={{ backgroundColor: store?.primaryColor || '#2563eb' }}
+                style={{ backgroundColor: store?.primaryColor || "#2563eb" }}
               >
                 <RefreshCw className="w-4 h-4 inline mr-2" />
                 Actualizar estado
@@ -466,7 +527,7 @@ export default function OrderSuccess() {
         </div>
 
         {/* Debug Info (Development) */}
-        {process.env.NODE_ENV === 'development' && (
+        {process.env.NODE_ENV === "development" && (
           <details className="mt-8 bg-white rounded-lg shadow p-4">
             <summary className="cursor-pointer text-sm font-medium text-gray-700">
               Debug Info (Solo desarrollo)

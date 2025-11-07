@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { ZoomIn } from "lucide-react";
+import { resolveImageUrl } from "@/lib/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Thumbs, FreeMode } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
@@ -45,9 +46,7 @@ export function ProductGallery({
   // Normalize image URLs
   const imageUrls = images.map((image) => {
     const imageUrl = typeof image === "string" ? image : image.url;
-    return imageUrl.startsWith("http")
-      ? imageUrl
-      : `https://emprendyup-images.s3.us-east-1.amazonaws.com/${imageUrl}`;
+    return resolveImageUrl(imageUrl);
   });
 
   const openModal = (index: number) => {

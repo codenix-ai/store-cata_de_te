@@ -110,10 +110,11 @@ export const GET_PAYMENTS = gql`
 `;
 
 export const GET_PAYMENT = gql`
-  query GetPayment($id: ID!) {
-    payment(id: $id) {
+  query GetPayment($storeId: ID) {
+    payment(storeId: $storeId) {
       id
       amount
+      storeId
       currency
       status
       provider

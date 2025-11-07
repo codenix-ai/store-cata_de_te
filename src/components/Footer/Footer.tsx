@@ -12,6 +12,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { useStore } from "@/components/StoreProvider";
+import { resolveImageUrl } from "@/lib/image";
 import { gql, useQuery } from "@apollo/client";
 
 const GET_POLICIES = gql`
@@ -78,11 +79,7 @@ export function Footer() {
             </p>
             {store?.logoUrl && (
               <img
-                src={
-                  store.logoUrl.startsWith("http")
-                    ? store.logoUrl
-                    : `https://emprendyup-images.s3.us-east-1.amazonaws.com/${store.logoUrl}`
-                }
+                src={resolveImageUrl(store.logoUrl)}
                 alt={store.name || "Logo"}
                 className="h-8 w-auto"
               />

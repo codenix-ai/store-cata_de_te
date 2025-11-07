@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { cartService } from "@/lib/cart";
 import { useStore } from "@/components/StoreProvider";
+import resolveImageUrl from "@/lib/image";
 
 export function Navbar() {
   const { data: session } = useSession();
@@ -93,11 +94,7 @@ export function Navbar() {
             <Link href="/" className="flex-shrink-0 flex items-center">
               {store.logoUrl ? (
                 <Image
-                  src={
-                    store.logoUrl.startsWith("http")
-                      ? store.logoUrl
-                      : `https://emprendyup-images.s3.us-east-1.amazonaws.com/${store.logoUrl}`
-                  }
+                  src={resolveImageUrl(store.logoUrl)}
                   alt={store.name}
                   width={190}
                   height={80}
