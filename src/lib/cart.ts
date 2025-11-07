@@ -16,6 +16,7 @@ export interface Cart {
   tax: number;
   shipping: number;
 }
+
 class CartService {
   private storageKey = 'emprendyup_cart';
 
