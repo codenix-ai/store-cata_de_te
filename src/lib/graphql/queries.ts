@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client";
+import { gql } from '@apollo/client';
 
 // Payment Mutations
 export const CREATE_PAYMENT = gql`
@@ -71,10 +71,7 @@ export const REFUND_PAYMENT = gql`
 
 // Payment Queries
 export const GET_PAYMENTS = gql`
-  query GetPayments(
-    $filter: PaymentFilterInput
-    $pagination: PaymentPaginationInput
-  ) {
+  query GetPayments($filter: PaymentFilterInput, $pagination: PaymentPaginationInput) {
     payments(filter: $filter, pagination: $pagination) {
       id
       amount
@@ -185,10 +182,7 @@ export const GET_ORDER_PAYMENT_STATUS = gql`
 
 export const GET_ORDER_PAYMENTS = gql`
   query GetOrderPayments($orderId: ID!) {
-    payments(
-      filter: { orderId: $orderId }
-      pagination: { take: 10, orderBy: "createdAt_desc" }
-    ) {
+    payments(filter: { orderId: $orderId }, pagination: { take: 10, orderBy: "createdAt_desc" }) {
       id
       status
       amount
@@ -323,9 +317,7 @@ export const GET_PAYMENT_CONFIGURATIONS = gql`
 `;
 
 export const CREATE_PAYMENT_CONFIGURATION = gql`
-  mutation CreatePaymentConfiguration(
-    $input: CreatePaymentConfigurationInput!
-  ) {
+  mutation CreatePaymentConfiguration($input: CreatePaymentConfigurationInput!) {
     createPaymentConfiguration(input: $input) {
       id
       wompiEnabled
@@ -348,10 +340,7 @@ export const CREATE_PAYMENT_CONFIGURATION = gql`
 `;
 
 export const UPDATE_PAYMENT_CONFIGURATION = gql`
-  mutation UpdatePaymentConfiguration(
-    $id: ID!
-    $input: UpdatePaymentConfigurationInput!
-  ) {
+  mutation UpdatePaymentConfiguration($id: ID!, $input: UpdatePaymentConfigurationInput!) {
     updatePaymentConfiguration(id: $id, input: $input) {
       id
       wompiEnabled

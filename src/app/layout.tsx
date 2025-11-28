@@ -1,265 +1,272 @@
-import type { Metadata } from "next";
-import { Roboto, Montserrat } from "next/font/google";
-import "./globals.css";
-import { Providers } from "@/components/Providers";
-import { Navbar } from "@/components/Navbar/Navbar";
-import { Footer } from "@/components/Footer/Footer";
-import { Toaster } from "react-hot-toast";
-import CookieWrapper from "@/components/CookieWrapper";
-import { WhatsAppWrapper } from "@/components/WhatsAppWrapper";
-import Script from "next/script";
+import type { Metadata } from 'next';
+import { Roboto, Montserrat } from 'next/font/google';
+import './globals.css';
+import { Providers } from '@/components/Providers';
+import { Navbar } from '@/components/Navbar/Navbar';
+import { Footer } from '@/components/Footer/Footer';
+import { Toaster } from 'react-hot-toast';
+import CookieWrapper from '@/components/CookieWrapper';
+import { WhatsAppWrapper } from '@/components/WhatsAppWrapper';
+import Script from 'next/script';
+import { getStoreData } from '@/lib/getStoreData';
 
 const roboto = Roboto({
-  variable: "--font-roboto",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
+  variable: '--font-roboto',
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '700'],
 });
 
 const montserrat = Montserrat({
-  variable: "--font-montserrat",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  variable: '--font-montserrat',
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
 });
 
-export const metadata: Metadata = {
-  title:
-    "Pawis Colombia Tejidos de punto | Confección Mayor y Detal | Uniformes y Dotaciones - Pawis S.A.S",
-  description:
-    "Empresa líder en tejido de punto en Colombia. Confección de uniformes, dotaciones, guantes, gorros, medias y productos textiles al mayor y al detal. Calidad garantizada para empresas y particulares.",
-  keywords: [
-    "tejidos de punto",
-    "textiles colombia",
-    "Dotaciones para empresas cuarto frio",
-    "confección colombia",
-    "uniformes empresariales",
-    "dotaciones laborales",
-    "textiles al mayor",
-    "confección al detal",
-    "manufactura textil",
-    "tejido punto colombia",
-    "ropa empresarial",
-    "uniformes industriales",
-    "dotación personal",
-  ],
-  authors: [{ name: "Pawis Colombia Tejidos de punto" }],
-  creator: "Pawis Colombia Tejidos de punto",
-  publisher: "Pawis Colombia Tejidos de punto",
-  category: "Textiles y Confección",
-  classification: "Business",
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+export async function generateMetadata(): Promise<Metadata> {
+  const storeId = process.env.NEXT_PUBLIC_STORE_ID || 'default-store';
+  const { store, siteConfig } = await getStoreData(storeId);
+
+  const title = siteConfig?.seo?.title || store?.metaTitle || store?.name || 'Store';
+  const description = siteConfig?.seo?.description || store?.metaDescription || 'Tienda en línea';
+  const keywords = siteConfig?.seo?.keywords || [];
+  const brandingName = siteConfig?.branding?.name || store?.name || 'Store';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
+  return {
+    title,
+    description,
+    keywords,
+    authors: [{ name: brandingName }],
+    creator: brandingName,
+    publisher: brandingName,
+    category: 'Textiles y Confección',
+    classification: 'Business',
+    robots: {
       index: true,
       follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
-  },
-  openGraph: {
-    type: "website",
-    locale: "es_CO",
-    url: "https://pawis.com.co",
-    title: "Pawis Colombia Tejidos de punto - Confección Mayor y Detal",
-    description:
-      "Empresa líder en tejido de punto. Uniformes, dotaciones y confección textil de alta calidad para empresas y particulares en Colombia.",
-    siteName: "Pawis Colombia Tejidos de punto",
-    images: [
-      {
-        url: "/assets/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Pawis Colombia Tejidos de punto - Confección textil",
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
       },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Pawis Colombia Tejidos de punto - Confección Mayor y Detal",
-    description:
-      "Empresa líder en tejido de punto. Uniformes, dotaciones y confección textil de alta calidad.",
-    images: ["/assets/og-image.png"],
-  },
-  verification: {
-    google: "your-google-verification-code",
-  },
-  alternates: {
-    canonical: "https://pawis.com.co",
-  },
-};
+    },
+    openGraph: {
+      type: 'website',
+      locale: 'es_CO',
+      url: siteUrl,
+      title,
+      description,
+      siteName: brandingName,
+      images: [
+        {
+          url: siteConfig?.branding?.logo?.url || '/assets/og-image.png',
+          width: 1200,
+          height: 630,
+          alt: brandingName,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [siteConfig?.branding?.logo?.url || '/assets/og-image.png'],
+    },
+    verification: {
+      google: 'your-google-verification-code',
+    },
+    alternates: {
+      canonical: siteUrl,
+    },
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const storeId = process.env.NEXT_PUBLIC_STORE_ID || 'default-store';
+  const { store, siteConfig } = await getStoreData(storeId);
+
+  const brandingName = siteConfig?.branding?.name || store?.name || 'Store';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const logoUrl = siteConfig?.branding?.logo?.url || '/assets/logo.svg';
+  const description = siteConfig?.branding?.description || siteConfig?.seo?.description || 'Tienda en línea';
+  const phone = siteConfig?.contact?.phone || store?.phone || '';
+  const address = siteConfig?.contact?.address;
+  const social = siteConfig?.contact?.social;
+
+  const socialLinks = [];
+  if (social?.facebook) socialLinks.push(social.facebook);
+  if (social?.instagram) socialLinks.push(social.instagram);
+  if (social?.twitter) socialLinks.push(social.twitter);
+  if (social?.youtube) socialLinks.push(social.youtube);
+  if (social?.tiktok) socialLinks.push(social.tiktok);
+
   const structuredData = {
-    "@context": "https://schema.org",
-    "@graph": [
+    '@context': 'https://schema.org',
+    '@graph': [
       {
-        "@type": "Organization",
-        "@id": "https://pawis.com.co/#organization",
-        name: "Pawis Colombia Tejidos de punto",
-        url: "https://pawis.com.co",
+        '@type': 'Organization',
+        '@id': `${siteUrl}/#organization`,
+        name: brandingName,
+        url: siteUrl,
         logo: {
-          "@type": "ImageObject",
-          url: "https://pawis.com.co/assets/logo.svg",
+          '@type': 'ImageObject',
+          url: `${siteUrl}${logoUrl}`,
           width: 300,
           height: 100,
         },
-        description:
-          "Empresa líder en tejido de punto y confección textil en Colombia",
+        description,
         address: {
-          "@type": "PostalAddress",
-          addressCountry: "CO",
-          addressLocality: "Colombia",
+          '@type': 'PostalAddress',
+          addressCountry: address?.country || 'CO',
+          addressLocality: address?.city || 'Colombia',
+          addressRegion: address?.state,
+          streetAddress: address?.street,
+          postalCode: address?.zip,
         },
         contactPoint: [
           {
-            "@type": "ContactPoint",
-            telephone: "+57-320-4953448",
-            contactType: "sales",
-            areaServed: "CO",
-            availableLanguage: "Spanish",
+            '@type': 'ContactPoint',
+            telephone: phone,
+            contactType: 'sales',
+            areaServed: address?.country || 'CO',
+            availableLanguage: 'Spanish',
           },
           {
-            "@type": "ContactPoint",
-            telephone: "+57-320-4953448",
-            contactType: "customer service",
-            areaServed: "CO",
-            availableLanguage: "Spanish",
+            '@type': 'ContactPoint',
+            telephone: phone,
+            contactType: 'customer service',
+            areaServed: address?.country || 'CO',
+            availableLanguage: 'Spanish',
           },
         ],
-        sameAs: [
-          "https://www.facebook.com/rossyssweaters",
-          "https://www.instagram.com/tejisdospawis",
-        ],
+        sameAs: socialLinks,
       },
       {
-        "@type": "LocalBusiness",
-        "@id": "https://pawis.com.co/#localbusiness",
-        name: "Pawis - Pawis Colombia Tejidos de punto",
-        image: "https://pawis.com.co/assets/banner.webp",
-        description:
-          "Confección de uniformes, dotaciones y productos textiles al mayor y al detal",
-        priceRange: "$$",
-        servesCuisine: "Textil",
+        '@type': 'LocalBusiness',
+        '@id': `${siteUrl}/#localbusiness`,
+        name: brandingName,
+        image: `${siteUrl}${siteConfig?.hero?.backgroundImage?.id || '/assets/banner.webp'}`,
+        description: description,
+        priceRange: '$$',
+        servesCuisine: 'Textil',
         address: {
-          "@type": "PostalAddress",
-          addressCountry: "CO",
+          '@type': 'PostalAddress',
+          addressCountry: address?.country || 'CO',
+          addressLocality: address?.city,
+          addressRegion: address?.state,
+          streetAddress: address?.street,
+          postalCode: address?.zip,
         },
         geo: {
-          "@type": "GeoCoordinates",
-          latitude: "4.7110",
-          longitude: "-74.0721",
+          '@type': 'GeoCoordinates',
+          latitude: '4.7110',
+          longitude: '-74.0721',
         },
-        url: "https://pawis.com.co",
-        telephone: "+57-XXX-XXXXXXX",
-        openingHoursSpecification: [
-          {
-            "@type": "OpeningHoursSpecification",
-            dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-            opens: "08:00",
-            closes: "18:00",
-          },
-        ],
+        url: siteUrl,
+        telephone: phone,
+        openingHoursSpecification: siteConfig?.contact?.hours
+          ? Object.entries(siteConfig.contact.hours).map(([day, hours]) => ({
+              '@type': 'OpeningHoursSpecification',
+              dayOfWeek: day.includes('-') ? day.split('-').map(d => d.trim()) : [day],
+              opens: hours.split('-')[0]?.trim() || '08:00',
+              closes: hours.split('-')[1]?.trim() || '18:00',
+            }))
+          : [
+              {
+                '@type': 'OpeningHoursSpecification',
+                dayOfWeek: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
+                opens: '08:00',
+                closes: '18:00',
+              },
+            ],
       },
       {
-        "@type": "WebSite",
-        "@id": "https://pawis.com.co/#website",
-        url: "https://pawis.com.co",
-        name: "Pawis Colombia Tejidos de punto",
-        description:
-          "Empresa de confección textil especializada en tejido de punto",
+        '@type': 'WebSite',
+        '@id': `${siteUrl}/#website`,
+        url: siteUrl,
+        name: brandingName,
+        description: description,
         publisher: {
-          "@id": "https://pawis.com.co/#organization",
+          '@id': `${siteUrl}/#organization`,
         },
         potentialAction: [
           {
-            "@type": "SearchAction",
+            '@type': 'SearchAction',
             target: {
-              "@type": "EntryPoint",
-              urlTemplate:
-                "https://pawis.com.co/products?search={search_term_string}",
+              '@type': 'EntryPoint',
+              urlTemplate: `${siteUrl}/products?search={search_term_string}`,
             },
-            "query-input": "required name=search_term_string",
+            'query-input': 'required name=search_term_string',
           },
         ],
         mainEntity: {
-          "@type": "ItemList",
-          "@id": "https://pawis.com.co/#sitelinks",
-          name: "Navegación Principal",
-          description: "Enlaces principales del sitio web",
-          itemListElement: [
+          '@type': 'ItemList',
+          '@id': `${siteUrl}/#sitelinks`,
+          name: 'Navegación Principal',
+          description: 'Enlaces principales del sitio web',
+          itemListElement: siteConfig?.navigation?.items?.map((item, index) => ({
+            '@type': 'SiteNavigationElement',
+            '@id': `${siteUrl}/#nav-${index}`,
+            name: item.label,
+            description: `Navegar a ${item.label}`,
+            url: `${siteUrl}${item.href}`,
+            position: index + 1,
+          })) || [
             {
-              "@type": "SiteNavigationElement",
-              "@id": "https://pawis.com.co/#nav-products",
-              name: "Productos",
-              description: "Catálogo completo de productos textiles",
-              url: "https://pawis.com.co/products",
+              '@type': 'SiteNavigationElement',
+              '@id': `${siteUrl}/#nav-products`,
+              name: 'Productos',
+              description: 'Catálogo completo de productos',
+              url: `${siteUrl}/products`,
+              position: 1,
             },
             {
-              "@type": "SiteNavigationElement",
-              "@id": "https://pawis.com.co/#nav-uniformes",
-              name: "Uniformes Empresariales",
-              description: "Uniformes de alta calidad para empresas",
-              url: "https://pawis.com.co/products?category=uniformes",
-            },
-            {
-              "@type": "SiteNavigationElement",
-              "@id": "https://pawis.com.co/#nav-dotaciones",
-              name: "Dotaciones Laborales",
-              description: "Dotaciones completas para trabajadores",
-              url: "https://pawis.com.co/products?category=dotaciones",
-            },
-            {
-              "@type": "SiteNavigationElement",
-              "@id": "https://pawis.com.co/#nav-textiles",
-              name: "Textiles de Punto",
-              description: "Productos textiles especializados",
-              url: "https://pawis.com.co/products?category=textiles",
-            },
-            {
-              "@type": "SiteNavigationElement",
-              "@id": "https://pawis.com.co/#nav-contact",
-              name: "Contacto y Soporte",
-              description: "Información de contacto y atención al cliente",
-              url: "https://pawis.com.co/support",
-            },
-            {
-              "@type": "SiteNavigationElement",
-              "@id": "https://pawis.com.co/#nav-account",
-              name: "Mi Cuenta",
-              description: "Gestión de perfil y pedidos",
-              url: "https://pawis.com.co/perfil",
+              '@type': 'SiteNavigationElement',
+              '@id': `${siteUrl}/#nav-contact`,
+              name: 'Contacto',
+              description: 'Información de contacto',
+              url: `${siteUrl}/support`,
+              position: 2,
             },
           ],
         },
       },
       {
-        "@type": "ItemList",
-        "@id": "https://pawis.com.co/#products",
-        name: "Productos de Confección",
-        description: "Catálogo de productos textiles y confección",
-        itemListElement: [
+        '@type': 'ItemList',
+        '@id': `${siteUrl}/#products`,
+        name: siteConfig?.menu?.title || 'Productos de Confección',
+        description: siteConfig?.menu?.subtitle || 'Catálogo de productos textiles y confección',
+        itemListElement: siteConfig?.menu?.items?.map((item, index) => ({
+          '@type': 'Product',
+          name: item.name,
+          description: item.description,
+          category: item.category,
+          position: index + 1,
+          offers: {
+            '@type': 'Offer',
+            price: item.price,
+            priceCurrency: 'COP',
+          },
+        })) || [
           {
-            "@type": "Product",
-            name: "Uniformes Empresariales",
-            description: "Uniformes de alta calidad para empresas",
-            category: "Textiles",
+            '@type': 'Product',
+            name: 'Uniformes Empresariales',
+            description: 'Uniformes de alta calidad para empresas',
+            category: 'Textiles',
+            position: 1,
           },
           {
-            "@type": "Product",
-            name: "Dotaciones Laborales",
-            description: "Dotaciones completas para trabajadores",
-            category: "Textiles",
-          },
-          {
-            "@type": "Product",
-            name: "Camisetas Personalizadas",
-            description: "Camisetas con diseños personalizados",
-            category: "Textiles",
+            '@type': 'Product',
+            name: 'Dotaciones Laborales',
+            description: 'Dotaciones completas para trabajadores',
+            category: 'Textiles',
+            position: 2,
           },
         ],
       },
@@ -268,64 +275,50 @@ export default function RootLayout({
 
   // Additional structured data specifically for sitelinks
   const sitelinksData = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "@id": "https://pawis.com.co/#breadcrumbs",
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    '@id': `${siteUrl}/#breadcrumbs`,
     itemListElement: [
       {
-        "@type": "ListItem",
+        '@type': 'ListItem',
         position: 1,
-        name: "Inicio",
-        item: "https://pawis.com.co",
+        name: 'Inicio',
+        item: siteUrl,
       },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: "Productos",
-        item: "https://pawis.com.co/products",
-      },
-      {
-        "@type": "ListItem",
-        position: 3,
-        name: "Uniformes Empresariales",
-        item: "https://pawis.com.co/products?category=uniformes",
-      },
-      {
-        "@type": "ListItem",
-        position: 4,
-        name: "Dotaciones Laborales",
-        item: "https://pawis.com.co/products?category=dotaciones",
-      },
-      {
-        "@type": "ListItem",
-        position: 5,
-        name: "Soporte",
-        item: "https://pawis.com.co/support",
-      },
+      ...(siteConfig?.navigation?.items?.slice(1).map((item, index) => ({
+        '@type': 'ListItem',
+        position: index + 2,
+        name: item.label,
+        item: `${siteUrl}${item.href}`,
+      })) || [
+        {
+          '@type': 'ListItem',
+          position: 2,
+          name: 'Productos',
+          item: `${siteUrl}/products`,
+        },
+        {
+          '@type': 'ListItem',
+          position: 3,
+          name: 'Soporte',
+          item: `${siteUrl}/support`,
+        },
+      ]),
     ],
   };
 
   return (
     <html lang="es">
       <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(sitelinksData) }}
-        />
-        <meta name="geo.region" content="CO" />
-        <meta name="geo.placename" content="Colombia" />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(sitelinksData) }} />
+        <meta name="geo.region" content={address?.country || 'CO'} />
+        <meta name="geo.placename" content={address?.city || 'Colombia'} />
         <meta name="ICBM" content="4.7110, -74.0721" />
-        <meta name="business.contact_data.country" content="Colombia" />
-        <meta name="business.contact_data.region" content="Cundinamarca" />
+        <meta name="business.contact_data.country" content={address?.country || 'Colombia'} />
+        <meta name="business.contact_data.region" content={address?.state || 'Cundinamarca'} />
         {/* ePayco Standard Checkout Script */}
-        <Script
-          src="https://checkout.epayco.co/checkout.js"
-          strategy="beforeInteractive"
-        />
+        <Script src="https://checkout.epayco.co/checkout.js" strategy="beforeInteractive" />
       </head>
       <body
         className={`${roboto.variable} ${montserrat.variable} font-roboto antialiased min-h-screen flex flex-col text-gray-900 bg-white dark:text-gray-100 dark:bg-slate-900`}
