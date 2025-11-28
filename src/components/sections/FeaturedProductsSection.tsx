@@ -103,7 +103,7 @@ export function FeaturedProductsSection() {
   const handleToggleFavorite = (product: any, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     try {
       const productData = {
         id: product.id,
@@ -116,19 +116,25 @@ export function FeaturedProductsSection() {
       };
 
       const isCurrentlyFavorite = favoriteIds.includes(product.id);
-      
+
       if (isCurrentlyFavorite) {
         const updatedIds = favoriteIds.filter((id) => id !== product.id);
         setFavoriteIds(updatedIds);
-        localStorage.setItem("emprendyup_favorites", JSON.stringify(updatedIds));
+        localStorage.setItem(
+          "emprendyup_favorites",
+          JSON.stringify(updatedIds)
+        );
         toast.success("Producto removido de favoritos");
       } else {
         const updatedIds = [...favoriteIds, product.id];
         setFavoriteIds(updatedIds);
-        localStorage.setItem("emprendyup_favorites", JSON.stringify(updatedIds));
+        localStorage.setItem(
+          "emprendyup_favorites",
+          JSON.stringify(updatedIds)
+        );
         toast.success("Producto añadido a favoritos");
       }
-      
+
       window.dispatchEvent(new Event("storage"));
     } catch (error) {
       console.error("Error toggling favorite:", error);
@@ -226,11 +232,11 @@ export function FeaturedProductsSection() {
             Lo Más Solicitado
           </span>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 font-montserrat mb-3 sm:mb-4 px-4">
-            Dotaciones Destacadas
+            Tés e Infusiones Destacadas
           </h2>
           <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto px-4">
-            Descubre los equipos favoritos de nuestros clientes industriales.
-            Calidad premium y protección garantizada.
+            Descubre las variedades favoritas de nuestros clientes amantes del
+            té. Calidad premium y sabor auténtico garantizado.
           </p>
         </div>
 
@@ -271,94 +277,102 @@ export function FeaturedProductsSection() {
                     >
                       <Link href={`/products/${product.id}`}>
                         <div className="group relative bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 h-full cursor-pointer">
-                        {/* Badge */}
-                        <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-10">
-                          <span
-                            className="px-2 sm:px-3 py-1 rounded-full text-xs font-medium text-white"
-                            style={{
-                              backgroundColor: store?.accentColor || "#60a5fa",
-                            }}
-                          >
-                            {getProductBadge(product)}
-                          </span>
-                        </div>
-
-                        {/* Product Image */}
-                        <div className="aspect-square overflow-hidden relative">
-                          <Image
-                            src={getProductImage(product)}
-                            alt={product.name || product.title}
-                            fill
-                            className="object-cover group-hover:scale-110 transition-transform duration-500"
-                          />
-                        </div>
-
-                        {/* Product Info */}
-                        <div className="p-3 sm:p-6">
-                          <div className="flex items-center mb-1 sm:mb-2">
-                            <div className="flex items-center">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`w-3 h-3 sm:w-4 sm:h-4 ${
-                                    i < 4
-                                      ? "text-yellow-400 fill-current"
-                                      : "text-gray-300"
-                                  }`}
-                                />
-                              ))}
-                            </div>
-                            <span className="text-xs sm:text-sm text-gray-500 ml-1 sm:ml-2">
-                              (4.5)
+                          {/* Badge */}
+                          <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-10">
+                            <span
+                              className="px-2 sm:px-3 py-1 rounded-full text-xs font-medium text-white"
+                              style={{
+                                backgroundColor:
+                                  store?.accentColor || "#60a5fa",
+                              }}
+                            >
+                              {getProductBadge(product)}
                             </span>
                           </div>
 
-                          <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 group-hover:text-blue-600 transition-colors text-sm sm:text-base line-clamp-2">
-                            {product.name || product.title}
-                          </h3>
-
-                          <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 line-clamp-2 hidden sm:block">
-                            {product.categories && product.categories.length > 0
-                              ? product.categories[0].category.name
-                              : "Dotación industrial de calidad premium"}
-                          </p>
-
-                          <div className="flex items-center justify-between">
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
-                              <span className="text-sm sm:text-lg font-bold text-gray-900">
-                                {product.currency || "$"}
-                                {getBestPrice(product)?.toLocaleString()}
-                              </span>
-                              {/* Show stock info */}
-                              {product.stock && product.stock < 10 && (
-                                <span className="text-xs text-orange-500">
-                                  Solo {product.stock} disponibles
-                                </span>
-                              )}
-                            </div>
-                            <button
-                              onClick={(e) => handleToggleFavorite(product, e)}
-                              className="p-1.5 sm:p-2 rounded-full transition-colors hover:scale-110 transform"
-                              style={{
-                                backgroundColor: favoriteIds.includes(product.id)
-                                  ? store?.primaryColor || "#2563eb"
-                                  : getColorWithOpacity(
-                                      store?.primaryColor || "#2563eb",
-                                      0.1
-                                    ),
-                                color: favoriteIds.includes(product.id)
-                                  ? "white"
-                                  : store?.primaryColor || "#2563eb",
-                              }}
-                            >
-                              <Heart
-                                className={`w-4 h-4 sm:w-5 sm:h-5 ${
-                                  favoriteIds.includes(product.id) ? "fill-current" : ""
-                                }`}
-                              />
-                            </button>
+                          {/* Product Image */}
+                          <div className="aspect-square overflow-hidden relative">
+                            <Image
+                              src={getProductImage(product)}
+                              alt={product.name || product.title}
+                              fill
+                              className="object-cover group-hover:scale-110 transition-transform duration-500"
+                            />
                           </div>
-                        </div>
+
+                          {/* Product Info */}
+                          <div className="p-3 sm:p-6">
+                            <div className="flex items-center mb-1 sm:mb-2">
+                              <div className="flex items-center">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`w-3 h-3 sm:w-4 sm:h-4 ${
+                                      i < 4
+                                        ? "text-yellow-400 fill-current"
+                                        : "text-gray-300"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-xs sm:text-sm text-gray-500 ml-1 sm:ml-2">
+                                (4.5)
+                              </span>
+                            </div>
+
+                            <h3 className="font-semibold text-gray-900 mb-1 sm:mb-2 group-hover:text-blue-600 transition-colors text-sm sm:text-base line-clamp-2">
+                              {product.name || product.title}
+                            </h3>
+
+                            <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 line-clamp-2 hidden sm:block">
+                              {product.categories &&
+                              product.categories.length > 0
+                                ? product.categories[0].category.name
+                                : "Té e infusión de calidad premium"}
+                            </p>
+
+                            <div className="flex items-center justify-between">
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
+                                <span className="text-sm sm:text-lg font-bold text-gray-900">
+                                  {product.currency || "$"}
+                                  {getBestPrice(product)?.toLocaleString()}
+                                </span>
+                                {/* Show stock info */}
+                                {product.stock && product.stock < 10 && (
+                                  <span className="text-xs text-orange-500">
+                                    Solo {product.stock} disponibles
+                                  </span>
+                                )}
+                              </div>
+                              <button
+                                onClick={(e) =>
+                                  handleToggleFavorite(product, e)
+                                }
+                                className="p-1.5 sm:p-2 rounded-full transition-colors hover:scale-110 transform"
+                                style={{
+                                  backgroundColor: favoriteIds.includes(
+                                    product.id
+                                  )
+                                    ? store?.primaryColor || "#2563eb"
+                                    : getColorWithOpacity(
+                                        store?.primaryColor || "#2563eb",
+                                        0.1
+                                      ),
+                                  color: favoriteIds.includes(product.id)
+                                    ? "white"
+                                    : store?.primaryColor || "#2563eb",
+                                }}
+                              >
+                                <Heart
+                                  className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                                    favoriteIds.includes(product.id)
+                                      ? "fill-current"
+                                      : ""
+                                  }`}
+                                />
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </Link>
                     </div>

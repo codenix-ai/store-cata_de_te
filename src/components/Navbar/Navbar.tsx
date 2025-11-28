@@ -10,16 +10,14 @@ import {
   ShoppingCart,
   Heart,
   User,
-  Search,
   HelpCircle,
   ArrowLeftFromLine,
-  PersonStandingIcon,
   User2,
-  Settings,
 } from "lucide-react";
 import { cartService } from "@/lib/cart";
 import { useStore } from "@/components/StoreProvider";
 import resolveImageUrl from "@/lib/image";
+import { text } from "stream/consumers";
 
 export function Navbar() {
   const { data: session } = useSession();
@@ -203,7 +201,10 @@ export function Navbar() {
                 <Link
                   href="/auth/signin"
                   className="px-4 py-2 rounded-md text-sm font-medium transition-colors text-white hover:opacity-90"
-                  style={{ backgroundColor: store.primaryColor }}
+                  style={{
+                    backgroundColor: store.primaryColor,
+                    color: store.textColor,
+                  }}
                 >
                   Iniciar Sesión
                 </Link>
@@ -308,7 +309,7 @@ export function Navbar() {
                 ) : (
                   <Link
                     href="/auth/signin"
-                    className="block w-full text-center text-white px-4 py-2 rounded-md text-base font-mediumtransition-colors"
+                    className="block w-full text-center px-4 py-2 rounded-md text-base font-mediumtransition-colors"
                     style={{ backgroundColor: store.primaryColor }}
                     onClick={() => setIsMenuOpen(false)}
                   >
