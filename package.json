@@ -23,6 +23,7 @@
     "graphql": "^16.11.0",
     "jest": "^30.0.5",
     "lucide-react": "^0.536.0",
+    "mercadopago": "^2.0.15",
     "next": "15.4.5",
     "next-auth": "^4.24.11",
     "prisma": "^6.13.0",
