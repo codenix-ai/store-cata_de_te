@@ -118,7 +118,7 @@ export const useEpaycoStandardCheckout = () => {
         external: "true",
         test: "true", // Como STRING para forzar sandbox
         response: `${baseUrl}/orden-exitosa`,
-        confirmation: `${baseUrl}/api/epayco/confirmation`,
+        confirmation: `https://panheaded-overdesirously-donetta.ngrok-free.dev/payment/webhook/epayco`,
         // Parámetros adicionales para forzar sandbox
         extra1: "FORCE_SANDBOX",
         extra2: "TEST_MODE_ENABLED",
