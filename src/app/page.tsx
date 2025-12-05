@@ -1,12 +1,6 @@
-<<<<<<< HEAD
-import { Metadata } from "next";
-import Layout from "@/components/Layout/Layout";
-import { HeroBanner } from "@/components/HeroBanner";
-=======
 import { Metadata } from 'next';
 import Layout from '@/components/Layout/Layout';
 import { HeroBanner } from '@/components/HeroBanner';
->>>>>>> upstream/main
 import {
   AboutSection,
   MissionSection,
@@ -14,25 +8,6 @@ import {
   FeaturesSection,
   TestimonialsSection,
   ContactSection,
-<<<<<<< HEAD
-} from "@/components/sections";
-import { getStoreData } from "@/lib/getStoreData";
-
-export async function generateMetadata(): Promise<Metadata> {
-  const storeId = process.env.NEXT_PUBLIC_STORE_ID || "default-store";
-  const { store, siteConfig } = await getStoreData(storeId);
-
-  const title =
-    siteConfig?.seo?.title ||
-    store?.metaTitle ||
-    store?.name ||
-    "EmprendyUp Store";
-  const description =
-    siteConfig?.seo?.description ||
-    store?.metaDescription ||
-    "Dotaciones industriales de calidad";
-  const keywords = siteConfig?.seo?.keywords?.join(", ") || store?.metaKeywords;
-=======
 } from '@/components/sections';
 import { getStoreData } from '@/lib/getStoreData';
 
@@ -43,7 +18,6 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = siteConfig?.seo?.title || store?.metaTitle || store?.name || 'EmprendyUp Store';
   const description = siteConfig?.seo?.description || store?.metaDescription || 'Dotaciones industriales de calidad';
   const keywords = siteConfig?.seo?.keywords?.join(', ') || store?.metaKeywords;
->>>>>>> upstream/main
 
   return {
     title,
@@ -54,18 +28,10 @@ export async function generateMetadata(): Promise<Metadata> {
       description,
       images: [
         {
-<<<<<<< HEAD
-          url:
-            siteConfig?.branding?.logo?.url || "/assets/default-og-image.jpg",
-          width: 1200,
-          height: 630,
-          alt: siteConfig?.branding?.name || store?.name || "EmprendyUp Store",
-=======
           url: siteConfig?.branding?.logo?.url || '/assets/default-og-image.jpg',
           width: 1200,
           height: 630,
           alt: siteConfig?.branding?.name || store?.name || 'EmprendyUp Store',
->>>>>>> upstream/main
         },
       ],
     },
@@ -73,18 +39,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-<<<<<<< HEAD
-  const storeId = process.env.NEXT_PUBLIC_STORE_ID || "default-store";
-  const { siteConfig } = await getStoreData(storeId);
-
-  // Get images from siteConfig gallery or use fallback images
-  const imageA =
-    siteConfig?.gallery?.images?.[0]?.id || "/assets/bannercata.webp";
-  const imageB = siteConfig?.gallery?.images?.[1]?.id || "/assets/img1.webp";
-  const imageC = siteConfig?.gallery?.images?.[2]?.id || "/assets/img3.webp";
-  const imageD = siteConfig?.gallery?.images?.[3]?.id || "/assets/img4.webp";
-  const imageE = siteConfig?.gallery?.images?.[4]?.id || "/assets/img2.webp";
-=======
   const storeId = process.env.NEXT_PUBLIC_STORE_ID || 'default-store';
   const { siteConfig } = await getStoreData(storeId);
 
@@ -93,22 +47,14 @@ export default async function HomePage() {
   const imageB = siteConfig?.gallery?.images?.[1]?.id || '/assets/img1.png';
   const imageC = siteConfig?.gallery?.images?.[2]?.id || '/assets/img3.png';
   const imageD = siteConfig?.gallery?.images?.[3]?.id || '/assets/img4.png';
->>>>>>> upstream/main
 
   // Prepare hero title and subtitle from siteConfig
   const heroTitle = siteConfig?.hero?.title ? (
     <>
-<<<<<<< HEAD
-      {siteConfig.hero.title.split("\n").map((line, i) => (
-        <span key={i}>
-          {line}
-          {i < siteConfig.hero.title.split("\n").length - 1 && <br />}
-=======
       {siteConfig.hero.title.split('\n').map((line, i) => (
         <span key={i}>
           {line}
           {i < siteConfig.hero.title.split('\n').length - 1 && <br />}
->>>>>>> upstream/main
         </span>
       ))}
     </>
@@ -116,11 +62,7 @@ export default async function HomePage() {
 
   const heroSubtitle = siteConfig?.hero?.subtitle ? (
     <>
-<<<<<<< HEAD
-      {siteConfig.hero.subtitle.split("\n").map((line, i, arr) => (
-=======
       {siteConfig.hero.subtitle.split('\n').map((line, i, arr) => (
->>>>>>> upstream/main
         <span key={i}>
           {line}
           {i < arr.length - 1 && <br />}
@@ -144,11 +86,7 @@ export default async function HomePage() {
 
         {/* About Section - use siteConfig about data */}
         <AboutSection
-<<<<<<< HEAD
-          imageA={imageE}
-=======
           imageA={imageA}
->>>>>>> upstream/main
           imageB={imageB}
           title={siteConfig?.about?.title}
           paragraphs={siteConfig?.about?.paragraphs}
