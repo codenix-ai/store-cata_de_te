@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { MercadoPagoConfig, Preference } from 'mercadopago';
-import { MercadoPagoOrderCheckout } from '@/types/mercadopago';
+import { NextRequest, NextResponse } from "next/server";
+import { MercadoPagoConfig, Preference } from "mercadopago";
+import { MercadoPagoOrderCheckout } from "@/types/mercadopago";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!body.orderId || !body.items || body.items.length === 0) {
       return NextResponse.json(
-        { error: 'Missing required fields: orderId and items are required' },
+        { error: "Missing required fields: orderId and items are required" },
         { status: 400 }
       );
     }
@@ -17,9 +17,9 @@ export async function POST(request: NextRequest) {
     // Get access token from environment
     const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
     if (!accessToken) {
-      console.error('MERCADOPAGO_ACCESS_TOKEN not configured');
+      console.error("MERCADOPAGO_ACCESS_TOKEN not configured");
       return NextResponse.json(
-        { error: 'Mercado Pago is not configured' },
+        { error: "Mercado Pago is not configured" },
         { status: 500 }
       );
     }
@@ -30,29 +30,30 @@ export async function POST(request: NextRequest) {
 
     // Determine test mode - only enable production mode when explicitly in production
     // and MERCADOPAGO_TEST_MODE is not set to 'true'
-    const isProduction = process.env.NODE_ENV === 'production';
-    const testMode = !isProduction || process.env.MERCADOPAGO_TEST_MODE === 'true';
+    const isProduction = process.env.NODE_ENV === "production";
+    const testMode =
+      !isProduction || process.env.MERCADOPAGO_TEST_MODE === "true";
 
     // Build base URL for callbacks - prefer explicit configuration over request headers
     // to prevent Host header injection attacks
     const configuredBaseUrl = process.env.NEXT_PUBLIC_BASE_URL;
     if (!configuredBaseUrl && isProduction) {
-      console.error('NEXT_PUBLIC_BASE_URL must be configured in production');
+      console.error("NEXT_PUBLIC_BASE_URL must be configured in production");
       return NextResponse.json(
-        { error: 'Server configuration error' },
+        { error: "Server configuration error" },
         { status: 500 }
       );
     }
-    const baseUrl = configuredBaseUrl || 'http://localhost:3200';
+    const baseUrl = configuredBaseUrl || "http://localhost:3200";
 
     // Create preference items from order items
-    const items = body.items.map(item => ({
+    const items = body.items.map((item) => ({
       id: item.id,
       title: item.name,
       description: item.description || item.name,
       picture_url: item.imageUrl,
       quantity: item.quantity,
-      currency_id: 'COP',
+      currency_id: "COP",
       unit_price: item.unitPrice,
     }));
 
@@ -62,24 +63,25 @@ export async function POST(request: NextRequest) {
       payer: {
         email: body.customerEmail,
         ...(body.customerName && {
-          name: body.customerName.split(' ')[0],
-          surname: body.customerName.split(' ').slice(1).join(' ') || '',
+          name: body.customerName.split(" ")[0],
+          surname: body.customerName.split(" ").slice(1).join(" ") || "",
         }),
         ...(body.customerPhone && {
           phone: {
-            area_code: '57', // Colombia
-            number: body.customerPhone.replace(/\D/g, ''),
+            area_code: "57", // Colombia
+            number: body.customerPhone.replace(/\D/g, ""),
           },
         }),
-        ...(body.customerDocument && body.customerDocumentType && {
-          identification: {
-            type: body.customerDocumentType.toUpperCase(),
-            number: body.customerDocument,
-          },
-        }),
+        ...(body.customerDocument &&
+          body.customerDocumentType && {
+            identification: {
+              type: body.customerDocumentType.toUpperCase(),
+              number: body.customerDocument,
+            },
+          }),
         ...(body.shippingAddress && {
           address: {
-            zip_code: body.shippingAddress.zipCode || '',
+            zip_code: body.shippingAddress.zipCode || "",
             street_name: body.shippingAddress.street,
           },
         }),
@@ -89,24 +91,24 @@ export async function POST(request: NextRequest) {
         failure: `${baseUrl}/checkout/retry/${body.orderId}?provider=mercadopago`,
         pending: `${baseUrl}/orden-exitosa?orderId=${body.orderId}&provider=mercadopago&status=pending`,
       },
-      auto_return: 'approved' as const,
+      auto_return: "approved" as const,
       external_reference: body.orderId,
       notification_url: `${baseUrl}/api/webhooks/mercadopago`,
-      statement_descriptor: 'EMPRENDYUP',
+      statement_descriptor: "EMPRENDYUP",
       ...(body.shippingAddress && {
         shipments: {
           receiver_address: {
-            zip_code: body.shippingAddress.zipCode || '',
+            zip_code: body.shippingAddress.zipCode || "",
             street_name: body.shippingAddress.street,
             city_name: body.shippingAddress.city,
             state_name: body.shippingAddress.state,
-            country_name: body.shippingAddress.country || 'Colombia',
+            country_name: body.shippingAddress.country || "Colombia",
           },
         },
       }),
       metadata: {
         order_id: body.orderId,
-        store_id: process.env.NEXT_PUBLIC_STORE_ID || '',
+        store_id: process.env.NEXT_PUBLIC_STORE_ID || "",
         test_mode: testMode.toString(),
       },
     };
@@ -123,13 +125,13 @@ export async function POST(request: NextRequest) {
       orderId: body.orderId,
     });
   } catch (error) {
-    console.error('Error creating Mercado Pago preference:', error);
+    console.error("Error creating Mercado Pago preference:", error);
 
     // Handle specific Mercado Pago errors
     if (error instanceof Error) {
       return NextResponse.json(
         {
-          error: 'Failed to create payment preference',
+          error: "Failed to create payment preference",
           details: error.message,
         },
         { status: 500 }
@@ -137,7 +139,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

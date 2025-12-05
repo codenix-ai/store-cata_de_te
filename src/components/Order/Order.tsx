@@ -888,7 +888,9 @@ export default function Order() {
       const mercadoPagoItems = cart.items.map((item: CartItem) => ({
         id: item.productId,
         name: item.name,
-        description: item.variant ? `${item.name} - ${item.variant}` : item.name,
+        description: item.variant
+          ? `${item.name} - ${item.variant}`
+          : item.name,
         imageUrl: item.image,
         quantity: item.quantity,
         unitPrice: item.price,
@@ -1424,20 +1426,12 @@ export default function Order() {
                           </div>
                         </div>
 
-<<<<<<< HEAD
-                        {/* Payment Provider Selection m*/}
-=======
                         {/* Payment Provider Selection */}
->>>>>>> upstream/main
                         <div className="space-y-4">
                           <h4 className="font-medium text-gray-900">
                             Selecciona tu método de pago:
                           </h4>
-<<<<<<< HEAD
-                          <div className="grid grid-cols-2 gap-4">
-=======
                           <div className="grid grid-cols-3 gap-4">
->>>>>>> upstream/main
                             <button
                               onClick={() =>
                                 setSelectedPaymentProvider("wompi")
@@ -1460,8 +1454,6 @@ export default function Order() {
 
                             <button
                               onClick={() =>
-<<<<<<< HEAD
-=======
                                 setSelectedPaymentProvider("mercadopago")
                               }
                               className={`p-4 border-2 rounded-lg transition-all ${
@@ -1482,7 +1474,6 @@ export default function Order() {
 
                             <button
                               onClick={() =>
->>>>>>> upstream/main
                                 setSelectedPaymentProvider("epayco")
                               }
                               className={`p-4 border-2 rounded-lg transition-all ${
@@ -1608,8 +1599,6 @@ export default function Order() {
                           </div>
                         )}
 
-<<<<<<< HEAD
-=======
                         {/* Mercado Pago Checkout Pro */}
                         {selectedPaymentProvider === "mercadopago" && (
                           <div className="space-y-4">
@@ -1622,7 +1611,8 @@ export default function Order() {
                                   </p>
                                   <p className="text-sky-700 mt-1">
                                     Paga con tarjetas de crédito, débito, PSE,
-                                    efectivo y más métodos de pago disponibles en Mercado Pago.
+                                    efectivo y más métodos de pago disponibles
+                                    en Mercado Pago.
                                   </p>
                                 </div>
                               </div>
@@ -1653,7 +1643,6 @@ export default function Order() {
                           </div>
                         )}
 
->>>>>>> upstream/main
                         {/* Debug info in development */}
                         {process.env.NODE_ENV === "development" && (
                           <details className="mt-4">
