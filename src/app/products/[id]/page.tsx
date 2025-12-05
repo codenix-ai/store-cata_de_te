@@ -44,6 +44,7 @@ const favoritesService = {
     }
   },
 };
+
 const GET_PRODUCT_QUERY = gql`
   query GetProduct($id: String!) {
     product(id: $id) {
