@@ -6,27 +6,27 @@ import { useStore } from "@/components/StoreProvider";
 const features = [
   {
     icon: Truck,
-    title: "Envío Express",
-    description: "Entrega en 24-48h en principales ciudades",
-    highlight: "Gratis desde $150.000",
+    title: "Envío Rápido",
+    description: "Entrega en 24-72h en principales ciudades",
+    highlight: "Envío gratuito según promociones",
   },
   {
     icon: Shield,
-    title: "Garantía Total",
-    description: "30 días para cambios y devoluciones",
-    highlight: "100% Seguro",
+    title: "Frescura Garantizada",
+    description: "Control de calidad y envasado para conservar aroma",
+    highlight: "Sello de frescura",
   },
   {
     icon: CreditCard,
-    title: "Pago Flexible",
-    description: "Hasta 12 cuotas sin interés",
-    highlight: "Todos los medios",
+    title: "Pago Seguro",
+    description: "Múltiples medios de pago y opciones de pago",
+    highlight: "Tarjetas y transferencias",
   },
   {
     icon: Headphones,
-    title: "Asesoría Técnica",
-    description: "Expertos en dotaciones industriales",
-    highlight: "Chat 24/7",
+    title: "Asesoría Personalizada",
+    description: "Recomendaciones de té según tu paladar",
+    highlight: "Chat y asesoría experta",
   },
 ];
 
@@ -45,10 +45,10 @@ export function FeaturesSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12 sm:mb-16">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 font-montserrat mb-3 sm:mb-4">
-            ¿Por qué Elegir Nuestras Dotaciones?
+            ¿Por qué Elegir Nuestro Té?
           </h2>
           <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto px-4">
-            Más que un proveedor, somos tu aliado en protección industrial
+            Más que una tienda, somos tu aliado en sabor y bienestar
           </p>
         </div>
 

@@ -3,13 +3,12 @@ import Image from "next/image";
 import React from "react";
 import { useStore } from "../StoreProvider";
 import { ArrowRight } from "lucide-react";
-import { resolveImageUrl } from "@/lib/image";
+// resolveImageUrl not needed here because banner uses local asset
 
 interface HeroBannerProps {
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
-  leftWidthClass?: string;
-  imageA?: string;
+  imageE?: string;
   buttonText?: string;
   buttonAction?: string;
   imageAlt?: string;
@@ -18,17 +17,16 @@ interface HeroBannerProps {
 export function HeroBanner({
   title,
   subtitle,
-  leftWidthClass = "w-full md:w-7/12",
-  imageA = "/assets/banner.png",
   buttonText = "Solicita tu cotización",
   buttonAction = "#contact-form",
   imageAlt = "Banner principal",
 }: HeroBannerProps) {
   const { store } = useStore();
 
-  const displayTitle = title;
-  const displaySubtitle = subtitle;
-  const resolvedImage = resolveImageUrl(imageA);
+  const displayTitle = title || "Descubre el Mundo del Té y las Infusiones";
+  const displaySubtitle =
+    subtitle ||
+    "Tés de hebras, blends exclusivos e infusiones naturales para cada momento";
 
   const handleButtonClick = () => {
     if (buttonAction.startsWith("#")) {
@@ -45,77 +43,48 @@ export function HeroBanner({
   };
 
   return (
-    <section className="relative py-12 px-6 md:px-12 lg:px-20 min-h-[70vh] flex flex-col md:flex-row items-center overflow-hidden">
-      {/* Fondo de imagen solo en móvil */}
-      <div className="absolute inset-0 min-h-[30vh] md:hidden">
+    <section className="relative w-full min-h-[70vh] flex items-center justify-center overflow-hidden">
+      {/* Full-bleed background image */}
+      <div className="absolute inset-0 -z-10">
         <Image
-          src={resolvedImage}
+          src="/assets/bannercata.webp"
           alt={imageAlt}
           fill
-          className="object-cover"
+          className="object-cover w-full h-full"
           priority
         />
-        {/* Highlight/overlay para móvil */}
-        <div className="absolute inset-0 bg-black/50"></div>
+        {/* Dark overlay to improve text contrast */}
+        <div className="absolute inset-0 bg-black/60"></div>
+        {/* Accent gradient overlay */}
         <div
-          className="absolute inset-0 opacity-40"
+          className="absolute inset-0"
           style={{
-            background: `linear-gradient(135deg, ${store?.primaryColor}80 0%, transparent 50%, ${store?.primaryColor}40 100%)`,
+            background: `linear-gradient(135deg, ${store?.primaryColor}40 0%, transparent 40%, ${store?.primaryColor}20 100%)`,
           }}
-        ></div>
+        />
       </div>
-      {/* Fondo de color para desktop */}
-      <div
-        className="absolute inset-0 hidden md:block"
-        style={{
-          background: `linear-gradient(135deg, ${store?.primaryColor} 0%, ${store?.primaryColor}E6 80%)`,
-        }}
-      ></div>
-      <div className="relative max-w-8xl mx-auto flex flex-col md:flex-row items-center w-full z-10">
-        {/* Texto */}
-        <div className={`${leftWidthClass} text-left`}>
-          <div className="relative inline-block mb-8">
-            <h1 className="mt-4 text-4xl md:text-6xl lg:text-6xl font-bold tracking-tight text-white drop-shadow-2xl md:drop-shadow-none">
-              <span
-                className="hidden md:inline"
-                style={{ color: store?.textColor }}
-              >
-                {displayTitle}
-              </span>
-              <span className="md:hidden">{displayTitle}</span>
-            </h1>
-            <p className="mt-4 text-md lg:text-xl font-bold tracking-tight drop-shadow-2xl md:drop-shadow-none">
-              <span className="inline text-gray-300">{displaySubtitle}</span>
-            </p>
-          </div>
 
+      {/* Centered content */}
+      <div className="relative z-10 max-w-5xl w-full px-6 py-20 flex flex-col items-center text-center">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white mb-4">
+          {displayTitle}
+        </h1>
+        <p className="text-lg md:text-xl text-gray-200 mb-8 max-w-3xl">
+          {displaySubtitle}
+        </p>
+
+        <div>
           <button
             onClick={handleButtonClick}
-            className="group hover:bg-[#1E1B4B]/80 text-white font-bold py-3 px-6 rounded-2xl flex items-center transition-all duration-300 transform hover:scale-105"
+            className="inline-flex items-center justify-center bg-white text-black font-semibold py-3 px-6 rounded-full shadow-lg hover:scale-105 transition-transform"
             style={{
-              background: store?.backgroundColor,
-              color: store?.primaryColor,
-              opacity: 1,
-              filter: "saturate(1.2) brightness(1.1)",
+              backgroundColor: store?.primaryColor || undefined,
+              color: store?.textColor || "white",
             }}
           >
             {buttonText}
-            <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+            <ArrowRight className="w-5 h-5 ml-2" />
           </button>
-        </div>
-
-        <div className="w-full md:w-1/2 justify-center md:justify-end hidden md:flex">
-          <div className=" gap-2 w-full max-w-lg">
-            <div className="relative overflow-hidden aspect-[3/4]">
-              <Image
-                src={resolvedImage}
-                alt={imageAlt}
-                fill
-                className="object-cover"
-                priority
-              />
-            </div>
-          </div>
         </div>
       </div>
     </section>
