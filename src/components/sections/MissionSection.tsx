@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useStore } from "@/components/StoreProvider";
+import { resolveImageUrl } from "@/lib/image";
 
 interface MissionSectionProps {
   imageC: string;
@@ -10,6 +11,7 @@ interface MissionSectionProps {
 
 export function MissionSection({ imageC }: MissionSectionProps) {
   const { store } = useStore();
+  const resolvedImageC = resolveImageUrl(imageC);
 
   return (
     <section
@@ -20,7 +22,7 @@ export function MissionSection({ imageC }: MissionSectionProps) {
         {/* Imagen */}
         <div className="overflow-hidden aspect-[4/3] rounded-3xl shadow-2xl">
           <Image
-            src={imageC}
+            src={resolvedImageC}
             alt="Área de trabajo industrial con cuartos fríos"
             width={600}
             height={400}

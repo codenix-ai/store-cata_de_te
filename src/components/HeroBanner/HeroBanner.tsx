@@ -1,8 +1,9 @@
-'use client';
-import Image from 'next/image';
-import React from 'react';
-import { useStore } from '../StoreProvider';
-import { ArrowRight } from 'lucide-react';
+"use client";
+import Image from "next/image";
+import React from "react";
+import { useStore } from "../StoreProvider";
+import { ArrowRight } from "lucide-react";
+import { resolveImageUrl } from "@/lib/image";
 
 interface HeroBannerProps {
   title?: React.ReactNode;
@@ -17,27 +18,28 @@ interface HeroBannerProps {
 export function HeroBanner({
   title,
   subtitle,
-  leftWidthClass = 'w-full md:w-7/12',
-  imageA = '/assets/banner.png',
-  buttonText = 'Solicita tu cotización',
-  buttonAction = '#contact-form',
-  imageAlt = 'Banner principal',
+  leftWidthClass = "w-full md:w-7/12",
+  imageA = "/assets/banner.png",
+  buttonText = "Solicita tu cotización",
+  buttonAction = "#contact-form",
+  imageAlt = "Banner principal",
 }: HeroBannerProps) {
   const { store } = useStore();
 
   const displayTitle = title;
   const displaySubtitle = subtitle;
+  const resolvedImage = resolveImageUrl(imageA);
 
   const handleButtonClick = () => {
-    if (buttonAction.startsWith('#')) {
+    if (buttonAction.startsWith("#")) {
       const element = document.getElementById(buttonAction.substring(1));
       if (element) {
         element.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
+          behavior: "smooth",
+          block: "start",
         });
       }
-    } else if (buttonAction.startsWith('/')) {
+    } else if (buttonAction.startsWith("/")) {
       window.location.href = buttonAction;
     }
   };
@@ -46,7 +48,13 @@ export function HeroBanner({
     <section className="relative py-12 px-6 md:px-12 lg:px-20 min-h-[70vh] flex flex-col md:flex-row items-center overflow-hidden">
       {/* Fondo de imagen solo en móvil */}
       <div className="absolute inset-0 min-h-[30vh] md:hidden">
-        <Image src={imageA} alt={imageAlt} fill className="object-cover" priority />
+        <Image
+          src={resolvedImage}
+          alt={imageAlt}
+          fill
+          className="object-cover"
+          priority
+        />
         {/* Highlight/overlay para móvil */}
         <div className="absolute inset-0 bg-black/50"></div>
         <div
@@ -56,7 +64,6 @@ export function HeroBanner({
           }}
         ></div>
       </div>
-      sadads
       {/* Fondo de color para desktop */}
       <div
         className="absolute inset-0 hidden md:block"
@@ -69,7 +76,10 @@ export function HeroBanner({
         <div className={`${leftWidthClass} text-left`}>
           <div className="relative inline-block mb-8">
             <h1 className="mt-4 text-4xl md:text-6xl lg:text-6xl font-bold tracking-tight text-white drop-shadow-2xl md:drop-shadow-none">
-              <span className="hidden md:inline" style={{ color: store?.textColor }}>
+              <span
+                className="hidden md:inline"
+                style={{ color: store?.textColor }}
+              >
                 {displayTitle}
               </span>
               <span className="md:hidden">{displayTitle}</span>
@@ -86,7 +96,7 @@ export function HeroBanner({
               background: store?.backgroundColor,
               color: store?.primaryColor,
               opacity: 1,
-              filter: 'saturate(1.2) brightness(1.1)',
+              filter: "saturate(1.2) brightness(1.1)",
             }}
           >
             {buttonText}
@@ -97,7 +107,13 @@ export function HeroBanner({
         <div className="w-full md:w-1/2 justify-center md:justify-end hidden md:flex">
           <div className=" gap-2 w-full max-w-lg">
             <div className="relative overflow-hidden aspect-[3/4]">
-              <Image src={imageA} alt={imageAlt} fill className="object-cover" priority />
+              <Image
+                src={resolvedImage}
+                alt={imageAlt}
+                fill
+                className="object-cover"
+                priority
+              />
             </div>
           </div>
         </div>

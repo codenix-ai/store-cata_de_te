@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import { useStore } from '@/components/StoreProvider';
+import Image from "next/image";
+import { useStore } from "@/components/StoreProvider";
+import { resolveImageUrl } from "@/lib/image";
 
 interface AboutSectionProps {
   imageA: string;
@@ -14,21 +15,31 @@ interface AboutSectionProps {
   }>;
 }
 
-export function AboutSection({ imageA, imageB, title, paragraphs, stats }: AboutSectionProps) {
+export function AboutSection({
+  imageA,
+  imageB,
+  title,
+  paragraphs,
+  stats,
+}: AboutSectionProps) {
   const { store } = useStore();
 
+  // Resolver las URLs de las imágenes
+  const resolvedImageA = resolveImageUrl(imageA);
+  const resolvedImageB = resolveImageUrl(imageB);
+
   // Default content if not provided
-  const defaultTitle = 'Especialistas en Dotaciones Industriales';
+  const defaultTitle = "Especialistas en Dotaciones Industriales";
   const defaultParagraphs = [
-    'Durante más de 5 años, hemos sido pioneros en ofrecer dotaciones industriales de alta calidad para cuartos fríos, combinando protección térmica, durabilidad y comodidad laboral.',
-    'Cada prenda es cuidadosamente seleccionada pensando en el trabajador que necesita protección óptima en ambientes de baja temperatura, desde buzos térmicos hasta guantes y gorros de lana especializados.',
+    "Durante más de 5 años, hemos sido pioneros en ofrecer dotaciones industriales de alta calidad para cuartos fríos, combinando protección térmica, durabilidad y comodidad laboral.",
+    "Cada prenda es cuidadosamente seleccionada pensando en el trabajador que necesita protección óptima en ambientes de baja temperatura, desde buzos térmicos hasta guantes y gorros de lana especializados.",
   ];
 
   const getColorWithOpacity = (color: string, opacity: number) => {
     if (!color) return `rgba(37, 99, 235, ${opacity})`;
     return `${color}${Math.round(opacity * 255)
       .toString(16)
-      .padStart(2, '0')}`;
+      .padStart(2, "0")}`;
   };
 
   return (
@@ -37,14 +48,14 @@ export function AboutSection({ imageA, imageB, title, paragraphs, stats }: About
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center mb-16 lg:mb-24">
           <div className="relative group aspect-[4/3] overflow-hidden rounded-3xl shadow-2xl">
             <Image
-              src={imageA}
+              src={resolvedImageA}
               alt="Dotaciones industriales para cuartos fríos"
               fill
               className="object-cover object-top group-hover:scale-105 transition-transform duration-700 rounded-3xl"
             />
             <div
               className="absolute -bottom-6 -right-6 w-24 h-24 rounded-3xl opacity-20 blur-xl"
-              style={{ backgroundColor: store?.primaryColor || '#2563eb' }}
+              style={{ backgroundColor: store?.primaryColor || "#2563eb" }}
             />
           </div>
 
@@ -53,8 +64,11 @@ export function AboutSection({ imageA, imageB, title, paragraphs, stats }: About
               <span
                 className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4"
                 style={{
-                  backgroundColor: getColorWithOpacity(store?.primaryColor || '#2563eb', 0.1),
-                  color: store?.primaryColor || '#2563eb',
+                  backgroundColor: getColorWithOpacity(
+                    store?.primaryColor || "#2563eb",
+                    0.1
+                  ),
+                  color: store?.primaryColor || "#2563eb",
                 }}
               >
                 Nuestra Historia
@@ -65,7 +79,12 @@ export function AboutSection({ imageA, imageB, title, paragraphs, stats }: About
             </div>
 
             {(paragraphs || defaultParagraphs).map((paragraph, index) => (
-              <p key={index} className={`${index === 0 ? 'text-lg' : ''} text-gray-600 leading-relaxed`}>
+              <p
+                key={index}
+                className={`${
+                  index === 0 ? "text-lg" : ""
+                } text-gray-600 leading-relaxed`}
+              >
                 {paragraph}
               </p>
             ))}
@@ -76,7 +95,7 @@ export function AboutSection({ imageA, imageB, title, paragraphs, stats }: About
                   <div key={index} className="text-center">
                     <div
                       className="text-2xl sm:text-3xl font-bold mb-1"
-                      style={{ color: store?.primaryColor || '#2563eb' }}
+                      style={{ color: store?.primaryColor || "#2563eb" }}
                     >
                       {stat.value}
                     </div>
@@ -94,8 +113,11 @@ export function AboutSection({ imageA, imageB, title, paragraphs, stats }: About
               <span
                 className="inline-block px-4 py-2 rounded-full text-sm font-medium mb-4"
                 style={{
-                  backgroundColor: getColorWithOpacity(store?.accentColor || '#60a5fa', 0.1),
-                  color: store?.accentColor || '#60a5fa',
+                  backgroundColor: getColorWithOpacity(
+                    store?.accentColor || "#60a5fa",
+                    0.1
+                  ),
+                  color: store?.accentColor || "#60a5fa",
                 }}
               >
                 Compromiso Industrial
@@ -106,15 +128,16 @@ export function AboutSection({ imageA, imageB, title, paragraphs, stats }: About
             </div>
 
             <p className="text-lg text-gray-600 leading-relaxed">
-              Trabajamos directamente con los mejores fabricantes de equipos industriales para garantizar que cada
-              dotación cumpla con los más altos estándares de protección térmica y durabilidad.
+              Trabajamos directamente con los mejores fabricantes de equipos
+              industriales para garantizar que cada dotación cumpla con los más
+              altos estándares de protección térmica y durabilidad.
             </p>
           </div>
 
           <div className="relative group order-1 lg:order-2">
             <div className="aspect-[4/3] overflow-hidden rounded-3xl shadow-2xl">
               <Image
-                src={imageB}
+                src={resolvedImageB}
                 alt="Equipos de protección industrial"
                 fill
                 className="object-cover object-bottom rounded-3xl group-hover:scale-105 transition-transform duration-700"
@@ -122,7 +145,7 @@ export function AboutSection({ imageA, imageB, title, paragraphs, stats }: About
             </div>
             <div
               className="absolute -bottom-6 -left-6 w-24 h-24 rounded-3xl opacity-20 blur-xl"
-              style={{ backgroundColor: store?.accentColor || '#60a5fa' }}
+              style={{ backgroundColor: store?.accentColor || "#60a5fa" }}
             />
           </div>
         </div>
