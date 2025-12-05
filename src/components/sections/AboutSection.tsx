@@ -25,14 +25,12 @@ export function AboutSection({
   const { store } = useStore();
 
   // Resolver las URLs de las imágenes
-  const resolvedImageA = resolveImageUrl(imageA);
-  const resolvedImageB = resolveImageUrl(imageB);
 
-  // Default content if not provided
-  const defaultTitle = "Especialistas en Dotaciones Industriales";
+  // Default content if not provided (tea & infusions store)
+  const defaultTitle = "Especialistas en Té e Infusiones";
   const defaultParagraphs = [
-    "Durante más de 5 años, hemos sido pioneros en ofrecer dotaciones industriales de alta calidad para cuartos fríos, combinando protección térmica, durabilidad y comodidad laboral.",
-    "Cada prenda es cuidadosamente seleccionada pensando en el trabajador que necesita protección óptima en ambientes de baja temperatura, desde buzos térmicos hasta guantes y gorros de lana especializados.",
+    "Seleccionamos las mejores hojas y mezclas del mundo para ofrecer tés e infusiones de sabor excepcional y alta frescura.",
+    "Desde tés verdes y negros hasta infusiones herbales y blends exclusivos: cada lote es seleccionado y envasado pensando en tu ritual diario.",
   ];
 
   const getColorWithOpacity = (color: string, opacity: number) => {
@@ -48,8 +46,8 @@ export function AboutSection({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center mb-16 lg:mb-24">
           <div className="relative group aspect-[4/3] overflow-hidden rounded-3xl shadow-2xl">
             <Image
-              src={resolvedImageA}
-              alt="Dotaciones industriales para cuartos fríos"
+              src="/assets/img2.webp"
+              alt="Selección premium de tés e infusiones"
               fill
               className="object-cover object-top group-hover:scale-105 transition-transform duration-700 rounded-3xl"
             />
@@ -120,24 +118,24 @@ export function AboutSection({
                   color: store?.accentColor || "#60a5fa",
                 }}
               >
-                Compromiso Industrial
+                Compromiso con la Calidad
               </span>
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 font-montserrat mb-6">
-                Protección que Marca la Diferencia
+                Sabor que Enamora
               </h2>
             </div>
 
             <p className="text-lg text-gray-600 leading-relaxed">
-              Trabajamos directamente con los mejores fabricantes de equipos
-              industriales para garantizar que cada dotación cumpla con los más
-              altos estándares de protección térmica y durabilidad.
+              Trabajamos con productores y mezcladores expertos para asegurar
+              que cada té e infusión conserve su aroma y propiedades,
+              entregándote una experiencia deliciosa en cada taza.
             </p>
           </div>
 
           <div className="relative group order-1 lg:order-2">
             <div className="aspect-[4/3] overflow-hidden rounded-3xl shadow-2xl">
               <Image
-                src={resolvedImageB}
+                src="/assets/img1.webp"
                 alt="Equipos de protección industrial"
                 fill
                 className="object-cover object-bottom rounded-3xl group-hover:scale-105 transition-transform duration-700"

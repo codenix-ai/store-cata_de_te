@@ -11,7 +11,6 @@ interface MissionSectionProps {
 
 export function MissionSection({ imageC }: MissionSectionProps) {
   const { store } = useStore();
-  const resolvedImageC = resolveImageUrl(imageC);
 
   return (
     <section
@@ -22,7 +21,7 @@ export function MissionSection({ imageC }: MissionSectionProps) {
         {/* Imagen */}
         <div className="overflow-hidden aspect-[4/3] rounded-3xl shadow-2xl">
           <Image
-            src={resolvedImageC}
+            src="/assets/img3.webp"
             alt="Área de trabajo industrial con cuartos fríos"
             width={600}
             height={400}
@@ -40,18 +39,18 @@ export function MissionSection({ imageC }: MissionSectionProps) {
             >
               Misión
             </span>{" "}
-            es tu protección
+            es inspirar tu ritual
           </h2>
           <p className="text-lg mb-4">
-            Desde nuestros inicios, trabajamos con pasión para ofrecer
-            dotaciones industriales de la más alta calidad para cuartos fríos.
-            Nos aseguramos de cuidar cada detalle en el proceso, porque la
-            seguridad de tu equipo es nuestra mayor prioridad.
+            Desde el primer día, seleccionamos y curamos tés e infusiones
+            pensando en ofrecer productos frescos, sostenibles y llenos de
+            carácter. Nuestro objetivo es acercarte sabores auténticos que
+            acompañen tus mejores momentos.
           </p>
           <ul className="list-disc list-inside space-y-2 mb-6">
-            <li>Materiales térmicos de alta calidad</li>
-            <li>Control de calidad riguroso para ambientes extremos</li>
-            <li>Compromiso con la seguridad laboral</li>
+            <li>Ingredientes 100% naturales y, cuando es posible, orgánicos</li>
+            <li>Control de calidad riguroso en cada lote</li>
+            <li>Compromiso con productores locales y prácticas sostenibles</li>
           </ul>
           <Link
             href="/products"

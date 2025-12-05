@@ -52,9 +52,8 @@ interface ContactSectionProps {
 }
 
 export function ContactSection({
-  imageD,
-  title = "Solicita tu Cotización",
-  subtitle = "Estamos aquí para ayudarte con tus necesidades de dotación industrial",
+  title = "Solicita tu Pedido o Muestra",
+  subtitle = "¿Buscas té a granel, blends personalizados o muestras? Escríbenos y te ayudamos a elegir lo mejor",
   address,
   phone: contactPhone,
   email: contactEmail,
@@ -62,7 +61,6 @@ export function ContactSection({
   social,
 }: ContactSectionProps) {
   const { store } = useStore();
-  const resolvedImageD = resolveImageUrl(imageD);
   const [createContactLead, { loading, error, data }] =
     useMutation(CREATE_CONTACT_LEAD);
   const [phone, setPhone] = useState<string>("");
@@ -253,7 +251,7 @@ export function ContactSection({
             <button
               type="submit"
               disabled={loading || (phoneTouched && !!phoneError)}
-              className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl shadow-lg hover:bg-blue-700 transition disabled:opacity-50"
+              className="w-full py-3 text-white font-semibold rounded-xl shadow-lg hover:bg-blue-700 transition disabled:opacity-50"
             >
               {loading ? "Enviando..." : "Solicitar Cotización"}
             </button>
@@ -272,8 +270,8 @@ export function ContactSection({
         </div>
         <div className="relative aspect-[4/4] rounded-3xl overflow-hidden shadow-2xl">
           <Image
-            src={resolvedImageD}
-            alt="Equipo de atención al cliente especializado en dotaciones industriales"
+            src="/assets/img4.webp"
+            alt="Equipo de atención al cliente especializado en té e infusiones"
             fill
             className="object-cover object-bottom"
           />

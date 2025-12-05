@@ -32,14 +32,14 @@ export async function GET(
           name: "Producto Ejemplo 1",
           price: 179800,
           quantity: 2,
-          image: "/assets/img1.png",
+          image: "/assets/img1.webp",
         },
         {
           id: "2",
           name: "Producto Ejemplo 2",
           price: 129900,
           quantity: 1,
-          image: "/assets/img2.png",
+          image: "/assets/img2.webp",
         },
       ],
       payments: [

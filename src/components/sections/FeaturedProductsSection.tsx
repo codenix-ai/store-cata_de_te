@@ -232,11 +232,11 @@ export function FeaturedProductsSection() {
             Lo Más Solicitado
           </span>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 font-montserrat mb-3 sm:mb-4 px-4">
-            Dotaciones Destacadas
+            Tés e Infusiones Destacadas
           </h2>
           <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto px-4">
-            Descubre los equipos favoritos de nuestros clientes industriales.
-            Calidad premium y protección garantizada.
+            Descubre las variedades favoritas de nuestros clientes amantes del
+            té. Calidad premium y sabor auténtico garantizado.
           </p>
         </div>
 
