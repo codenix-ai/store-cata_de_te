@@ -14,6 +14,7 @@ export function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
   // GraphQL mutation for new input
   const CREATE_USER = gql`
@@ -48,10 +49,11 @@ export function RegisterForm() {
         variables: { input },
       });
       if (!data?.createUser) throw new Error("Registro fallido");
-      setSuccess("¡Registro exitoso! Ahora puedes iniciar sesión.");
+      setSuccess("¡Registro exitoso! Redirigiendo a confirmación OTP...");
       setTimeout(() => {
-        router.push("/auth/signin");
-      }, 2000);
+        setAcceptTerms(false);
+        router.push(`/otp-confirmation?email=${encodeURIComponent(email)}`);
+      }, 6000);
     } catch (err: any) {
       setError(err.message);
     } finally {
