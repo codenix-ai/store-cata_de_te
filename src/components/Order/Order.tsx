@@ -19,6 +19,7 @@ import crypto from "crypto";
 import { useWompiPayment, usePayments } from "@/hooks/usePayments";
 import { useStorePaymentConfiguration } from "@/hooks/usePaymentConfiguration";
 import { useEpaycoStandardCheckout } from "@/hooks/useEpaycoStandardCheckout";
+import { useMercadoPagoCheckout } from "@/hooks/useMercadoPagoCheckout";
 import { PaymentProvider, PaymentMethod } from "@/types/payment";
 import { CREATE_PAYMENT } from "@/lib/graphql/queries";
 
@@ -334,10 +335,15 @@ export default function Order() {
     isLoading: epaycoLoading,
     error: epaycoError,
   } = useEpaycoStandardCheckout();
+  const {
+    createAndRedirect: mercadoPagoCreateAndRedirect,
+    isLoading: mercadoPagoLoading,
+    error: mercadoPagoError,
+  } = useMercadoPagoCheckout();
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
   const [paymentReference, setPaymentReference] = useState<string>("");
   const [selectedPaymentProvider, setSelectedPaymentProvider] = useState<
-    "wompi" | "epayco"
+    "wompi" | "epayco" | "mercadopago"
   >("wompi");
 
   // Generate payment reference on component mount
@@ -812,6 +818,112 @@ export default function Order() {
       } else {
         alert(
           "Error al abrir el checkout de ePayco. Por favor intenta nuevamente."
+        );
+      }
+    } finally {
+      setIsSubmittingOrder(false);
+    }
+  };
+
+  const handleMercadoPagoCheckout = async () => {
+    // Check if user is authenticated
+    if (!session) {
+      alert("Debes iniciar sesión para completar la orden");
+      return;
+    }
+
+    // Check if address is saved or selected
+    const addressId = address.id || selectedAddressId;
+    if (!addressId) {
+      alert(
+        "Debes seleccionar o guardar una dirección antes de completar la orden"
+      );
+      return;
+    }
+
+    setIsSubmittingOrder(true);
+
+    try {
+      const selectedAddress = selectedAddressId
+        ? addressesData?.addressesByUser?.find(
+            (addr: Address) => addr.id === selectedAddressId
+          ) || address
+        : address;
+
+      // Create the order first
+      const orderItems: OrderItemInput[] = cart.items.map((item: CartItem) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        productColorId: item.productColorId,
+        productSizeId: item.productSizeId,
+        unitPrice: item.price,
+      }));
+
+      const orderInput: CreateOrderInput = {
+        addressId: addressId,
+        items: orderItems,
+        total: cart.total,
+        subtotal: cart.subtotal,
+        tax: cart.tax,
+        shipping: cart.shipping,
+        ...(store?.id && { storeId: store.id }),
+        ...(store?.storeId && !store?.id && { storeId: store.storeId }),
+      };
+
+      console.log("Creating order for Mercado Pago:", orderInput);
+
+      const { data: orderData } = await createOrder({
+        variables: {
+          input: orderInput,
+        },
+      });
+
+      const newOrder = orderData.createOrder;
+      console.log("Order created for Mercado Pago:", newOrder);
+
+      // Clear cart before opening checkout
+      cartService.clearCart();
+
+      // Prepare items for Mercado Pago
+      const mercadoPagoItems = cart.items.map((item: CartItem) => ({
+        id: item.productId,
+        name: item.name,
+        description: item.variant ? `${item.name} - ${item.variant}` : item.name,
+        imageUrl: item.image,
+        quantity: item.quantity,
+        unitPrice: item.price,
+      }));
+
+      // Create and redirect to Mercado Pago checkout
+      await mercadoPagoCreateAndRedirect({
+        orderId: newOrder.id,
+        items: mercadoPagoItems,
+        total: cart.total,
+        tax: cart.tax,
+        shipping: cart.shipping,
+        customerEmail: session.user?.email || "",
+        customerName: selectedAddress?.name || session.user?.name || "",
+        customerPhone: selectedAddress?.phone || "",
+        shippingAddress: {
+          street: selectedAddress?.street || "",
+          city: selectedAddress?.city || "",
+          state: selectedAddress?.department || "",
+          zipCode: selectedAddress?.postalCode || "",
+          country: "Colombia",
+        },
+      });
+
+      // Mark step as completed
+      setCompletedSteps([...completedSteps.filter((s) => s !== 3), 3]);
+    } catch (error) {
+      console.error("Error opening Mercado Pago checkout:", error);
+
+      if (error instanceof Error) {
+        console.error("Error message:", error.message);
+        alert(`Error: ${error.message}`);
+      } else {
+        alert(
+          "Error al abrir el checkout de Mercado Pago. Por favor intenta nuevamente."
         );
       }
     } finally {
@@ -1312,12 +1424,20 @@ export default function Order() {
                           </div>
                         </div>
 
+<<<<<<< HEAD
                         {/* Payment Provider Selection m*/}
+=======
+                        {/* Payment Provider Selection */}
+>>>>>>> upstream/main
                         <div className="space-y-4">
                           <h4 className="font-medium text-gray-900">
                             Selecciona tu método de pago:
                           </h4>
+<<<<<<< HEAD
                           <div className="grid grid-cols-2 gap-4">
+=======
+                          <div className="grid grid-cols-3 gap-4">
+>>>>>>> upstream/main
                             <button
                               onClick={() =>
                                 setSelectedPaymentProvider("wompi")
@@ -1340,6 +1460,29 @@ export default function Order() {
 
                             <button
                               onClick={() =>
+<<<<<<< HEAD
+=======
+                                setSelectedPaymentProvider("mercadopago")
+                              }
+                              className={`p-4 border-2 rounded-lg transition-all ${
+                                selectedPaymentProvider === "mercadopago"
+                                  ? "border-sky-500 bg-sky-50"
+                                  : "border-gray-200 hover:border-gray-300"
+                              }`}
+                            >
+                              <div className="text-center">
+                                <div className="font-medium text-gray-900 mb-1">
+                                  Mercado Pago
+                                </div>
+                                <div className="text-xs text-gray-600">
+                                  Tarjetas, PSE y más
+                                </div>
+                              </div>
+                            </button>
+
+                            <button
+                              onClick={() =>
+>>>>>>> upstream/main
                                 setSelectedPaymentProvider("epayco")
                               }
                               className={`p-4 border-2 rounded-lg transition-all ${
@@ -1465,6 +1608,52 @@ export default function Order() {
                           </div>
                         )}
 
+<<<<<<< HEAD
+=======
+                        {/* Mercado Pago Checkout Pro */}
+                        {selectedPaymentProvider === "mercadopago" && (
+                          <div className="space-y-4">
+                            <div className="bg-sky-50 border border-sky-200 rounded-lg p-4">
+                              <div className="flex items-start space-x-2">
+                                <ShieldCheck className="w-5 h-5 text-sky-600 mt-0.5" />
+                                <div className="text-sm">
+                                  <p className="font-medium text-sky-800">
+                                    Mercado Pago Checkout Pro
+                                  </p>
+                                  <p className="text-sky-700 mt-1">
+                                    Paga con tarjetas de crédito, débito, PSE,
+                                    efectivo y más métodos de pago disponibles en Mercado Pago.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={handleMercadoPagoCheckout}
+                              disabled={isSubmittingOrder || mercadoPagoLoading}
+                              className="w-full px-6 py-3 bg-sky-500 text-white rounded-md hover:bg-sky-600 transition-colors flex items-center justify-center space-x-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <ShieldCheck className="w-5 h-5" />
+                              <span>
+                                {isSubmittingOrder || mercadoPagoLoading
+                                  ? "Preparando checkout..."
+                                  : `Pagar con Mercado Pago $${cart.total.toLocaleString(
+                                      "es-CO"
+                                    )}`}
+                              </span>
+                            </button>
+
+                            {mercadoPagoError && (
+                              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                <p className="text-red-800 text-sm">
+                                  {mercadoPagoError}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+>>>>>>> upstream/main
                         {/* Debug info in development */}
                         {process.env.NODE_ENV === "development" && (
                           <details className="mt-4">

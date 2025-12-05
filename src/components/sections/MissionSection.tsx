@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useStore } from "@/components/StoreProvider";
+import { resolveImageUrl } from "@/lib/image";
 
 interface MissionSectionProps {
   imageC: string;
@@ -10,6 +11,7 @@ interface MissionSectionProps {
 
 export function MissionSection({ imageC }: MissionSectionProps) {
   const { store } = useStore();
+  const resolvedImageC = resolveImageUrl(imageC);
 
   return (
     <section
@@ -20,8 +22,8 @@ export function MissionSection({ imageC }: MissionSectionProps) {
         {/* Imagen */}
         <div className="overflow-hidden aspect-[4/3] rounded-3xl shadow-2xl">
           <Image
-            src={imageC}
-            alt="Selección de tés premium e infusiones naturales"
+            src={resolvedImageC}
+            alt="Área de trabajo industrial con cuartos fríos"
             width={600}
             height={400}
             className="object-cover object-top w-full h-full"
@@ -38,18 +40,18 @@ export function MissionSection({ imageC }: MissionSectionProps) {
             >
               Misión
             </span>{" "}
-            es tu bienestar
+            es tu protección
           </h2>
           <p className="text-lg mb-4">
-            Desde nuestros inicios, trabajamos con pasión para ofrecer té de
-            hebras e infusiones de la más alta calidad. Nos aseguramos de cuidar
-            cada detalle en el proceso, porque tu salud y disfrute son nuestra
-            mayor prioridad.
+            Desde nuestros inicios, trabajamos con pasión para ofrecer
+            dotaciones industriales de la más alta calidad para cuartos fríos.
+            Nos aseguramos de cuidar cada detalle en el proceso, porque la
+            seguridad de tu equipo es nuestra mayor prioridad.
           </p>
           <ul className="list-disc list-inside space-y-2 mb-6">
-            <li>Té de hebras 100% natural y orgánico</li>
-            <li>Control de calidad riguroso en cada lote</li>
-            <li>Compromiso con tu salud y bienestar</li>
+            <li>Materiales térmicos de alta calidad</li>
+            <li>Control de calidad riguroso para ambientes extremos</li>
+            <li>Compromiso con la seguridad laboral</li>
           </ul>
           <Link
             href="/products"

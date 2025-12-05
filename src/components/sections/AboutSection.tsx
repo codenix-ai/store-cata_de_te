@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useStore } from "@/components/StoreProvider";
+import { resolveImageUrl } from "@/lib/image";
 
 interface AboutSectionProps {
   imageA: string;
@@ -23,11 +24,15 @@ export function AboutSection({
 }: AboutSectionProps) {
   const { store } = useStore();
 
+  // Resolver las URLs de las imágenes
+  const resolvedImageA = resolveImageUrl(imageA);
+  const resolvedImageB = resolveImageUrl(imageB);
+
   // Default content if not provided
-  const defaultTitle = "Especialistas en Té de Hebras";
+  const defaultTitle = "Especialistas en Dotaciones Industriales";
   const defaultParagraphs = [
-    "Durante más de 5 años, hemos sido pioneros en ofrecer té de hebras e infusiones de la más alta calidad, combinando sabor auténtico, propiedades naturales y una experiencia única en cada taza.",
-    "Cada variedad es cuidadosamente seleccionada pensando en el amante del té que busca productos premium, desde tés verdes y negros hasta infusiones herbales y blends exclusivos de nuestra tienda.",
+    "Durante más de 5 años, hemos sido pioneros en ofrecer dotaciones industriales de alta calidad para cuartos fríos, combinando protección térmica, durabilidad y comodidad laboral.",
+    "Cada prenda es cuidadosamente seleccionada pensando en el trabajador que necesita protección óptima en ambientes de baja temperatura, desde buzos térmicos hasta guantes y gorros de lana especializados.",
   ];
 
   const getColorWithOpacity = (color: string, opacity: number) => {
@@ -43,8 +48,8 @@ export function AboutSection({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center mb-16 lg:mb-24">
           <div className="relative group aspect-[4/3] overflow-hidden rounded-3xl shadow-2xl">
             <Image
-              src={imageA}
-              alt="Selección premium de té de hebras e infusiones"
+              src={resolvedImageA}
+              alt="Dotaciones industriales para cuartos fríos"
               fill
               className="object-cover object-top group-hover:scale-105 transition-transform duration-700 rounded-3xl"
             />
@@ -115,25 +120,25 @@ export function AboutSection({
                   color: store?.accentColor || "#60a5fa",
                 }}
               >
-                Compromiso con la Calidad
+                Compromiso Industrial
               </span>
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 font-montserrat mb-6">
-                Sabor que Marca la Diferencia
+                Protección que Marca la Diferencia
               </h2>
             </div>
 
             <p className="text-lg text-gray-600 leading-relaxed">
-              Trabajamos directamente con los mejores productores de té del
-              mundo para garantizar que cada hebra cumpla con los más altos
-              estándares de calidad, frescura y sabor auténtico.
+              Trabajamos directamente con los mejores fabricantes de equipos
+              industriales para garantizar que cada dotación cumpla con los más
+              altos estándares de protección térmica y durabilidad.
             </p>
           </div>
 
           <div className="relative group order-1 lg:order-2">
             <div className="aspect-[4/3] overflow-hidden rounded-3xl shadow-2xl">
               <Image
-                src={imageB}
-                alt="Variedades de té premium e infusiones naturales"
+                src={resolvedImageB}
+                alt="Equipos de protección industrial"
                 fill
                 className="object-cover object-bottom rounded-3xl group-hover:scale-105 transition-transform duration-700"
               />
