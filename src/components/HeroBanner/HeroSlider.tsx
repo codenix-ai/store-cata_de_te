@@ -56,7 +56,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
         className="h-[70vh] hero-swiper"
       >
         {slides.map((slide, index) => (
-          <SwiperSlide key={index}>
+          <SwiperSlide key={`${slide.backgroundImage.id}-${index}`}>
             <div className="relative w-full h-full flex items-center justify-center">
               {/* Full-bleed background image */}
               <div className="absolute inset-0">
@@ -93,7 +93,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
                   <div className="flex gap-4 flex-wrap justify-center">
                     {slide.buttons.map((button, btnIndex) => (
                       <button
-                        key={btnIndex}
+                        key={`${button.text}-${button.action}-${btnIndex}`}
                         onClick={() => handleButtonClick(button.action)}
                         className="inline-flex items-center justify-center bg-white text-black font-semibold py-3 px-6 rounded-full shadow-lg hover:scale-105 transition-transform"
                         style={{
@@ -145,7 +145,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
         }
         .hero-swiper .swiper-pagination-bullet-active {
           opacity: 1;
-          background: ${store?.primaryColor || "white"};
+          background: ${store?.primaryColor && /^#[0-9A-F]{6}$/i.test(store.primaryColor) ? store.primaryColor : "white"};
         }
       `}</style>
     </section>
