@@ -11,6 +11,9 @@ const customJestConfig = {
   moduleNameMapper: {
     // Handle module aliases (this will be automatically configured for you based on your tsconfig.json paths)
     '^@/(.*)$': '<rootDir>/src/$1',
+    // Mock CSS imports from Swiper
+    '^swiper/css$': '<rootDir>/__mocks__/styleMock.js',
+    '^swiper/css/(.*)$': '<rootDir>/__mocks__/styleMock.js',
   },
   testEnvironment: 'jest-environment-jsdom',
   collectCoverageFrom: ['src/**/*.{js,jsx,ts,tsx}', '!src/**/*.d.ts'],

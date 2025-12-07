@@ -92,6 +92,7 @@ export default async function HomePage() {
           imageAlt={siteConfig?.hero?.backgroundImage?.alt}
           buttonText={siteConfig?.hero?.buttons?.[0]?.text}
           buttonAction={siteConfig?.hero?.buttons?.[0]?.action}
+          slides={siteConfig?.hero?.slides}
         />
 
         {/* About Section - use siteConfig about data */}

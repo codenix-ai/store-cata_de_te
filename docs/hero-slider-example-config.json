@@ -1,0 +1,61 @@
+{
+  "hero": {
+    "slides": [
+      {
+        "title": "Bienvenido a Cata de Té",
+        "subtitle": "Descubre el mundo del té y las infusiones naturales",
+        "backgroundImage": {
+          "id": "/assets/bannercata.webp",
+          "alt": "Cata de té principal"
+        },
+        "buttons": [
+          {
+            "text": "Ver Productos",
+            "action": "/products",
+            "variant": "primary"
+          },
+          {
+            "text": "Solicitar Cotización",
+            "action": "#contact-form",
+            "variant": "outline"
+          }
+        ]
+      },
+      {
+        "title": "Calidad Premium",
+        "subtitle": "Tés de hebras y blends exclusivos importados directamente",
+        "backgroundImage": {
+          "id": "/assets/img1.webp",
+          "alt": "Productos de té premium"
+        },
+        "buttons": [
+          {
+            "text": "Explorar Catálogo",
+            "action": "/products",
+            "variant": "primary"
+          }
+        ]
+      },
+      {
+        "title": "Experiencia Única",
+        "subtitle": "Infusiones naturales para cada momento del día",
+        "backgroundImage": {
+          "id": "/assets/img2.webp",
+          "alt": "Momento de té"
+        },
+        "buttons": [
+          {
+            "text": "Conocer Más",
+            "action": "#about",
+            "variant": "primary"
+          },
+          {
+            "text": "Contactar",
+            "action": "#contact-form",
+            "variant": "secondary"
+          }
+        ]
+      }
+    ]
+  }
+}
