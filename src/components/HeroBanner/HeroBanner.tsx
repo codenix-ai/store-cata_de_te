@@ -3,7 +3,8 @@ import Image from "next/image";
 import React from "react";
 import { useStore } from "../StoreProvider";
 import { ArrowRight } from "lucide-react";
-// resolveImageUrl not needed here because banner uses local asset
+import { HeroSlider } from "./HeroSlider";
+import { SiteHeroSlide } from "@/types/siteConfig";
 
 interface HeroBannerProps {
   title?: React.ReactNode;
@@ -12,6 +13,7 @@ interface HeroBannerProps {
   buttonText?: string;
   buttonAction?: string;
   imageAlt?: string;
+  slides?: SiteHeroSlide[];
 }
 
 export function HeroBanner({
@@ -20,9 +22,16 @@ export function HeroBanner({
   buttonText = "Solicita tu cotización",
   buttonAction = "#contact-form",
   imageAlt = "Banner principal",
+  slides,
 }: HeroBannerProps) {
   const { store } = useStore();
 
+  // If slides are provided, use the slider
+  if (slides && slides.length > 0) {
+    return <HeroSlider slides={slides} />;
+  }
+
+  // Otherwise, render the static banner (backward compatible)
   const displayTitle = title || "Descubre el Mundo del Té y las Infusiones";
   const displaySubtitle =
     subtitle ||

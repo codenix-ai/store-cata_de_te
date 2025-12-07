@@ -39,6 +39,21 @@ export interface SiteTheme {
   };
 }
 
+export interface SiteHeroSlide {
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  backgroundImage: {
+    id: string;
+    alt: string;
+  };
+  buttons?: Array<{
+    text: string;
+    action: string;
+    variant: 'primary' | 'outline' | 'secondary';
+  }>;
+}
+
 export interface SiteHero {
   title: string;
   subtitle?: string;
@@ -52,6 +67,8 @@ export interface SiteHero {
     action: string;
     variant: 'primary' | 'outline' | 'secondary';
   }>;
+  // Support for multiple slides
+  slides?: SiteHeroSlide[];
 }
 
 export interface SiteAbout {
