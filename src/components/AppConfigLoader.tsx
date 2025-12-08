@@ -104,6 +104,13 @@ export function AppConfigLoader({ children }: { children: ReactNode }) {
       timezone: 'America/Bogota',
       isActive: true,
       maintenanceMode: false,
+      mercadoPagoEnabled: false,
+      wompiEnabled: false,
+      ePaycoEnabled: false,
+      freeShippingThreshold: 150000,
+      standardShippingCost: 15000,
+      taxRate: 0.19,
+      includeTaxInPrice: false,
     };
     return <StoreProvider initialStore={fallbackStore}>{children}</StoreProvider>;
   }

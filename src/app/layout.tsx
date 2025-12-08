@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Roboto, Montserrat } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import { Navbar } from "@/components/Navbar/Navbar";
@@ -9,18 +8,6 @@ import CookieWrapper from "@/components/CookieWrapper";
 import { WhatsAppWrapper } from "@/components/WhatsAppWrapper";
 import Script from "next/script";
 import { getStoreData } from "@/lib/getStoreData";
-
-const roboto = Roboto({
-  variable: "--font-roboto",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
-});
-
-const montserrat = Montserrat({
-  variable: "--font-montserrat",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-});
 
 export async function generateMetadata(): Promise<Metadata> {
   const storeId = process.env.NEXT_PUBLIC_STORE_ID || "default-store";
@@ -355,7 +342,7 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${roboto.variable} ${montserrat.variable} font-roboto antialiased min-h-screen flex flex-col text-gray-900 bg-white dark:text-gray-100 dark:bg-slate-900`}
+        className="antialiased min-h-screen flex flex-col text-gray-900 bg-white dark:text-gray-100 dark:bg-slate-900"
       >
         <Providers>
           <Toaster position="bottom-right" toastOptions={{ duration: 3400 }} />
